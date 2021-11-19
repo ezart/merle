@@ -157,7 +157,7 @@ func (h *Hub) _scanPorts() {
 			if port.tunnelConnected {
 				// no change
 			} else {
-				log.Printf("Listening for tunnel on port %d", port.port)
+				log.Printf("Tunnel connected on port %d", port.port)
 				port.tunnelConnected = true
 				port.tunnelTrying = false
 				go h.portRun(port)

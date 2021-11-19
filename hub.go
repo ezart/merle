@@ -78,9 +78,6 @@ disconnect:
 	p.disconnect()
 }
 
-func (h *Hub) http() {
-}
-
 func (h *Hub) Run() {
 	go h.http()
 	h.portScan()
