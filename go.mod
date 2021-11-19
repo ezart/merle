@@ -2,7 +2,7 @@ module github.com/scottfeldman/merle
 
 go 1.17
 
-replace github.com/scottfeldman/merle => /home/admin/merle2
+replace github.com/scottfeldman/merle => /home/admin/merle
 
 require (
 	github.com/gorilla/websocket v1.4.2
