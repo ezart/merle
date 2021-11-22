@@ -1,12 +1,12 @@
 package merle
 
 import (
-	"github.com/gorilla/websocket"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"github.com/gorilla/websocket"
 	"log"
 	"net"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -14,23 +14,23 @@ import (
 type IDevice interface {
 	Init(bool) error
 	Run(authUser, hubHost, hubUser, hubKey string)
-	ReceivePacket(* Packet)
+	ReceivePacket(*Packet)
 	HomePage(http.ResponseWriter, *http.Request)
 }
 
 type DeviceGenerator func(id, model, name string, startupTime time.Time) IDevice
 
 type Device struct {
-	Id		string
-	Model		string
-	Name		string
-	StartupTime	time.Time
+	Id          string
+	Model       string
+	Name        string
+	StartupTime time.Time
 
-	Input		chan *Packet
-	Home		func(http.ResponseWriter, *http.Request)
+	Input chan *Packet
+	Home  func(http.ResponseWriter, *http.Request)
 
 	sync.Mutex
-	conns		map[*websocket.Conn]bool
+	conns map[*websocket.Conn]bool
 }
 
 func DefaultId() string {
@@ -119,7 +119,7 @@ func (d *Device) Broadcast(msg []byte) {
 	for c := range d.conns {
 		p := Packet{
 			conn: c,
-			Msg: msg,
+			Msg:  msg,
 		}
 		d.SendPacket(&p)
 	}

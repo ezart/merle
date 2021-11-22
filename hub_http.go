@@ -3,10 +3,10 @@ package merle
 import (
 	"crypto/tls"
 	"fmt"
+	"golang.org/x/crypto/acme/autocert"
+	"html/template"
 	"log"
 	"net/http"
-	"html/template"
-	"golang.org/x/crypto/acme/autocert"
 	"time"
 )
 
@@ -32,34 +32,34 @@ func getPort(w http.ResponseWriter, r *http.Request) {
 
 func (h *Hub) wsDevice(w http.ResponseWriter, r *http.Request, id string) {
 	/*
-	var s socket
-	var err error
+		var s socket
+		var err error
 
-	d := Hub.getDevice(id)
-	if d == nil {
-		http.Error(w, "Unknown device ID "+id, http.StatusNotFound)
-		return
-	}
-
-	s.conn, err = upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println("Websocket upgrader error:", err)
-		return
-	}
-
-	d.SocketAdd(&s)
-
-	for {
-		_, msg, err := s.conn.ReadMessage()
-		if err != nil {
-			log.Println("wsDevice read message error:", err)
-			break
+		d := Hub.getDevice(id)
+		if d == nil {
+			http.Error(w, "Unknown device ID "+id, http.StatusNotFound)
+			return
 		}
-		d.Receive(&s, msg)
-	}
 
-	d.SocketDelete(&s)
-	s.conn.Close()
+		s.conn, err = upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println("Websocket upgrader error:", err)
+			return
+		}
+
+		d.SocketAdd(&s)
+
+		for {
+			_, msg, err := s.conn.ReadMessage()
+			if err != nil {
+				log.Println("wsDevice read message error:", err)
+				break
+			}
+			d.Receive(&s, msg)
+		}
+
+		d.SocketDelete(&s)
+		s.conn.Close()
 	*/
 }
 

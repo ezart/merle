@@ -131,7 +131,7 @@ func (p *Port) run(d IDevice) {
 	}
 	var msg = MsgCmd{
 		Type: MsgTypeCmd,
-		Cmd: CmdStart,
+		Cmd:  CmdStart,
 	}
 	var err error
 

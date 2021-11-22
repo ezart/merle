@@ -9,7 +9,7 @@ import (
 type Packet struct {
 	sync.Mutex
 	conn *websocket.Conn
-	Msg []byte
+	Msg  []byte
 }
 
 func (p *Packet) writeMessage() error {

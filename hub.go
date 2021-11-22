@@ -1,36 +1,36 @@
 package merle
 
 import (
+	"database/sql"
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"database/sql"
-	"sync"
 	_ "github.com/mattn/go-sqlite3"
-	"time"
 	"log"
+	"sync"
+	"time"
 )
 
 type hubDevice struct {
 	IDevice
-	id string
-	model string
-	name string
+	id     string
+	model  string
+	name   string
 	status string
 }
 
 type Hub struct {
 	sync.Mutex
 	supportedDevices map[string]DeviceGenerator
-	devices map[string]*hubDevice
-	db *sql.DB
-	conns map[*websocket.Conn]bool
+	devices          map[string]*hubDevice
+	db               *sql.DB
+	conns            map[*websocket.Conn]bool
 }
 
 func NewHub(supportedDevices map[string]DeviceGenerator) *Hub {
 	return &Hub{
 		supportedDevices: supportedDevices,
-		devices: make(map[string]*hubDevice),
-		conns: make(map[*websocket.Conn]bool),
+		devices:          make(map[string]*hubDevice),
+		conns:            make(map[*websocket.Conn]bool),
 	}
 }
 
@@ -154,10 +154,10 @@ func (h *Hub) newDevice(id, model, name string, startupTime time.Time) *hubDevic
 		}
 		d := &hubDevice{
 			IDevice: dev,
-			id: id,
-			model: model,
-			name: name,
-			status: "offline",
+			id:      id,
+			model:   model,
+			name:    name,
+			status:  "offline",
 		}
 		h.devices[id] = d
 		return d
@@ -253,12 +253,12 @@ func (h *Hub) changeStatus(d *hubDevice, status string) {
 	d.status = status
 
 	spam := MsgStatusSpam{
-		Type:        MsgTypeSpam,
-		Spam:        "Status",
-		Id:          d.id,
-		Model:       d.model,
-		Name:        d.name,
-		Status:      d.status,
+		Type:   MsgTypeSpam,
+		Spam:   "Status",
+		Id:     d.id,
+		Model:  d.model,
+		Name:   d.name,
+		Status: d.status,
 	}
 
 	msg, _ := json.Marshal(&spam)

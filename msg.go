@@ -5,30 +5,30 @@ import (
 )
 
 const (
-	MsgTypeCmd         = "cmd"
-	MsgTypeCmdResp     = "resp"
-	MsgTypeSpam        = "spam"
+	MsgTypeCmd     = "cmd"
+	MsgTypeCmdResp = "resp"
+	MsgTypeSpam    = "spam"
 )
 
 type MsgType struct {
-	Type	string
+	Type string
 }
 
 type MsgCmd struct {
-	Type	string
-	Cmd	string
+	Type string
+	Cmd  string
 	// payload
 }
 
 type MsgCmdResp struct {
-	Type	string
-	Cmd	string
+	Type string
+	Cmd  string
 	// payload
 }
 
 type MsgSpam struct {
-	Type	string
-	Spam	string
+	Type string
+	Spam string
 	// payload
 }
 

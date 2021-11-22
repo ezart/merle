@@ -6,8 +6,8 @@ import (
 	"errors"
 	"github.com/gorilla/websocket"
 	"github.com/msteinert/pam"
-	"net/http"
 	"log"
+	"net/http"
 )
 
 var upgrader = websocket.Upgrader{}
