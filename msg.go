@@ -14,20 +14,6 @@ type MsgType struct {
 	Type	string
 }
 
-const (
-	CmdIdentify = "Identify"
-	CmdStart    = "Start"
-)
-
-type MsgIdentifyResp struct {
-	Type        string
-	Cmd         string
-	Id          string
-	Model       string
-	Name        string
-	StartupTime time.Time
-}
-
 type MsgCmd struct {
 	Type	string
 	Cmd	string
@@ -44,4 +30,41 @@ type MsgSpam struct {
 	Type	string
 	Spam	string
 	// payload
+}
+
+const (
+	CmdIdentify = "Identify"
+	CmdStart    = "Start"
+	CmdDevices  = "Devices"
+)
+
+type MsgIdentifyResp struct {
+	Type        string
+	Cmd         string
+	Id          string
+	Model       string
+	Name        string
+	StartupTime time.Time
+}
+
+type MsgDevicesDevice struct {
+	Id     string
+	Model  string
+	Name   string
+	Status string
+}
+
+type MsgDevicesResp struct {
+	Type    string
+	Cmd     string
+	Devices []MsgDevicesDevice
+}
+
+type MsgStatusSpam struct {
+	Type   string
+	Spam   string
+	Id     string
+	Model  string
+	Name   string
+	Status string
 }

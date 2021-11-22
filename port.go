@@ -1,6 +1,7 @@
 package merle
 
 import (
+	"encoding/json"
 	"github.com/gorilla/websocket"
 	"io/ioutil"
 	"log"
@@ -122,6 +123,28 @@ func (p *Port) disconnect() {
 	p.Lock()
 	p.tunnelConnected = false
 	p.Unlock()
+}
+
+func (p *Port) run(d IDevice) {
+	var pkt = &Packet{
+		conn: p.ws,
+	}
+	var msg = MsgCmd{
+		Type: MsgTypeCmd,
+		Cmd: CmdStart,
+	}
+	var err error
+
+	pkt.Msg, _ = json.Marshal(&msg)
+	d.ReceivePacket(pkt)
+
+	for {
+		pkt.Msg, err = p.readMessage()
+		if err != nil {
+			break
+		}
+		d.ReceivePacket(pkt)
+	}
 }
 
 func (h *Hub) _scanPorts() {

@@ -12,7 +12,7 @@ import (
 )
 
 type IDevice interface {
-	Init() error
+	Init(bool) error
 	Run(authUser, hubHost, hubUser, hubKey string)
 	ReceivePacket(* Packet)
 }

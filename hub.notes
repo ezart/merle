@@ -48,3 +48,12 @@ Build/install Merle hub:
 	$ cd merle/hub
 	$ ./install
 ```
+
+Config SSH server for two minute client timeout (to timeout half-dropped TCP connections):
+
+```
+	Edit /etc/ssh/sshd_config and set:
+
+		ClientAliveInterval 30
+		ClientAliveCountMax 4
+```
