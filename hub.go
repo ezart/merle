@@ -12,6 +12,9 @@ import (
 
 type hubDevice struct {
 	IDevice
+	id string
+	model string
+	name string
 	status string
 }
 
@@ -113,6 +116,7 @@ func (h *Hub) receiveCmd(p *Packet) {
 	json.Unmarshal(p.Msg, &cmd)
 
 	switch cmd.Cmd {
+
 	case CmdDevices:
 		var resp = MsgDevicesResp{
 			Type:    MsgTypeCmdResp,
@@ -121,6 +125,7 @@ func (h *Hub) receiveCmd(p *Packet) {
 		}
 		p.Msg, _ = json.Marshal(&resp)
 		h.sendPacket(p)
+
 	default:
 		log.Printf("Unknown command \"%s\", skipping", cmd.Cmd)
 	}
@@ -149,6 +154,9 @@ func (h *Hub) newDevice(id, model, name string, startupTime time.Time) *hubDevic
 		}
 		d := &hubDevice{
 			IDevice: dev,
+			id: id,
+			model: model,
+			name: name,
 			status: "offline",
 		}
 		h.devices[id] = d
@@ -164,14 +172,14 @@ func (h *Hub) getDevice(id string) *hubDevice {
 	return nil
 }
 
-func (h *Hub) saveDevice(id, model, name string) error {
+func (h *Hub) saveDevice(d *hubDevice) error {
 	var err error
 	var count int
 
 	// TODO is there an SQL oneliner to do all the below?
 
 	query := `SELECT COUNT(*) FROM devices WHERE id=?;`
-	err = h.db.QueryRow(query, id).Scan(&count)
+	err = h.db.QueryRow(query, d.id).Scan(&count)
 	if err != nil {
 		return err
 	}
@@ -179,10 +187,10 @@ func (h *Hub) saveDevice(id, model, name string) error {
 	switch count {
 	case 0:
 		insert := `INSERT INTO devices (id, model, name, firstseen) VALUES(?, ?, ?, ?);`
-		_, err = h.db.Exec(insert, id, model, name, time.Now())
+		_, err = h.db.Exec(insert, d.id, d.model, d.name, time.Now())
 	case 1:
 		update := `UPDATE devices SET model=?, name=? WHERE id=?;`
-		_, err = h.db.Exec(update, model, name, id)
+		_, err = h.db.Exec(update, d.model, d.name, d.id)
 	}
 
 	return err
@@ -241,14 +249,16 @@ func (h *Hub) openDB() error {
 	return nil
 }
 
-func (h *Hub) broadcastStatus(id, model, name, status string) {
+func (h *Hub) changeStatus(d *hubDevice, status string) {
+	d.status = status
+
 	spam := MsgStatusSpam{
 		Type:        MsgTypeSpam,
 		Spam:        "Status",
-		Id:          id,
-		Model:       model,
-		Name:        name,
-		Status:      status,
+		Id:          d.id,
+		Model:       d.model,
+		Name:        d.name,
+		Status:      d.status,
 	}
 
 	msg, _ := json.Marshal(&spam)
@@ -271,18 +281,14 @@ func (h *Hub) portRun(p *Port) {
 		}
 	}
 
-	err = h.saveDevice(resp.Id, resp.Model, resp.Name)
+	err = h.saveDevice(d)
 	if err != nil {
 		goto disconnect
 	}
 
-	d.status = "online"
-	h.broadcastStatus(resp.Id, resp.Model, resp.Name, d.status)
-
+	h.changeStatus(d, "online")
 	p.run(d.IDevice)
-
-	d.status = "offline"
-	h.broadcastStatus(resp.Id, resp.Model, resp.Name, d.status)
+	h.changeStatus(d, "offline")
 
 disconnect:
 	p.disconnect()
