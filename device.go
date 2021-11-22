@@ -15,6 +15,7 @@ type IDevice interface {
 	Init(bool) error
 	Run(authUser, hubHost, hubUser, hubKey string)
 	ReceivePacket(* Packet)
+	HomePage(http.ResponseWriter, *http.Request)
 }
 
 type DeviceGenerator func(id, model, name string, startupTime time.Time) IDevice
@@ -30,7 +31,6 @@ type Device struct {
 
 	sync.Mutex
 	conns		map[*websocket.Conn]bool
-	//port		*Port
 }
 
 func DefaultId() string {

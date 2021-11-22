@@ -99,15 +99,13 @@ func (h *Hub) ws(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Hub) homeDevice(w http.ResponseWriter, r *http.Request, id string) {
-	/*
 	d := h.getDevice(id)
 	if d == nil {
 		http.Error(w, "Unknown device ID "+id, http.StatusNotFound)
 		return
 	}
 
-	d.HomePage(w, r)
-	*/
+	d.IDevice.HomePage(w, r)
 }
 
 var homeTempl = template.Must(template.ParseFiles("./res/templates/hub.html"))
