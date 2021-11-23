@@ -12,8 +12,8 @@ import (
 )
 
 type IDevice interface {
-	Init(bool) error
-	Run(authUser, hubHost, hubUser, hubKey string)
+	Init() error
+	//Run(authUser, hubHost, hubUser, hubKey string)
 	ReceivePacket(*Packet)
 	HomePage(http.ResponseWriter, *http.Request)
 }
