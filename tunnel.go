@@ -27,7 +27,7 @@ func (d *Device) tunnelCreate(hubHost, hubUser, hubKey string) {
 
 		cmd := exec.Command("ssh", "-i", hubKey,
 			hubUser+"@"+hubHost,
-			"curl", "-s", "localhost:8080/port?id="+d.Id)
+			"curl", "-s", "localhost:8080/port?id="+d.id)
 		// If the parent process (this app) dies, kill the ssh cmd also
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig: syscall.SIGTERM,

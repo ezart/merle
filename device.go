@@ -2,7 +2,6 @@ package merle
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net"
@@ -11,26 +10,44 @@ import (
 	"time"
 )
 
-type IDevice interface {
-	Init() error
-	//Run(authUser, hubHost, hubUser, hubKey string)
-	ReceivePacket(*Packet)
+type IModel interface {
+	Init(*Device) error
+	Run()
+	Receive([]byte)
 	HomePage(http.ResponseWriter, *http.Request)
 }
 
-type DeviceGenerator func(id, model, name string, startupTime time.Time) IDevice
-
 type Device struct {
-	Id          string
-	Model       string
-	Name        string
-	StartupTime time.Time
-
-	Input chan *Packet
-	Home  func(http.ResponseWriter, *http.Request)
+	m           IModel
+	id          string
+	model       string
+	name        string
+	startupTime time.Time
 
 	sync.Mutex
 	conns map[*websocket.Conn]bool
+}
+
+func NewDevice(m IModel, id, model, name string) *Device {
+	return &Device{
+		m: m,
+		id: id,
+		model: model,
+		name: name,
+		startupTime: time.Now(),
+	}
+}
+
+func (d *Device) Id() string {
+	return d.id
+}
+
+func (d *Device) Model() string {
+	return d.model
+}
+
+func (d *Device) Name() string {
+	return d.name
 }
 
 func DefaultId() string {
@@ -67,19 +84,10 @@ func (d *Device) HomeParams(r *http.Request) *homeParams {
 	return &homeParams{
 		Scheme: scheme,
 		Host:   r.Host,
-		Id:     d.Id,
-		Model:  d.Model,
-		Name:   d.Name,
+		Id:     d.id,
+		Model:  d.model,
+		Name:   d.name,
 	}
-}
-
-func (d *Device) homePage(w http.ResponseWriter, r *http.Request) {
-	if d.Home == nil {
-		fmt.Fprintf(w, "Missing home page handler")
-		return
-	}
-
-	d.Home(w, r)
 }
 
 func (d *Device) connAdd(c *websocket.Conn) {
@@ -136,15 +144,15 @@ func (d *Device) receiveCmd(p *Packet) {
 		var resp = MsgIdentifyResp{
 			Type:        MsgTypeCmdResp,
 			Cmd:         msg.Cmd,
-			Id:          d.Id,
-			Model:       d.Model,
-			Name:        d.Name,
-			StartupTime: d.StartupTime,
+			Id:          d.id,
+			Model:       d.model,
+			Name:        d.name,
+			StartupTime: d.startupTime,
 		}
 		p.Msg, _ = json.Marshal(&resp)
 		d.SendPacket(p)
 	default:
-		d.Input <- p
+		//d.Input <- p
 	}
 }
 
@@ -159,12 +167,12 @@ func (d *Device) receivePacket(p *Packet) {
 	case MsgTypeCmd:
 		d.receiveCmd(p)
 	default:
-		d.Input <- p
+		//d.Input <- p
 	}
 }
 
 func (d *Device) Run(authUser, hubHost, hubUser, hubKey string) {
-	d.Input = make(chan *Packet)
+	//d.Input = make(chan *Packet)
 	d.conns = make(map[*websocket.Conn]bool)
 
 	go d.tunnelCreate(hubHost, hubUser, hubKey)

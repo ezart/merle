@@ -47,7 +47,7 @@ func (d *Device) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	d.homePage(w, r)
+	d.m.HomePage(w, r)
 }
 
 func pamValidate(user, passwd string) (bool, error) {
