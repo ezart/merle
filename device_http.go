@@ -30,7 +30,7 @@ func (d *Device) ws(w http.ResponseWriter, r *http.Request) {
 			log.Println("Websocket read message error:", err)
 			break
 		}
-		d.receivePacket(&p)
+		d.receive(&p)
 	}
 
 	d.connDelete(p.conn)

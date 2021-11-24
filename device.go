@@ -13,28 +13,34 @@ import (
 type IModel interface {
 	Init(*Device) error
 	Run()
-	Receive([]byte)
+	Receive(*Packet)
 	HomePage(http.ResponseWriter, *http.Request)
 }
 
 type Device struct {
 	m           IModel
+	status      string
 	id          string
 	model       string
 	name        string
 	startupTime time.Time
-
 	sync.Mutex
 	conns map[*websocket.Conn]bool
 }
 
-func NewDevice(m IModel, id, model, name string) *Device {
+func NewDevice(m IModel, id, model, name, status string, startupTime time.Time) *Device {
+	if id == "" {
+		id = DefaultId()
+	}
+
 	return &Device{
-		m: m,
-		id: id,
-		model: model,
-		name: name,
-		startupTime: time.Now(),
+		m:           m,
+		status:      status,
+		id:          id,
+		model:       model,
+		name:        name,
+		startupTime: startupTime,
+		conns:       make(map[*websocket.Conn]bool),
 	}
 }
 
@@ -50,24 +56,8 @@ func (d *Device) Name() string {
 	return d.name
 }
 
-func DefaultId() string {
-
-	// Use the MAC address of the first non-lo interface
-	// as the default device ID
-
-	ifaces, err := net.Interfaces()
-	if err == nil {
-		for _, iface := range ifaces {
-			if iface.Name != "lo" {
-				return iface.HardwareAddr.String()
-			}
-		}
-	}
-
-	return ""
-}
-
 type homeParams struct {
+	Status string
 	Scheme string
 	Host   string
 	Id     string
@@ -82,6 +72,7 @@ func (d *Device) HomeParams(r *http.Request) *homeParams {
 	}
 
 	return &homeParams{
+		Status: d.status,
 		Scheme: scheme,
 		Host:   r.Host,
 		Id:     d.id,
@@ -102,8 +93,12 @@ func (d *Device) connDelete(c *websocket.Conn) {
 	delete(d.conns, c)
 }
 
-func (d *Device) SendPacket(p *Packet) {
+func (d *Device) Send(p *Packet) {
 	log.Printf("Device SendPacket: %s", p.Msg)
+
+	d.Lock()
+	defer d.Unlock()
+
 	err := p.writeMessage()
 	if err != nil {
 		log.Println("Device SendPacket error:", err)
@@ -129,7 +124,7 @@ func (d *Device) Broadcast(msg []byte) {
 			conn: c,
 			Msg:  msg,
 		}
-		d.SendPacket(&p)
+		p.writeMessage()
 	}
 }
 
@@ -150,13 +145,13 @@ func (d *Device) receiveCmd(p *Packet) {
 			StartupTime: d.startupTime,
 		}
 		p.Msg, _ = json.Marshal(&resp)
-		d.SendPacket(p)
+		d.Send(p)
 	default:
-		//d.Input <- p
+		d.m.Receive(p)
 	}
 }
 
-func (d *Device) receivePacket(p *Packet) {
+func (d *Device) receive(p *Packet) {
 	var msg MsgType
 
 	log.Printf("Device receivePacket: %s", p.Msg)
@@ -167,14 +162,35 @@ func (d *Device) receivePacket(p *Packet) {
 	case MsgTypeCmd:
 		d.receiveCmd(p)
 	default:
-		//d.Input <- p
+		d.m.Receive(p)
 	}
 }
 
 func (d *Device) Run(authUser, hubHost, hubUser, hubKey string) {
-	//d.Input = make(chan *Packet)
-	d.conns = make(map[*websocket.Conn]bool)
+	err := d.m.Init(d)
+	if err != nil {
+		return
+	}
 
 	go d.tunnelCreate(hubHost, hubUser, hubKey)
 	go d.http(authUser)
+
+	d.m.Run()
+}
+
+func DefaultId() string {
+
+	// Use the MAC address of the first non-lo interface
+	// as the default device ID
+
+	ifaces, err := net.Interfaces()
+	if err == nil {
+		for _, iface := range ifaces {
+			if iface.Name != "lo" {
+				return iface.HardwareAddr.String()
+			}
+		}
+	}
+
+	return ""
 }
