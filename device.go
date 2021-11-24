@@ -105,6 +105,9 @@ func (d *Device) Send(p *Packet) {
 	}
 }
 
+func (d *Device) Sink(p *Packet) {
+}
+
 func (d *Device) Broadcast(msg []byte) {
 	var p = &Packet{
 		Msg: msg,
