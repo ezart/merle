@@ -57,9 +57,9 @@ func (d *Device) Name() string {
 }
 
 type homeParams struct {
-	Status string
 	Scheme string
 	Host   string
+	Status string
 	Id     string
 	Model  string
 	Name   string
@@ -72,9 +72,9 @@ func (d *Device) HomeParams(r *http.Request) *homeParams {
 	}
 
 	return &homeParams{
-		Status: d.status,
 		Scheme: scheme,
 		Host:   r.Host,
+		Status: d.status,
 		Id:     d.id,
 		Model:  d.model,
 		Name:   d.name,
@@ -106,7 +106,9 @@ func (d *Device) Send(p *Packet) {
 }
 
 func (d *Device) Broadcast(msg []byte) {
-	log.Printf("Device broadcast: %s", msg)
+	var p = &Packet{
+		Msg: msg,
+	}
 
 	d.Lock()
 	defer d.Unlock()
@@ -116,14 +118,13 @@ func (d *Device) Broadcast(msg []byte) {
 		return
 	}
 
+	log.Printf("Device broadcast: %s", msg)
+
 	// TODO Perf optimization: use websocket.NewPreparedMessage
 	// TODO to prepare msg once, and then sent on each connection
 
 	for c := range d.conns {
-		p := Packet{
-			conn: c,
-			Msg:  msg,
-		}
+		p.conn = c
 		p.writeMessage()
 	}
 }
@@ -139,6 +140,7 @@ func (d *Device) receiveCmd(p *Packet) {
 		var resp = MsgIdentifyResp{
 			Type:        MsgTypeCmdResp,
 			Cmd:         msg.Cmd,
+			Status:      d.status,
 			Id:          d.id,
 			Model:       d.model,
 			Name:        d.name,

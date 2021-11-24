@@ -1,7 +1,7 @@
 package merle
 
 import (
-//	"encoding/json"
+	"encoding/json"
 	"github.com/gorilla/websocket"
 	"io/ioutil"
 	"log"
@@ -125,8 +125,7 @@ func (p *Port) disconnect() {
 	p.Unlock()
 }
 
-/*
-func (p *Port) run(d IDevice) {
+func (p *Port) run(d *Device) {
 	var pkt = &Packet{
 		conn: p.ws,
 	}
@@ -137,17 +136,16 @@ func (p *Port) run(d IDevice) {
 	var err error
 
 	pkt.Msg, _ = json.Marshal(&msg)
-	d.ReceivePacket(pkt)
+	d.m.Receive(pkt)
 
 	for {
 		pkt.Msg, err = p.readMessage()
 		if err != nil {
 			break
 		}
-		d.ReceivePacket(pkt)
+		d.m.Receive(pkt)
 	}
 }
-*/
 
 func (h *Hub) _scanPorts() {
 	// ss -Hntl4p src 127.0.0.1 sport ge 8081 sport le 9080

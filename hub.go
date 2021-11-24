@@ -38,6 +38,18 @@ func (h *Hub) connDelete(c *websocket.Conn) {
 	delete(h.conns, c)
 }
 
+func (h *Hub) send(p *Packet) {
+	log.Printf("Hub send: %s", p.Msg)
+
+	h.Lock()
+	defer h.Unlock()
+
+	err := p.writeMessage()
+	if err != nil {
+		log.Println("Hub send error:", err)
+	}
+}
+
 func (h *Hub) broadcast(msg []byte) {
 	var p = &Packet{
 		Msg: msg,
@@ -59,14 +71,6 @@ func (h *Hub) broadcast(msg []byte) {
 	for c := range h.conns {
 		p.conn = c
 		p.writeMessage()
-	}
-}
-
-func (h *Hub) sendPacket(p *Packet) {
-	log.Printf("Hub sendPacket: %s", p.Msg)
-	err := p.writeMessage()
-	if err != nil {
-		log.Println("Hub sendPacket error:", err)
 	}
 }
 
@@ -116,7 +120,7 @@ func (h *Hub) receiveCmd(p *Packet) {
 			Devices: h.deviceList(),
 		}
 		p.Msg, _ = json.Marshal(&resp)
-		h.sendPacket(p)
+		h.send(p)
 
 	default:
 		log.Printf("Unknown command \"%s\", skipping", cmd.Cmd)
@@ -138,7 +142,7 @@ func (h *Hub) receivePacket(p *Packet) {
 }
 
 func (h *Hub) newDevice(id, model, name string, startupTime time.Time) *Device {
-	m := h.modelGen(id)
+	m := h.modelGen(model)
 	if m == nil {
 		log.Printf("No device model named '%s'", model)
 		return nil
@@ -236,23 +240,21 @@ func (h *Hub) openDB() error {
 	return nil
 }
 
-/*
 func (h *Hub) changeStatus(d *Device, status string) {
 	d.status = status
 
 	spam := MsgStatusSpam{
 		Type:   MsgTypeSpam,
 		Spam:   "Status",
+		Status: d.status,
 		Id:     d.id,
 		Model:  d.model,
 		Name:   d.name,
-		Status: d.status,
 	}
 
 	msg, _ := json.Marshal(&spam)
 	h.broadcast(msg)
 }
-*/
 
 func (h *Hub) portRun(p *Port) {
 	var d *Device
@@ -275,9 +277,9 @@ func (h *Hub) portRun(p *Port) {
 		goto disconnect
 	}
 
-	//h.changeStatus(d, "online")
-	//p.run(d.IDevice)
-	//h.changeStatus(d, "offline")
+	h.changeStatus(d, "online")
+	p.run(d)
+	h.changeStatus(d, "offline")
 
 disconnect:
 	p.disconnect()

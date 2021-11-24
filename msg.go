@@ -41,6 +41,7 @@ const (
 type MsgIdentifyResp struct {
 	Type        string
 	Cmd         string
+	Status      string
 	Id          string
 	Model       string
 	Name        string
@@ -63,8 +64,8 @@ type MsgDevicesResp struct {
 type MsgStatusSpam struct {
 	Type   string
 	Spam   string
+	Status string
 	Id     string
 	Model  string
 	Name   string
-	Status string
 }
