@@ -11,7 +11,7 @@ import (
 )
 
 type IModel interface {
-	Init(*Device) error
+	Init(*Device, bool) error
 	Run()
 	Receive(*Packet)
 	HomePage(http.ResponseWriter, *http.Request)
@@ -169,7 +169,7 @@ func (d *Device) receive(p *Packet) {
 }
 
 func (d *Device) Run(authUser, hubHost, hubUser, hubKey string) {
-	err := d.m.Init(d)
+	err := d.m.Init(d, false)
 	if err != nil {
 		return
 	}

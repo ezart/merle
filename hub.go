@@ -154,7 +154,14 @@ func (h *Hub) newDevice(id, model, name string, startupTime time.Time) *Device {
 		return nil
 	}
 
+	err := d.m.Init(d, true)
+	if err != nil {
+		log.Printf("Device init failed, model '%s'", model)
+		return nil
+	}
+
 	h.devices[id] = d
+
 	return d
 }
 
