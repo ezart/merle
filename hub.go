@@ -277,6 +277,10 @@ func (h *Hub) portRun(p *Port) {
 		if d == nil {
 			goto disconnect
 		}
+	} else {
+		d.model = resp.Model
+		d.name = resp.Name
+		d.startupTime = resp.StartupTime
 	}
 
 	err = h.saveDevice(d)
