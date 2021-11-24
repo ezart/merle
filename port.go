@@ -129,12 +129,21 @@ func (p *Port) run(d *Device) {
 	var pkt = &Packet{
 		conn: p.ws,
 	}
+	var err error
+
+	d.Lock()
+	if d.port != nil {
+		d.Unlock()
+		log.Printf("Port[%d] already running", p.port)
+		return
+	}
+	d.port = p
+	d.Unlock()
+
 	var msg = MsgCmd{
 		Type: MsgTypeCmd,
 		Cmd:  CmdStart,
 	}
-	var err error
-
 	pkt.Msg, _ = json.Marshal(&msg)
 	d.m.Receive(pkt)
 
@@ -145,6 +154,10 @@ func (p *Port) run(d *Device) {
 		}
 		d.m.Receive(pkt)
 	}
+
+	d.Lock()
+	d.port = nil
+	d.Unlock()
 }
 
 func (h *Hub) _scanPorts() {

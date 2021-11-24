@@ -26,6 +26,7 @@ type Device struct {
 	startupTime time.Time
 	sync.Mutex
 	conns map[*websocket.Conn]bool
+	port *Port
 }
 
 func NewDevice(m IModel, id, model, name, status string, startupTime time.Time) *Device {
@@ -94,18 +95,34 @@ func (d *Device) connDelete(c *websocket.Conn) {
 }
 
 func (d *Device) Send(p *Packet) {
-	log.Printf("Device SendPacket: %s", p.Msg)
+	log.Printf("Device Send: %s", p.Msg)
 
 	d.Lock()
 	defer d.Unlock()
 
 	err := p.writeMessage()
 	if err != nil {
-		log.Println("Device SendPacket error:", err)
+		log.Println("Device Send error:", err)
 	}
 }
 
 func (d *Device) Sink(p *Packet) {
+	d.Lock()
+	defer d.Unlock()
+
+	if d.port == nil {
+		log.Printf("Device Sink error: not running on port: %s", p.Msg)
+		return
+	}
+
+	log.Printf("Device Sink: %s", p.Msg)
+
+	p.conn = d.port.ws
+
+	err := p.writeMessage()
+	if err != nil {
+		log.Println("Device Sink error:", err)
+	}
 }
 
 func (d *Device) Broadcast(msg []byte) {
