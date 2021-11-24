@@ -263,7 +263,7 @@ func (h *Hub) changeStatus(d *Device, status string) {
 	h.broadcast(msg)
 }
 
-func (h *Hub) portRun(p *Port) {
+func (h *Hub) portRun(p *port) {
 	var d *Device
 
 	resp, err := p.connect()

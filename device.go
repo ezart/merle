@@ -26,7 +26,7 @@ type Device struct {
 	startupTime time.Time
 	sync.Mutex
 	conns map[*websocket.Conn]bool
-	port *Port
+	port *port
 }
 
 func NewDevice(m IModel, id, model, name, status string, startupTime time.Time) *Device {

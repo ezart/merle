@@ -19,7 +19,7 @@ var portNext int
 
 var numPorts int
 
-type Port struct {
+type port struct {
 	sync.Mutex
 	port              int
 	tunnelTrying      bool
@@ -29,19 +29,19 @@ type Port struct {
 	input             chan []byte
 }
 
-var ports []Port
+var ports []port
 
-func (p *Port) writeJSON(v interface{}) error {
+func (p *port) writeJSON(v interface{}) error {
 	log.Printf("Port writeJSON: %v", v)
 	return p.ws.WriteJSON(v)
 }
 
-func (p *Port) writeMessage(msg []byte) error {
+func (p *port) writeMessage(msg []byte) error {
 	log.Printf("Port writeMessage: %.80s", msg)
 	return p.ws.WriteMessage(websocket.TextMessage, msg)
 }
 
-func (p *Port) readMessage() (msg []byte, err error) {
+func (p *port) readMessage() (msg []byte, err error) {
 	_, msg, err = p.ws.ReadMessage()
 	if err == nil {
 		log.Printf("Port readMessage: %.80s", msg)
@@ -49,7 +49,7 @@ func (p *Port) readMessage() (msg []byte, err error) {
 	return msg, err
 }
 
-func (p *Port) wsOpen() error {
+func (p *port) wsOpen() error {
 	var err error
 
 	u := url.URL{Scheme: "ws",
@@ -61,12 +61,12 @@ func (p *Port) wsOpen() error {
 	return err
 }
 
-func (p *Port) wsIdentify() error {
+func (p *port) wsIdentify() error {
 	msg := MsgCmd{MsgTypeCmd, CmdIdentify}
 	return p.writeJSON(msg)
 }
 
-func (p *Port) wsIdentifyResp() (r *MsgIdentifyResp, err error) {
+func (p *port) wsIdentifyResp() (r *MsgIdentifyResp, err error) {
 	var resp MsgIdentifyResp
 
 	// Wait for response no longer than a second
@@ -85,7 +85,7 @@ func (p *Port) wsIdentifyResp() (r *MsgIdentifyResp, err error) {
 	return &resp, nil
 }
 
-func (p *Port) wsClose() {
+func (p *port) wsClose() {
 	if p.ws == nil {
 		return
 	}
@@ -96,7 +96,7 @@ func (p *Port) wsClose() {
 	p.ws = nil
 }
 
-func (p *Port) connect() (resp *MsgIdentifyResp, err error) {
+func (p *port) connect() (resp *MsgIdentifyResp, err error) {
 	err = p.wsOpen()
 	if err != nil {
 		log.Printf("Port[%d] run wsOpen error:", p.port, err)
@@ -118,14 +118,14 @@ func (p *Port) connect() (resp *MsgIdentifyResp, err error) {
 	return resp, nil
 }
 
-func (p *Port) disconnect() {
+func (p *port) disconnect() {
 	p.wsClose()
 	p.Lock()
 	p.tunnelConnected = false
 	p.Unlock()
 }
 
-func (p *Port) run(d *Device) {
+func (p *port) run(d *Device) {
 	var pkt = &Packet{
 		conn: p.ws,
 	}
@@ -263,7 +263,7 @@ func (h *Hub) portScan() {
 	numPorts = portEnd - portBegin + 1
 	portNext = 0
 
-	ports = make([]Port, numPorts)
+	ports = make([]port, numPorts)
 
 	for i := 0; i < numPorts; i++ {
 		ports[i].port = portBegin + i
@@ -272,7 +272,7 @@ func (h *Hub) portScan() {
 	h.scanPorts()
 }
 
-func nextPort() (p *Port) {
+func nextPort() (p *port) {
 
 	for i := 0; i < numPorts; i++ {
 		p = &ports[portNext]
@@ -299,10 +299,10 @@ func nextPort() (p *Port) {
 	return nil
 }
 
-var portMap = make(map[string]*Port)
+var portMap = make(map[string]*port)
 
 func portFromId(id string) int {
-	var p *Port
+	var p *port
 	var ok bool
 
 	if p, ok = portMap[id]; ok {
