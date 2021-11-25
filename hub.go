@@ -12,10 +12,10 @@ import (
 
 type Hub struct {
 	sync.Mutex
-	modelGen         func(model string) IModel
-	devices          map[string]*Device
-	conns            map[*websocket.Conn]bool
-	db               *sql.DB
+	modelGen func(model string) IModel
+	devices  map[string]*Device
+	conns    map[*websocket.Conn]bool
+	db       *sql.DB
 }
 
 func NewHub(modelGen func(model string) IModel) *Hub {

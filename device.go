@@ -18,15 +18,15 @@ type IModel interface {
 }
 
 type Device struct {
+	sync.Mutex
 	m           IModel
 	status      string
 	id          string
 	model       string
 	name        string
 	startupTime time.Time
-	sync.Mutex
-	conns map[*websocket.Conn]bool
-	port *port
+	conns       map[*websocket.Conn]bool
+	port        *port
 }
 
 func NewDevice(m IModel, id, model, name, status string, startupTime time.Time) *Device {

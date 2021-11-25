@@ -281,17 +281,18 @@ func nextPort() (p *port) {
 			portNext = 0
 		}
 		p.Lock()
-		defer p.Unlock()
 		if p.tunnelConnected {
+			p.Unlock()
 			continue
 		}
-		if p.tunnelTrying &&
-			p.tunnelTryingUntil.After(time.Now()) {
+		if p.tunnelTrying && p.tunnelTryingUntil.After(time.Now()) {
+			p.Unlock()
 			log.Printf("NextPort still tunnelTrying on port %d", p.port)
 			continue
 		}
 		p.tunnelTrying = true
 		p.tunnelTryingUntil = time.Now().Add(2 * time.Second)
+		p.Unlock()
 		return
 	}
 
@@ -307,8 +308,8 @@ func portFromId(id string) int {
 
 	if p, ok = portMap[id]; ok {
 		p.Lock()
-		defer p.Unlock()
 		if p.tunnelConnected {
+			p.Unlock()
 			log.Printf("portFromId ID %s port %d busy", id, p.port)
 			return -2 // Port busy; try later
 		}
