@@ -95,7 +95,7 @@ func (d *Device) connDelete(c *websocket.Conn) {
 }
 
 func (d *Device) Send(p *Packet) {
-	log.Printf("Device Send: %s", p.Msg)
+	log.Printf("Device Send: %.80s", p.Msg)
 
 	d.Lock()
 	defer d.Unlock()
@@ -115,7 +115,7 @@ func (d *Device) Sink(p *Packet) {
 		return
 	}
 
-	log.Printf("Device Sink: %s", p.Msg)
+	log.Printf("Device Sink: %.80s", p.Msg)
 
 	p.conn = d.port.ws
 
@@ -134,11 +134,11 @@ func (d *Device) Broadcast(msg []byte) {
 	defer d.Unlock()
 
 	if len(d.conns) == 0 {
-		log.Printf("Would broadcast: %s", msg)
+		log.Printf("Would broadcast: %.80s", msg)
 		return
 	}
 
-	log.Printf("Device broadcast: %s", msg)
+	log.Printf("Device broadcast: %.80s", msg)
 
 	// TODO Perf optimization: use websocket.NewPreparedMessage
 	// TODO to prepare msg once, and then sent on each connection
@@ -176,7 +176,7 @@ func (d *Device) receiveCmd(p *Packet) {
 func (d *Device) receive(p *Packet) {
 	var msg MsgType
 
-	log.Printf("Device receivePacket: %s", p.Msg)
+	log.Printf("Device receivePacket: %.80s", p.Msg)
 
 	json.Unmarshal(p.Msg, &msg)
 
