@@ -25,6 +25,8 @@ func (d *Device) tunnelCreate(hubHost, hubUser, hubKey string) {
 
 		// ssh -i <key> <user>@<hub> curl -s localhost:8080/port?id=xxx
 
+		log.Printf("Getting port...ssh -i %s %s@%s curl -s localhost:8080/port?id=%s...",
+			hubKey, hubUser, hubHost, d.id)
 		cmd := exec.Command("ssh", "-i", hubKey,
 			hubUser+"@"+hubHost,
 			"curl", "-s", "localhost:8080/port?id="+d.id)
@@ -53,7 +55,8 @@ func (d *Device) tunnelCreate(hubHost, hubUser, hubKey string) {
 		//   most likely from port already being in-use on the server side).
 
 		remote = fmt.Sprintf("%s:localhost:8080", port)
-		log.Println("Creating tunnel:", remote)
+		log.Printf("Creating tunnel...ssh -o ExitOnForwardFailure=yes -CNT -i %s -R %s %s@%s...",
+			hubKey, remote, hubUser, hubHost)
 		cmd = exec.Command("ssh", "-o", "ExitOnForwardFailure=yes",
 			"-CNT", "-i", hubKey,
 			"-R", remote, hubUser+"@"+hubHost)
