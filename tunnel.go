@@ -48,6 +48,7 @@ func (d *Device) tunnelCreate(hubHost, hubUser, hubKey string) {
 			log.Print("Port is busy; trying again\n")
 			goto again
 		}
+		log.Printf("Got port %s", port)
 
 		// ssh -o ExitOnForwardFailure=yes -CNT -i <key> -R 8081:localhost:8080 <hub>
 		//
