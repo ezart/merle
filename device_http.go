@@ -107,12 +107,12 @@ func (d *Device) http(authUser string) {
 		log.Fatalln("Private HTTP server failed:", err)
 	}()
 
-	fs := http.FileServer(http.Dir("res"))
+	fs := http.FileServer(http.Dir("web"))
 
 	publicMux := http.NewServeMux()
 	publicMux.HandleFunc("/ws", basicAuth(authUser, d.ws))
 	publicMux.HandleFunc("/", basicAuth(authUser, d.home))
-	publicMux.Handle("/res/", http.StripPrefix("/res", fs))
+	publicMux.Handle("/web/", http.StripPrefix("/web", fs))
 
 	log.Printf("Listening HTTP on :80 for public")
 	err := http.ListenAndServe(":80", publicMux)
