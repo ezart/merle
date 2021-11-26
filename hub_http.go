@@ -145,12 +145,12 @@ func (h *Hub) http() {
 		log.Fatalln("Public HTTP server failed:", err)
 	}()
 
-	fs := http.FileServer(http.Dir("./res"))
+	fs := http.FileServer(http.Dir("./web"))
 
 	publicMux := http.NewServeMux()
 	publicMux.HandleFunc("/ws", h.ws)
 	publicMux.HandleFunc("/", h.home)
-	publicMux.Handle("/res/", http.StripPrefix("/res", fs))
+	publicMux.Handle("/web/", http.StripPrefix("/web", fs))
 
 	https := &http.Server{
 		Addr:         ":443",
