@@ -93,6 +93,8 @@ func (h *Hub) homeHub(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Hub) home(w http.ResponseWriter, r *http.Request) {
+	log.Printf("RemoteAddr:%s, RequestURI:%s", r.RemoteAddr, r.RequestURI)
+
 	if r.URL.Path != "/" {
 		http.Error(w, "Not found", http.StatusNotFound)
 		return
