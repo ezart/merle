@@ -313,6 +313,7 @@ func portFromId(id string) int {
 			log.Printf("portFromId ID %s port %d busy", id, p.port)
 			return -2 // Port busy; try later
 		}
+		p.Unlock()
 	} else {
 		p = nextPort()
 		if p == nil {
