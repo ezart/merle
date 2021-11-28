@@ -148,13 +148,13 @@ func (h *Hub) newDevice(id, model, name string, startupTime time.Time) *Device {
 		return nil
 	}
 
-	d := NewDevice(m, id, model, name, "offline", startupTime)
+	d := NewDevice(m, true, id, model, name, "offline", startupTime)
 	if d == nil {
 		log.Printf("Device creation failed, model '%s'", model)
 		return nil
 	}
 
-	err := d.m.Init(d, true)
+	err := d.m.Init(d)
 	if err != nil {
 		log.Printf("Device init failed, model '%s'", model)
 		return nil

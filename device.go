@@ -10,13 +10,57 @@ import (
 	"time"
 )
 
+// IModel is the business logic of a Device, specifying a "device driver" interface.
 type IModel interface {
-	Init(*Device, bool) error
+
+	// Init the device model.  Device model software construct such as
+	// timers/tickers can be setup here.  If running in device-mode, device
+	// model hardware is initialized here as well.
+	Init(d *Device) error
+
+	// Run the device model.  Run should block until device stops.  Run is
+	// only called in device-mode.  Hub-mode will not call Run.
 	Run()
-	Receive(*Packet)
-	HomePage(http.ResponseWriter, *http.Request)
+
+	// Receive a message in a Packet.
+	Receive(p *Packet)
+
+	// HomePage for the device model.
+	HomePage(w http.ResponseWriter, r *http.Request)
 }
 
+// Device runs an IModel, either in device-mode or hub-mode.  In device-mode,
+// the Device runs locally, with direct access to the device hardware.  In
+// hub-mode, the Device runs inside a Hub, connecting to the device-mode Device
+// over a tunnel using websockets.  The IModel implements both modes.
+//
+// Device-mode
+//
+// In device-mode, the Device runs the IModel, starts two web servers, and
+// (optionally) creates a tunnel to a Hub.
+//
+// The first web server listens on port :80 for HTTP and serves up the Device
+// homepage on http://localhost/ and a websocket connection to the Device on
+// ws://localhost/ws.  Basic Authentication protects access to both http:// and
+// ws://.  The only allowed Basic Authentication user is authUser passed to
+// Device.Run(...).
+//
+// The second web server listens on port :8080 for HTTP and serves up websocket
+// connection to the Device on ws://localhost:8080/ws.
+//
+// The optional tunnel is a SSH remote port forwarding tunnel where the Device
+// is the ssh client and the Hub is the SSH server.  To create the tunnel,
+// first the Device requests, over SSH, a remote port from the Hub.  The Device
+// then creates a SSH remote port forwarding tunnel mapping <remote
+// port>:localhost:8080.  The Hub can now create a websocket connection back to
+// the device-mode Device using ws://localhost:<remote port>/ws.
+//
+// Hub-mode
+//
+// In hub-mode, the Device runs the IModel inside a Hub.  The Hub will
+// websocket connect back to the device-mode Device, also running the same
+// IModel.  See type Hub for more information.
+// 
 type Device struct {
 	sync.Mutex
 	m           IModel
@@ -27,9 +71,20 @@ type Device struct {
 	startupTime time.Time
 	conns       map[*websocket.Conn]bool
 	port        *port
+	inHub       bool
 }
 
-func NewDevice(m IModel, id, model, name, status string, startupTime time.Time) *Device {
+// NewDevice returns a new Device.
+// 	m is IModel instance.
+// 	inHub is true if Device is running in hub-mode.
+// 	id is ID of Device.  id is unique for each Device in a Hub.  If id is "",
+// 	a default ID is assigned.
+// 	model is the name of the model.
+// 	name is the name of the Device.
+// 	status is status of the Device, e.g. "online", "offline".
+// 	startupTime is the Device's startup time.
+func NewDevice(m IModel, inHub bool, id, model, name, status string,
+	startupTime time.Time) *Device {
 	if id == "" {
 		id = DefaultId()
 	}
@@ -41,20 +96,29 @@ func NewDevice(m IModel, id, model, name, status string, startupTime time.Time) 
 		model:       model,
 		name:        name,
 		startupTime: startupTime,
+		inHub:       inHub,
 		conns:       make(map[*websocket.Conn]bool),
 	}
 }
 
+// Return the Device ID
 func (d *Device) Id() string {
 	return d.id
 }
 
+// Return the Device model
 func (d *Device) Model() string {
 	return d.model
 }
 
+// Return the Device name
 func (d *Device) Name() string {
 	return d.name
+}
+
+// Return true if Device running in Hub
+func (d *Device) InHub() bool {
+	return d.inHub
 }
 
 type homeParams struct {
@@ -66,6 +130,8 @@ type homeParams struct {
 	Name   string
 }
 
+// HomeParams returns useful parameters to be passed to IModel.HomePage's
+// html template.
 func (d *Device) HomeParams(r *http.Request) *homeParams {
 	scheme := "wss:\\"
 	if r.TLS == nil {
@@ -94,19 +160,27 @@ func (d *Device) connDelete(c *websocket.Conn) {
 	delete(d.conns, c)
 }
 
-func (d *Device) Send(p *Packet) {
-	log.Printf("Device Send: %.80s", p.Msg)
+// Reply sends Packet back to originator of a Packet received with
+// IModel.Receive.
+func (d *Device) Reply(p *Packet) {
+	log.Printf("Device Reply: %.80s", p.Msg)
 
 	d.Lock()
 	defer d.Unlock()
 
 	err := p.writeMessage()
 	if err != nil {
-		log.Println("Device Send error:", err)
+		log.Println("Device Reply error:", err)
 	}
 }
 
+// Sink send Packet towards device-mode Device.  This should only be called
+// by Device in hub-mode to send Packet towards the device-mode Device.
 func (d *Device) Sink(p *Packet) {
+	if !d.inHub {
+		return
+	}
+
 	d.Lock()
 	defer d.Unlock()
 
@@ -125,6 +199,7 @@ func (d *Device) Sink(p *Packet) {
 	}
 }
 
+// Broadcast message to all websocket connections on the Device.
 func (d *Device) Broadcast(msg []byte) {
 	var p = &Packet{
 		Msg: msg,
@@ -167,7 +242,7 @@ func (d *Device) receiveCmd(p *Packet) {
 			StartupTime: d.startupTime,
 		}
 		p.Msg, _ = json.Marshal(&resp)
-		d.Send(p)
+		d.Reply(p)
 	default:
 		d.m.Receive(p)
 	}
@@ -188,8 +263,19 @@ func (d *Device) receive(p *Packet) {
 	}
 }
 
+// Run the Device.  Run should not be called on a Device in Hub.  Run will
+// initialize the IModel, create a tunnel, start the http servers, and then run
+// the IModel.
+// 	authUser is the valid user for Basic Authentication.
+// 	hubHost is URL for the Hub host.  If blank, Device will not connect to Hub.
+//	hubUser is the Hub SSH user.
+// 	hubKey is the Hub SSH key.
 func (d *Device) Run(authUser, hubHost, hubUser, hubKey string) {
-	err := d.m.Init(d, false)
+	if d.inHub {
+		return
+	}
+
+	err := d.m.Init(d)
 	if err != nil {
 		return
 	}
@@ -200,6 +286,7 @@ func (d *Device) Run(authUser, hubHost, hubUser, hubKey string) {
 	d.m.Run()
 }
 
+// DefaultId returns a default ID based on the device's MAC address
 func DefaultId() string {
 
 	// Use the MAC address of the first non-lo interface
