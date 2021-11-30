@@ -174,8 +174,8 @@ func (d *Device) Reply(p *Packet) {
 	}
 }
 
-// Sink send Packet towards device-mode Device.  This should only be called
-// by Device in hub-mode to send Packet towards the device-mode Device.
+// Sink send Packet towards device-mode Device.  The Packet is dropped if
+// Device is in hub-mode.
 func (d *Device) Sink(p *Packet) {
 	if !d.inHub {
 		return
@@ -199,27 +199,37 @@ func (d *Device) Sink(p *Packet) {
 	}
 }
 
-// Broadcast message to all websocket connections on the Device.
-func (d *Device) Broadcast(msg []byte) {
-	var p = &Packet{
-		Msg: msg,
-	}
+// Broadcast packet to all websocket connections on the Device, except self.
+func (d *Device) Broadcast(p *Packet) {
+	src := p.conn
 
 	d.Lock()
 	defer d.Unlock()
 
-	if len(d.conns) == 0 {
-		log.Printf("Would broadcast: %.80s", msg)
+	switch len(d.conns) {
+	case 0:
+		log.Printf("Would broadcast: %.80s", p.Msg)
 		return
+	case 1:
+		if _, ok := d.conns[src]; ok {
+			log.Printf("Would broadcast: %.80s", p.Msg)
+			return
+		}
 	}
 
-	log.Printf("Device broadcast: %.80s", msg)
+	log.Printf("Device broadcast: %.80s", p.Msg)
 
 	// TODO Perf optimization: use websocket.NewPreparedMessage
 	// TODO to prepare msg once, and then sent on each connection
 
 	for c := range d.conns {
+		if c == src {
+			// skip self
+			log.Printf("Skipping broadcast: %.80s", p.Msg)
+			continue
+		}
 		p.conn = c
+		log.Printf("Sending broadcast: %.80s", p.Msg)
 		p.writeMessage()
 	}
 }
