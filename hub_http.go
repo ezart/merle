@@ -41,28 +41,29 @@ func (h *Hub) wsDevice(w http.ResponseWriter, r *http.Request, id string) {
 }
 
 func (h *Hub) wsHub(w http.ResponseWriter, r *http.Request) {
-	var p Packet
-	var err error
-
-	p.conn, err = upgrader.Upgrade(w, r, nil)
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Websocket upgrader error:", err)
 		return
 	}
 
-	h.connAdd(p.conn)
+	h.connAdd(conn)
 
 	for {
-		_, p.Msg, err = p.conn.ReadMessage()
+		var p = &Packet{
+			conn: conn,
+		}
+
+		_, p.Msg, err = conn.ReadMessage()
 		if err != nil {
 			log.Println("wsHub read message error:", err)
 			break
 		}
-		h.receivePacket(&p)
+		h.receivePacket(p)
 	}
 
-	h.connDelete(p.conn)
-	p.conn.Close()
+	h.connDelete(conn)
+	conn.Close()
 }
 
 func (h *Hub) ws(w http.ResponseWriter, r *http.Request) {
