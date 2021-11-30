@@ -13,28 +13,29 @@ import (
 var upgrader = websocket.Upgrader{}
 
 func (d *Device) ws(w http.ResponseWriter, r *http.Request) {
-	var p Packet
-	var err error
-
-	p.conn, err = upgrader.Upgrade(w, r, nil)
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Websocket upgrader error:", err)
 		return
 	}
 
-	d.connAdd(p.conn)
+	d.connAdd(conn)
 
 	for {
-		_, p.Msg, err = p.conn.ReadMessage()
+		var p = &Packet{
+			conn: conn,
+		}
+
+		_, p.Msg, err = conn.ReadMessage()
 		if err != nil {
 			log.Println("Websocket read message error:", err)
 			break
 		}
-		d.receive(&p)
+		d.receive(p)
 	}
 
-	d.connDelete(p.conn)
-	p.conn.Close()
+	d.connDelete(conn)
+	conn.Close()
 }
 
 func (d *Device) home(w http.ResponseWriter, r *http.Request) {
