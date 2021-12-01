@@ -151,16 +151,12 @@ func (d *Device) HomeParams(r *http.Request) *homeParams {
 func (d *Device) connAdd(c *websocket.Conn) {
 	d.Lock()
 	defer d.Unlock()
-	u := c.UnderlyingConn()
-	log.Printf("XXX connAdd local %s remote %s", u.LocalAddr(), u.RemoteAddr())
 	d.conns[c] = true
 }
 
 func (d *Device) connDelete(c *websocket.Conn) {
 	d.Lock()
 	defer d.Unlock()
-	u := c.UnderlyingConn()
-	log.Printf("XXX connDel local %s remote %s", u.LocalAddr(), u.RemoteAddr())
 	delete(d.conns, c)
 }
 
@@ -178,8 +174,9 @@ func (d *Device) Reply(p *Packet) {
 	}
 }
 
-// Sink send Packet towards device-mode Device.  The Packet is dropped if
-// Device is in hub-mode.
+// Sink sends Packet towards device-mode Device.  The Packet is not sunk if
+// Device is not in hub-mode.  The Packet is not sunk if it came thru the port
+// from the device-mode Device.
 func (d *Device) Sink(p *Packet) {
 	if !d.inHub {
 		return
@@ -198,20 +195,14 @@ func (d *Device) Sink(p *Packet) {
 		return
 	}
 
-	if p.conn == d.port.ws {
+	if src == d.port.ws {
 		log.Printf("Device Sink reject: message came in on port: %s", p.Msg)
 		return
 	}
 
-	u := p.conn.UnderlyingConn()
-	log.Printf("XXX Sink local %s remote %s", u.LocalAddr(), u.RemoteAddr())
-
 	log.Printf("Device Sink: %.80s", p.Msg)
 
 	p.conn = d.port.ws
-
-	u = p.conn.UnderlyingConn()
-	log.Printf("XXX Sink after local %s remote %s", u.LocalAddr(), u.RemoteAddr())
 
 	err := p.writeMessage()
 	if err != nil {
@@ -222,9 +213,6 @@ func (d *Device) Sink(p *Packet) {
 // Broadcast packet to all websocket connections on the Device, except self.
 func (d *Device) Broadcast(p *Packet) {
 	src := p.conn
-
-	u := p.conn.UnderlyingConn()
-	log.Printf("XXX Broadcast src local %s remote %s", u.LocalAddr(), u.RemoteAddr())
 
 	d.Lock()
 	defer func() {
@@ -255,8 +243,6 @@ func (d *Device) Broadcast(p *Packet) {
 			continue
 		}
 		p.conn = c
-		u := p.conn.UnderlyingConn()
-		log.Printf("XXX Broadcast local %s remote %s", u.LocalAddr(), u.RemoteAddr())
 		log.Printf("Sending broadcast: %.80s", p.Msg)
 		p.writeMessage()
 	}
