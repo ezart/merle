@@ -151,12 +151,16 @@ func (d *Device) HomeParams(r *http.Request) *homeParams {
 func (d *Device) connAdd(c *websocket.Conn) {
 	d.Lock()
 	defer d.Unlock()
+	u := c.UnderlyingConn()
+	log.Printf("XXX connAdd local %s remote %s", u.LocalAddr(), u.RemoteAddr())
 	d.conns[c] = true
 }
 
 func (d *Device) connDelete(c *websocket.Conn) {
 	d.Lock()
 	defer d.Unlock()
+	u := c.UnderlyingConn()
+	log.Printf("XXX connDel local %s remote %s", u.LocalAddr(), u.RemoteAddr())
 	delete(d.conns, c)
 }
 
@@ -181,17 +185,33 @@ func (d *Device) Sink(p *Packet) {
 		return
 	}
 
+	src := p.conn
+
 	d.Lock()
-	defer d.Unlock()
+	defer func() {
+		p.conn = src
+		d.Unlock()
+	}()
 
 	if d.port == nil {
 		log.Printf("Device Sink error: not running on port: %s", p.Msg)
 		return
 	}
 
+	if p.conn == d.port.ws {
+		log.Printf("Device Sink reject: message came in on port: %s", p.Msg)
+		return
+	}
+
+	u := p.conn.UnderlyingConn()
+	log.Printf("XXX Sink local %s remote %s", u.LocalAddr(), u.RemoteAddr())
+
 	log.Printf("Device Sink: %.80s", p.Msg)
 
 	p.conn = d.port.ws
+
+	u = p.conn.UnderlyingConn()
+	log.Printf("XXX Sink after local %s remote %s", u.LocalAddr(), u.RemoteAddr())
 
 	err := p.writeMessage()
 	if err != nil {
@@ -203,8 +223,14 @@ func (d *Device) Sink(p *Packet) {
 func (d *Device) Broadcast(p *Packet) {
 	src := p.conn
 
+	u := p.conn.UnderlyingConn()
+	log.Printf("XXX Broadcast src local %s remote %s", u.LocalAddr(), u.RemoteAddr())
+
 	d.Lock()
-	defer d.Unlock()
+	defer func() {
+		p.conn = src
+		d.Unlock()
+	}()
 
 	switch len(d.conns) {
 	case 0:
@@ -229,6 +255,8 @@ func (d *Device) Broadcast(p *Packet) {
 			continue
 		}
 		p.conn = c
+		u := p.conn.UnderlyingConn()
+		log.Printf("XXX Broadcast local %s remote %s", u.LocalAddr(), u.RemoteAddr())
 		log.Printf("Sending broadcast: %.80s", p.Msg)
 		p.writeMessage()
 	}
