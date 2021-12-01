@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"
+	"fmt"
 	"net"
 	"net/http"
 	"sync"
@@ -294,20 +295,22 @@ func (d *Device) receive(p *Packet) {
 // 	hubHost is URL for the Hub host.  If blank, Device will not connect to Hub.
 //	hubUser is the Hub SSH user.
 // 	hubKey is the Hub SSH key.
-func (d *Device) Run(authUser, hubHost, hubUser, hubKey string) {
+func (d *Device) Run(authUser, hubHost, hubUser, hubKey string) error {
 	if d.inHub {
-		return
+		return nil
 	}
 
 	err := d.m.Init(d)
 	if err != nil {
-		return
+		return err
 	}
 
 	go d.tunnelCreate(hubHost, hubUser, hubKey)
 	go d.http(authUser)
 
 	d.m.Run()
+
+	return fmt.Errorf("Device Run() exited unexpectedly")
 }
 
 // DefaultId returns a default ID based on the device's MAC address
