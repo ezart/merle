@@ -99,19 +99,19 @@ func (p *port) wsClose() {
 func (p *port) connect() (resp *MsgIdentifyResp, err error) {
 	err = p.wsOpen()
 	if err != nil {
-		log.Printf("Port[%d] run wsOpen error:", p.port, err)
+		log.Printf("Port[%d] run wsOpen error: %s", p.port, err)
 		return nil, err
 	}
 
 	err = p.wsIdentify()
 	if err != nil {
-		log.Printf("Port[%d] run wsIdentify error:", p.port, err)
+		log.Printf("Port[%d] run wsIdentify error: %s", p.port, err)
 		return nil, err
 	}
 
 	resp, err = p.wsIdentifyResp()
 	if err != nil {
-		log.Printf("Port[%d] run wsIdentifyResp error:", p.port, err)
+		log.Printf("Port[%d] run wsIdentifyResp error: %s", p.port, err)
 		return nil, err
 	}
 

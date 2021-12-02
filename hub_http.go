@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"golang.org/x/crypto/acme/autocert"
-	"html/template"
 	"log"
 	"net/http"
 	"time"
@@ -86,11 +85,9 @@ func (h *Hub) homeDevice(w http.ResponseWriter, r *http.Request, id string) {
 	d.m.HomePage(w, r)
 }
 
-var homeTempl = template.Must(template.ParseFiles("./web/templates/hub.html"))
-
 func (h *Hub) homeHub(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	homeTempl.Execute(w, r.Host)
+	h.templ.Execute(w, r.Host)
 }
 
 func (h *Hub) home(w http.ResponseWriter, r *http.Request) {

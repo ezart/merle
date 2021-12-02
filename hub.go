@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	_ "github.com/mattn/go-sqlite3"
+	"html/template"
 	"log"
 	"sync"
 	"time"
@@ -16,13 +17,15 @@ type Hub struct {
 	devices  map[string]*Device
 	conns    map[*websocket.Conn]bool
 	db       *sql.DB
+	templ	 *template.Template
 }
 
-func NewHub(modelGen func(model string) IModel) *Hub {
+func NewHub(modelGen func(model string) IModel, templ string) *Hub {
 	return &Hub{
 		modelGen: modelGen,
 		devices:  make(map[string]*Device),
 		conns:    make(map[*websocket.Conn]bool),
+		templ:    template.Must(template.ParseFiles(templ)),
 	}
 }
 
