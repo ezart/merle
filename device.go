@@ -1,3 +1,7 @@
+// Copyright 2021 Scott Feldman (sfeldma@gmail.com). All rights reserved.
+// Use of this source code is governed by a GPLv3 license that can be found in
+// the LICENSE file.
+
 package merle
 
 import (
@@ -235,7 +239,7 @@ func (d *Device) Broadcast(p *Packet) {
 	log.Printf("Device broadcast: %.80s", p.Msg)
 
 	// TODO Perf optimization: use websocket.NewPreparedMessage
-	// TODO to prepare msg once, and then sent on each connection
+	// TODO to prepare msg once, and then send on each connection
 
 	for c := range d.conns {
 		if c == src {

@@ -1,3 +1,7 @@
+// Copyright 2021 Scott Feldman (sfeldma@gmail.com). All rights reserved.
+// Use of this source code is governed by a GPLv3 license that can be found in
+// the LICENSE file.
+
 package merle
 
 import (
@@ -69,7 +73,7 @@ func (h *Hub) broadcast(msg []byte) {
 	log.Printf("Hub broadcast: %s", msg)
 
 	// TODO Perf optimization: use websocket.NewPreparedMessage
-	// TODO to prepare msg once, and then sent on each socket
+	// TODO to prepare msg once, and then send on each socket
 
 	for c := range h.conns {
 		p.conn = c
