@@ -93,6 +93,9 @@ func NewDevice(m IModel, inHub bool, id, model, name, status string,
 	if id == "" {
 		id = DefaultId()
 	}
+	if model == "" || name == "" || status == "" {
+		return nil
+	}
 
 	return &Device{
 		m:           m,

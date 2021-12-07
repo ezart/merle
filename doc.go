@@ -6,6 +6,14 @@
 Merle is a "shortest stack" IoT framework.  The stack spans hardware access at
 the bottom to html/javascript presentation at the top.
 
+Status
+
+	Pre-alpha quatility of code here...
+
+Installation
+
+	go get github.com/scottfeldman/merle
+
 Overview
 
 A device in Merle is the "Thing" in IoT.  A device is modeled with an IModel
@@ -38,7 +46,7 @@ and 3) optionally, create an SSH tunnel to a hub.
 
 The hub is an aggregator of devices.  Zero of more devices connect to the hub
 over SSH tunnels, one SSH tunnel per device.  The hub runs it's own web server
-and serves up the devices' home pages.
+and serves up the devices' home pages.  A hub can also aggregate other hubs.
 
 */
 package merle

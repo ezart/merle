@@ -112,6 +112,11 @@ func (d *Device) http(authUser string) {
 		log.Fatalln("Private HTTP server failed:", err)
 	}()
 
+	if authUser == "" {
+		log.Printf("Missing authUser; skipping HTTP on :80 for public")
+		return
+	}
+
 	fs := http.FileServer(http.Dir("web"))
 
 	publicMux := http.NewServeMux()
