@@ -30,7 +30,6 @@ type port struct {
 	tunnelTryingUntil time.Time
 	tunnelConnected   bool
 	ws                *websocket.Conn
-	input             chan []byte
 }
 
 var ports []port

@@ -1,6 +1,8 @@
 package merle
 
 import (
+	"fmt"
+	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
@@ -8,15 +10,26 @@ import (
 	"time"
 )
 
+const testId = "HS30-01132"  // sorry if that's your car
+const testModel = "240z"
+const testName = "Fairlady"
+
 func newDevice(m IModel) *Device {
 	var inHub = false
-	var id = "HS30-01132"  // sorry if that's your car
-	var model = "240z"
-	var name = "Fairlady"
 	var status = "online"
 	var startupTime = time.Now()
 
-	return NewDevice(m, inHub, id, model, name, status, startupTime)
+	return NewDevice(m, inHub, testId, testModel,
+		testName, status, startupTime)
+}
+
+func checkIdentifyResp(r *MsgIdentifyResp) error {
+	if r.Id != testId ||
+	   r.Model != testModel ||
+	   r.Name != testName {
+		return fmt.Errorf("Identify not matching")
+	}
+	return nil
 }
 
 type minimal struct {
@@ -116,8 +129,8 @@ func (s *simple) Init(d *Device) error {
 func (s *simple) Run() {
 	for {
 		select {
-		case <-s.done
-			break
+		case <-s.done:
+			return
 		}
 	}
 }
@@ -126,62 +139,46 @@ func (s *simple) Receive(p *Packet) {
 	var msg MsgCmd
 	json.Unmarshal(p.Msg, &msg)
 	switch msg.Cmd {
-	case "done"
+	case "Done":
 		s.done <- true
 	}
 }
 
-```
-<!DOCTYPE html>
-<html lang="en">
-
-	<head>
-		<meta name="viewport"
-		      content="width=device-width, initial-scale=1">
-
-		<title>{{.Name}}</title>
-
-		<link rel="stylesheet" type="text/css"
-		      href="/web/css/{{.Model}}.css">
-
-	</head>
-
-	<body>
-
-		<div class="columns">
-			<div class="labels-hidden" id="lables">
-				<pre>Id:</pre>
-				<pre>Model:</pre>
-				<pre>Name:</pre>
-			</div>
-			<div class="data">
-				<pre id="id"></pre>
-				<pre id="model"></pre>
-				<pre id="name"></pre>
-			</div>
-		</div>
-
-		<div class="rows">
-			<div>
-				<img id="image" src="./web/images/{{.Model}}/{{.Id}}.jpg"
-					style="visibility: hidden;">
-			</div>
-			<div>
-				<input type="range" id="position" min="0" max="50"
-					style="visibility: hidden;" onchange="change()">
-			</div>
-		</div>
-
-		<script src="/web/js/{{.Model}}.js"></script>
-
-	<script>Run({{.Scheme}}, {{.Host}}, {{.Id}})</script>
-
-	</body>
-
-</html>
-```
-
 func (s *simple) HomePage(w http.ResponseWriter, r *http.Request) {
+}
+
+func runWs(t *testing.T) {
+	var p = &port{port: 8080}
+
+	// sleep a second for http server to start
+	time.Sleep(time.Second)
+
+	err := p.wsOpen()
+	if err != nil {
+		t.Errorf("ws open failed: %s", err)
+	}
+
+	err = p.wsIdentify()
+	if err != nil {
+		t.Errorf("ws identify failed: %s", err)
+	}
+
+	resp, err := p.wsIdentifyResp()
+	if err != nil {
+		t.Errorf("ws identify response failed: %s", err)
+	}
+
+	err = checkIdentifyResp(resp)
+	if err != nil {
+		t.Errorf("Unexpected identify response: %s", err)
+	}
+
+	var msg = MsgCmd{Type: "cmd", Cmd: "Done"}
+
+	err = p.writeJSON(msg)
+	if err != nil {
+		t.Errorf("ws writeJSON failed: %s", err)
+	}
 }
 
 func TestSimple(t *testing.T) {
@@ -191,6 +188,8 @@ func TestSimple(t *testing.T) {
 	if d == nil {
 		t.Errorf("Create new device failed")
 	}
+
+	go runWs(t)
 
 	err := d.Run("", "", "", "")
 	if err.Error() != "Device Run() exited unexpectedly" {
