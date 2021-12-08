@@ -77,6 +77,9 @@ type Device struct {
 	conns       map[*websocket.Conn]bool
 	port        *port
 	inHub       bool
+	privateServer *http.Server
+	publicServer *http.Server
+	wg sync.WaitGroup
 }
 
 // NewDevice returns a new Device.
@@ -313,9 +316,10 @@ func (d *Device) Run(authUser, hubHost, hubUser, hubKey string) error {
 	}
 
 	go d.tunnelCreate(hubHost, hubUser, hubKey)
-	go d.http(authUser)
 
+	d.httpStart(authUser)
 	d.m.Run()
+	d.httpStop()
 
 	return fmt.Errorf("Device Run() exited unexpectedly")
 }

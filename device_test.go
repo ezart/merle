@@ -3,10 +3,8 @@ package merle
 import (
 	"fmt"
 	"encoding/json"
-	"io"
 	"net/http"
 	"testing"
-	"strings"
 	"time"
 )
 
@@ -87,33 +85,6 @@ func TestMinimalRun(t *testing.T) {
 	err := d.Run("", "", "", "")
 	if err.Error() != "Device Run() exited unexpectedly" {
 		t.Errorf("Run failed: %s", err)
-	}
-
-	// sleep a second for http server to start
-	time.Sleep(time.Second)
-
-	// Since authUser="" was passed into d.Run(), only expecting
-	// http server to be running on localhost:8080.  localhost:80
-	// should not be listening.  404 should be returned for
-	// localhost:8080 since no HomePage.
-
-	resp, err := http.Get("http://localhost:8080")
-	if err != nil {
-		t.Errorf("Get failed: %s", err)
-	}
-	body, err := io.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		t.Errorf("Get localhost:8080 failed: %s", err)
-	}
-	if strings.TrimSpace(string(body)) != "404 page not found" {
-		t.Errorf("Get localhost:8080 expected '404 page not found', got: %s foo", body)
-	}
-
-	resp, err = http.Get("http://localhost:80")
-	if err == nil {
-		resp.Body.Close()
-		t.Errorf("Get localhost:80 didn't fail")
 	}
 }
 

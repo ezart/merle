@@ -5,6 +5,7 @@
 package merle
 
 import (
+	"context"
 	"crypto/sha256"
 	"crypto/subtle"
 	"errors"
@@ -12,6 +13,7 @@ import (
 	"github.com/msteinert/pam"
 	"log"
 	"net/http"
+	"time"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -102,14 +104,51 @@ func basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (d *Device) http(authUser string) {
+func (d *Device) shutdown() {
+	d.Lock()
+	for c := range d.conns {
+		c.WriteControl(websocket.CloseMessage, nil, time.Now())
+	}
+	d.Unlock()
+	d.wg.Done()
+}
+
+func (d *Device) httpStop() {
+	d.privateServer.Shutdown(context.Background())
+	d.publicServer.Shutdown(context.Background())
+	d.wg.Wait()
+}
+
+func (d *Device) httpStart(authUser string) {
+	fs := http.FileServer(http.Dir("web"))
+
 	privateMux := http.NewServeMux()
 	privateMux.HandleFunc("/ws", d.ws)
 
+	publicMux := http.NewServeMux()
+	publicMux.HandleFunc("/ws", basicAuth(authUser, d.ws))
+	publicMux.HandleFunc("/", basicAuth(authUser, d.home))
+	publicMux.Handle("/web/", http.StripPrefix("/web", fs))
+
+	d.privateServer = &http.Server {
+		Addr: ":8080",
+		Handler: privateMux,
+	}
+
+	d.publicServer = &http.Server {
+		Addr: ":80",
+		Handler: publicMux,
+	}
+
+	d.wg.Add(2)
+	d.privateServer.RegisterOnShutdown(d.shutdown)
+
 	go func() {
 		log.Printf("Listening HTTP on :8080 for private")
-		err := http.ListenAndServe(":8080", privateMux)
-		log.Fatalln("Private HTTP server failed:", err)
+		if err := d.privateServer.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalln("Private HTTP server failed:", err)
+		}
+		d.wg.Done()
 	}()
 
 	if authUser == "" {
@@ -117,14 +156,14 @@ func (d *Device) http(authUser string) {
 		return
 	}
 
-	fs := http.FileServer(http.Dir("web"))
+	d.wg.Add(2)
+	d.publicServer.RegisterOnShutdown(d.shutdown)
 
-	publicMux := http.NewServeMux()
-	publicMux.HandleFunc("/ws", basicAuth(authUser, d.ws))
-	publicMux.HandleFunc("/", basicAuth(authUser, d.home))
-	publicMux.Handle("/web/", http.StripPrefix("/web", fs))
-
-	log.Printf("Listening HTTP on :80 for public")
-	err := http.ListenAndServe(":80", publicMux)
-	log.Fatalln("Public HTTP server failed:", err)
+	go func() {
+		log.Printf("Listening HTTP on :80 for public")
+		if err := d.publicServer.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalln("Public HTTP server failed:", err)
+		}
+		d.wg.Done()
+	}()
 }
