@@ -21,7 +21,7 @@ type Hub struct {
 	devices  map[string]*Device
 	conns    map[*websocket.Conn]bool
 	db       *sql.DB
-	templ	 *template.Template
+	templ    *template.Template
 }
 
 func NewHub(modelGen func(model string) IModel, templ string) *Hub {

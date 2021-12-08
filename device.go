@@ -6,9 +6,9 @@ package merle
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
-	"fmt"
 	"net"
 	"net/http"
 	"sync"
@@ -65,21 +65,21 @@ type IModel interface {
 // In hub-mode, the Device runs the IModel inside a Hub.  The Hub will
 // websocket connect back to the device-mode Device, also running the same
 // IModel.  See type Hub for more information.
-// 
+//
 type Device struct {
 	sync.Mutex
-	m           IModel
-	status      string
-	id          string
-	model       string
-	name        string
-	startupTime time.Time
-	conns       map[*websocket.Conn]bool
-	port        *port
-	inHub       bool
+	m             IModel
+	status        string
+	id            string
+	model         string
+	name          string
+	startupTime   time.Time
+	conns         map[*websocket.Conn]bool
+	port          *port
+	inHub         bool
 	privateServer *http.Server
-	publicServer *http.Server
-	wg sync.WaitGroup
+	publicServer  *http.Server
+	wg            sync.WaitGroup
 }
 
 // NewDevice returns a new Device.

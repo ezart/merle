@@ -1,14 +1,14 @@
 package merle
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
 )
 
-const testId = "HS30-01132"  // sorry if that's your car
+const testId = "HS30-01132" // sorry if that's your car
 const testModel = "240z"
 const testName = "Fairlady"
 
@@ -23,8 +23,8 @@ func newDevice(m IModel) *Device {
 
 func checkIdentifyResp(r *MsgIdentifyResp) error {
 	if r.Id != testId ||
-	   r.Model != testModel ||
-	   r.Name != testName {
+		r.Model != testModel ||
+		r.Name != testName {
 		return fmt.Errorf("Identify not matching")
 	}
 	return nil
@@ -89,11 +89,11 @@ func TestMinimalRun(t *testing.T) {
 }
 
 type simple struct {
-	done chan(bool)
+	done chan (bool)
 }
 
 func (s *simple) Init(d *Device) error {
-	s.done = make(chan(bool))
+	s.done = make(chan (bool))
 	return nil
 }
 

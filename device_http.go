@@ -130,13 +130,13 @@ func (d *Device) httpStart(authUser string) {
 	publicMux.HandleFunc("/", basicAuth(authUser, d.home))
 	publicMux.Handle("/web/", http.StripPrefix("/web", fs))
 
-	d.privateServer = &http.Server {
-		Addr: ":8080",
+	d.privateServer = &http.Server{
+		Addr:    ":8080",
 		Handler: privateMux,
 	}
 
-	d.publicServer = &http.Server {
-		Addr: ":80",
+	d.publicServer = &http.Server{
+		Addr:    ":80",
 		Handler: publicMux,
 	}
 
