@@ -3,16 +3,21 @@
 Merle is a "shortest stack" IoT framework.  The stack spans hardware access at
 the bottom to html/javascript presentation at the top.
 
-Status
+## Status
 
-```go
 Pre-alpha quatility of code here...
-```
 
-Installation
+## Installation
+
+Install merle:
 
 ```go
 go get github.com/scottfeldman/merle
+```
+
+Install merle devices:
+
+```go
 go get github.com/scottfeldman/merle_devices
 ```
 
