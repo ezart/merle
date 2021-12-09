@@ -85,7 +85,7 @@ a websocket back to the device.
 The device's http server serves the websocket interface on a public port and a
 private port.  Regardless of the port, the websocket address is:
 
-ws://<host>:<port>/ws
+	ws://<host>:<port>/ws
 
 Public port access is gated by http Basic Authentication.  More about this in
 the security section.
