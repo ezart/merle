@@ -1,6 +1,6 @@
 // Copyright 2021 Scott Feldman (sfeldma@gmail.com). All rights reserved.
-// Use of this source code is governed by a GPLv3 license that can be found in
-// the LICENSE file.
+// Use of this source code is governed by a BSD-style license that can be found
+// in the LICENSE file.
 
 /*
 Merle is a "shortest stack" IoT framework.  The stack spans hardware access at
@@ -13,6 +13,7 @@ Status
 Installation
 
 	go get github.com/scottfeldman/merle
+	go get github.com/scottfeldman/merle_devices
 
 Overview
 
