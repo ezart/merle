@@ -4,21 +4,27 @@
 
 /*
 Merle is a "shortest stack" IoT framework.  The stack spans hardware access at
-the bottom to html/javascript presentation at the top.
+the bottom to html presentation at the top.
 
 Status
 
-Pre-alpha quatility of code here...
+Alpha quatility of code here...
 
 Installation
 
-Install merle:
+Merle is two packages: core and devices.  Install the core package from here:
 
 	go get github.com/scottfeldman/merle
 
-Install merle devices:
+The devices package contains a library of devices.  Install merle devices
+package from here:
 
 	go get github.com/scottfeldman/merle_devices
+
+Quickstart
+
+See Quickstart in github.com/scottfeldman/merle_devices for building sample
+devices for common IoT device hardware configurations.
 
 Overview
 
@@ -35,14 +41,14 @@ interface.
 An implementation of IModel is the "device driver" for the device.  Init()
 initializes the device hardware and structures.  Run() runs the main loop for
 the device.  The device stops when Run() exits.  Receive() handles incoming
-Packets, where a Packet is a container for a []byte message payload.  The
-IModel implemenation defines the contents of the messages and their symantics.
+Packets, where a Packet is a container for a []byte message.  The IModel
+implemenation defines the contents of the messages and their symantics.
 HomePage() is the device's html home page.
 
 Use merle.NewDevice to create a new device from an IModel.
 
 	model := ... // an IModel
-	device := merle.NewDevice(model, ...)
+	device := NewDevice(model, ...)
 
 Use Device.Run to start running the device.  Device.Run will 1) init and run
 the IModel; 2) start an optional web server to serve up the device's home page;
@@ -53,6 +59,21 @@ and 3) optionally, create an SSH tunnel to a hub.
 The hub is an aggregator of devices.  Zero of more devices connect to the hub
 over SSH tunnels, one SSH tunnel per device.  The hub runs it's own web server
 and serves up the devices' home pages.  A hub can also aggregate other hubs.
+To create a new hub, use merle.NewHub:
+
+	hub := NewHub(...)
+
+And to run hub, use:
+
+	hub.Run()
+
+Messaging
+
+blah, blah, blah
+
+Security
+
+blah, blah, blah
 
 */
 package merle
