@@ -301,11 +301,16 @@ func (d *Device) receive(p *Packet) {
 // Run the Device.  Run should not be called on a Device in Hub.  Run will
 // initialize the IModel, create a tunnel, start the http servers, and then run
 // the IModel.
-// 	authUser is the valid user for Basic Authentication.
+//
+// 	authUser is the valid user for Basic Authentication of the public http
+// 	server.
 // 	hubHost is URL for the Hub host.  If blank, Device will not connect to Hub.
 //	hubUser is the Hub SSH user.
 // 	hubKey is the Hub SSH key.
-func (d *Device) Run(authUser, hubHost, hubUser, hubKey string) error {
+//	publicPort is the public http server listening port
+//	privatePort is the private http server listening port
+func (d *Device) Run(authUser, hubHost, hubUser, hubKey string,
+	publicPort, privatePort int) error {
 	if d.inHub {
 		return nil
 	}
@@ -317,7 +322,7 @@ func (d *Device) Run(authUser, hubHost, hubUser, hubKey string) error {
 
 	go d.tunnelCreate(hubHost, hubUser, hubKey)
 
-	d.httpStart(authUser)
+	d.httpStart(authUser, publicPort, privatePort)
 	d.m.Run()
 	d.httpStop()
 

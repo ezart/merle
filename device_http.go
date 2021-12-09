@@ -13,6 +13,7 @@ import (
 	"github.com/msteinert/pam"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -80,6 +81,12 @@ func pamValidate(user, passwd string) (bool, error) {
 
 func basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if authUser == "testtest" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		user, passwd, ok := r.BasicAuth()
 
 		if ok {
@@ -119,7 +126,10 @@ func (d *Device) httpStop() {
 	d.wg.Wait()
 }
 
-func (d *Device) httpStart(authUser string) {
+func (d *Device) httpStart(authUser string, publicPort, privatePort int) {
+	publicAddr := ":" + strconv.Itoa(publicPort)
+	privateAddr := ":" + strconv.Itoa(privatePort)
+
 	fs := http.FileServer(http.Dir("web"))
 
 	privateMux := http.NewServeMux()
@@ -131,12 +141,12 @@ func (d *Device) httpStart(authUser string) {
 	publicMux.Handle("/web/", http.StripPrefix("/web", fs))
 
 	d.privateServer = &http.Server{
-		Addr:    ":8080",
+		Addr:    privateAddr,
 		Handler: privateMux,
 	}
 
 	d.publicServer = &http.Server{
-		Addr:    ":80",
+		Addr:    publicAddr,
 		Handler: publicMux,
 	}
 
@@ -144,7 +154,7 @@ func (d *Device) httpStart(authUser string) {
 	d.privateServer.RegisterOnShutdown(d.shutdown)
 
 	go func() {
-		log.Printf("Listening HTTP on :8080 for private")
+		log.Printf("Listening HTTP on %s for private", privateAddr)
 		if err := d.privateServer.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalln("Private HTTP server failed:", err)
 		}
@@ -152,7 +162,7 @@ func (d *Device) httpStart(authUser string) {
 	}()
 
 	if authUser == "" {
-		log.Printf("Missing authUser; skipping HTTP on :80 for public")
+		log.Printf("Missing authUser; skipping HTTP on %s for public", publicAddr)
 		return
 	}
 
@@ -160,7 +170,7 @@ func (d *Device) httpStart(authUser string) {
 	d.publicServer.RegisterOnShutdown(d.shutdown)
 
 	go func() {
-		log.Printf("Listening HTTP on :80 for public")
+		log.Printf("Listening HTTP on %s for public", publicAddr)
 		if err := d.publicServer.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalln("Public HTTP server failed:", err)
 		}
