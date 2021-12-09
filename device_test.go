@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"testing"
-	"time"
 	"strconv"
 	"strings"
+	"testing"
+	"time"
 )
 
 const testId = "HS30-01132" // sorry if that's your car
@@ -77,7 +77,7 @@ func TestMinimalRun(t *testing.T) {
 		t.Errorf("Create new device failed")
 	}
 
-	err := d.Run("", "", "", "", 80, 8080)
+	err := d.Run("", 80, 8080, "", "", "")
 	if err.Error() != "Device Run() exited unexpectedly" {
 		t.Errorf("Run failed: %s", err)
 	}
@@ -201,17 +201,17 @@ func testSimple(t *testing.T, publicPort, privatePort int) {
 
 func TestSimple(t *testing.T) {
 	var s simple
-	var publicPort = 8081
-	var privatePort = 8080
+	var portPublic = 8081
+	var portPrivate = 8080
 
 	d := newDevice(&s)
 	if d == nil {
 		t.Errorf("Create new device failed")
 	}
 
-	go testSimple(t, publicPort, privatePort)
+	go testSimple(t, portPublic, portPrivate)
 
-	err := d.Run("testtest", "", "", "", publicPort, privatePort)
+	err := d.Run("testtest", portPublic, portPrivate, "", "", "")
 	if err.Error() != "Device Run() exited unexpectedly" {
 		t.Errorf("Run failed: %s", err)
 	}

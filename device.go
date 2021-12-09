@@ -304,13 +304,13 @@ func (d *Device) receive(p *Packet) {
 //
 // 	authUser is the valid user for Basic Authentication of the public http
 // 	server.
+//	portPublic is the public http server listening port
+//	portPrivate is the private http server listening port
 // 	hubHost is URL for the Hub host.  If blank, Device will not connect to Hub.
 //	hubUser is the Hub SSH user.
 // 	hubKey is the Hub SSH key.
-//	publicPort is the public http server listening port
-//	privatePort is the private http server listening port
-func (d *Device) Run(authUser, hubHost, hubUser, hubKey string,
-	publicPort, privatePort int) error {
+func (d *Device) Run(authUser string, portPublic, portPrivate int,
+	hubHost, hubUser, hubKey string) error {
 	if d.inHub {
 		return nil
 	}
@@ -322,7 +322,7 @@ func (d *Device) Run(authUser, hubHost, hubUser, hubKey string,
 
 	go d.tunnelCreate(hubHost, hubUser, hubKey)
 
-	d.httpStart(authUser, publicPort, privatePort)
+	d.httpStart(authUser, portPublic, portPrivate)
 	d.m.Run()
 	d.httpStop()
 
