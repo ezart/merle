@@ -16,6 +16,7 @@ const (
 
 type MsgType struct {
 	Type string
+	// payload
 }
 
 type MsgCmd struct {

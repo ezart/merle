@@ -4,7 +4,9 @@
 
 /*
 Merle is a "shortest stack" IoT framework.  The stack spans hardware access at
-the bottom to html presentation at the top.
+the bottom to html presentation at the top.  Merle uses websockets for
+messaging.
+
 
 Status
 
@@ -50,14 +52,17 @@ Use merle.NewDevice to create a new device from an IModel.
 	model := ... // an IModel
 	device := NewDevice(model, ...)
 
-Use Device.Run to start running the device.  Device.Run will 1) init and run
-the IModel; 2) start an optional web server to serve up the device's home page;
-and 3) optionally, create an SSH tunnel to a hub.
+Use Device.Run to start running the device.  Device.Run will
+
+1) Init() and Run() the IModel.
+2) Start an optional http server to serve up the device's home page and a
+websocket interface to the device.
+3) Optionally, create an SSH tunnel to a hub.
 
 	device.Run(...)
 
 The hub is an aggregator of devices.  Zero of more devices connect to the hub
-over SSH tunnels, one SSH tunnel per device.  The hub runs it's own web server
+over SSH tunnels, one SSH tunnel per device.  The hub runs it's own http server
 and serves up the devices' home pages.  A hub can also aggregate other hubs.
 To create a new hub, use merle.NewHub:
 
@@ -69,7 +74,48 @@ And to run hub, use:
 
 Messaging
 
-blah, blah, blah
+Merle uses websockets for messaging.  The device's http server serves up a
+websocket interface.  A client opens a websocket connection to the device.  The
+websocket connection persists until the client disconnects and allows
+bi-directional messaging from/to the device and to/from the client.  Since
+websocket is built on TCP, the connection is reliable.  A client could be a
+hub, or a client could be the device's own home page, using Javascript to open
+a websocket back to the device.
+
+The device's http server serves the websocket interface on a public port and a
+private port.  Regardless of the port, the websocket address is:
+
+	ws://<host>:<port>/ws
+
+Public port access is gated by http Basic Authentication.  More about this in
+the security section.
+
+Merle defines a few constraints on the message format, but otherwise the
+message content is defined by the device's IModel.  Although websockets
+supports both binary and text messages, merle uses text message with a JSON
+enconding.  A JSON message in merle uses the base structure MsgType:
+
+	type MsgType struct {
+		Type string
+		// payload
+	}
+
+Where Type is one of:
+
+	const (
+		MsgTypeCmd     = "cmd"
+		MsgTypeCmdResp = "resp"
+		MsgTypeSpam    = "spam"
+	)
+
+A device can make new message structures building on MsgType:
+
+	type msgMyMsg struct {
+		Type  string
+		Cmd   string
+		Stamp time.Time
+		Value int
+	}
 
 Security
 
