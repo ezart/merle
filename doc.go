@@ -18,7 +18,7 @@ Merle is two packages: core and devices.  Install the core package from here:
 
 	go get github.com/scottfeldman/merle
 
-The devices package contains a library of devices.  Install merle devices
+The devices package contains a library of devices.  Install the merle devices
 package from here:
 
 	go get github.com/scottfeldman/merle_devices
@@ -68,7 +68,7 @@ To create a new hub, use merle.NewHub:
 
 	hub := NewHub(...)
 
-And to run hub, use:
+And to run the hub, use:
 
 	hub.Run()
 
@@ -85,7 +85,7 @@ a websocket back to the device.
 The device's http server serves the websocket interface on a public port and a
 private port.  Regardless of the port, the websocket address is:
 
-	ws://<host>:<port>/ws
+ws://<host>:<port>/ws
 
 Public port access is gated by http Basic Authentication.  More about this in
 the security section.
@@ -110,12 +110,32 @@ Where Type is one of:
 
 A device can make new message structures building on MsgType:
 
-	type msgMyMsg struct {
+	type msgMyCmd struct {
 		Type  string
 		Cmd   string
-		Stamp time.Time
 		Value int
 	}
+
+The device receives messages on IModel:Receive(p *Packet).  The message is
+contained in p.Msg.  The device will JSON Unmarshal the p.Msg message, process
+the message, and optionally send a reply.  For example, using the msgMyCmd
+structure, handle getting or setting a device value:
+
+	func (m *MyModel) Receive(p *Packet) {
+		var msg msgMyCmd
+		json.Unmarshal(p.Msg, &msg)
+		switch msg.Cmd {
+		case "Put":
+			// save msg.Value to device
+		case "Get":
+			msg.Value = // get from device
+			p.Msg, _ = json.Marshal(&msg)
+			m.device.Reply(p)
+		}
+	}
+
+The device can broadcast a message using device.Broadcast(&p).  This will
+broadcast the message to all of the websocket clients.
 
 Security
 
