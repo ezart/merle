@@ -8,11 +8,16 @@ the bottom to html/javascript presentation at the top.
 
 Status
 
-	Pre-alpha quatility of code here...
+Pre-alpha quatility of code here...
 
 Installation
 
+Install merle:
+
 	go get github.com/scottfeldman/merle
+
+Install merle devices:
+
 	go get github.com/scottfeldman/merle_devices
 
 Overview
