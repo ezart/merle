@@ -78,7 +78,7 @@ Merle uses websockets for messaging.  The device's http server serves up a
 websocket interface.  A client opens a websocket connection to the device to
 communicate with the device.  The websocket connection persists until the
 client disconnects and allows bi-directional messaging from/to the device and
-to/from the client.  Since websocket is built on TCP, the connection is
+to/from the client.  Since websockets is built on TCP, the connection is
 reliable.  A client could be a hub, or a client could be the device's own home
 page, using Javascript to open a websocket back to the device.
 
