@@ -1,6 +1,6 @@
 # Merle
 
-[![Go Reference](https://pkg.go.dev/badge/pkg.dev.go/github.com/scottfeldman/merle.svg)](https://pkg.go.dev/pkg.dev.go/github.com/scottfeldman/merle)
+[![Go Reference](https://pkg.go.dev/badge/pkg.dev.go/github.com/scottfeldman/merle.svg)](https://pkg.dev.go/github.com/scottfeldman/merle)
 
 Merle is a "shortest stack" IoT framework.  The stack spans hardware access at
 the bottom to html presentation at the top.  Merle uses websockets for
