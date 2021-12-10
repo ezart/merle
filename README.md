@@ -10,7 +10,7 @@ uses websockets for all messaging between the device and the framework.
 Websocket messaging between the device and hub is through a SSH tunnel.
 
 Merle has a companion project called merle_devices.  Merle_devices is a libary
-of device drivers for common IoT devices.
+of device drivers for common IoT hardware configurations.
 
 	https://github.com/scottfeldman/merle_devices
 
