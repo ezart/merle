@@ -15,17 +15,17 @@ Alpha quatility of code here...
 
 ## Installation
 
-Merle comprises two packages: core and devices.  Install the core package from here:
+Merle comprises two packages: core and devices.  Install the core package:
 
 ```go
-go get github.com/scottfeldman/merle
+git clone https://github.com/scottfeldman/merle
 ```
 
 The devices package contains a library of devices.  Install the merle devices
-package from here:
+package:
 
 ```go
-go get github.com/scottfeldman/merle_devices
+git clone https://github.com/scottfeldman/merle_devices
 ```
 
 ## Quickstart
