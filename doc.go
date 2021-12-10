@@ -172,46 +172,98 @@ let's start with
 
 1) javascript websocket connection to real device
 
-	Javascript (model60.js)		Real Device (model60.go)
+	Javascript (model60.js)             Real Device (model60.go)
 	===============================================================
 
 	START:
 	--------
 
-	cmd:Identify   ------------>
-	                                get identity
-	               <------------    resp:Identify
+	cmd:Identify     ------------>
+	                                    get identity
+	                 <------------      resp:Identify
 	save identity
-	cmd:Location   ------------>
-	                                get location from store
-	               <------------    resp:Location
+	cmd:Location     ------------>
+	                                    get location from store
+	                 <------------      resp:Location
 	save location
-	cmd:Temps      ------------>
-	                                get temps from store
-	               <------------    resp:Temps
+	cmd:Temps        ------------>
+	                                    get temps from store
+	                 <------------      resp:Temps
 	save temps
 
 
 	RUNNING:
 	--------
 
-	                                new temp/humidity from device
-	                                save temp/humidity to store
-	               <------------    spam:Temp (Broadcast)
+	                                    new temp/humidity from device
+	                                    save temp/humidity to store
+	                 <------------      spam:Temp (Broadcast)
 	update temps
 
-	                                new location from device
-	                                save location to store
-	               <------------    spam:Temp (Broadcast)
+	                                    new location from device
+	                                    save location to store
+	                 <------------      spam:Temp (Broadcast)
 	update location
 
-	presses restart button
-	cmd:Restart    ------------>
-	                                restart device
+	restart button
+	cmd:Restart      ------------>
+	                                    restart device
 
 The spam broadcasts broadcast to all the connected clients.  For example,
 multiple web clients viewing the device's home page would open a websocket
 connection back to the device for each client.
+
+2) javascript websocket connection to hub device
+
+	Javascript (model60.js)             Hub Device (model60.go)
+	===============================================================
+
+	// Everything same as 1) above except for cmd:Restart handling
+
+	restart button
+	cmd:Restart      ------------>
+	                                    cmd:Restart (Sink)
+
+Sink will send the message down to the real device, and the real device will
+restart.
+
+3) hub device to real device
+
+	Hub Device (model60.go)             Real Device (model60.go)
+	===============================================================
+
+	START:
+	--------
+	                     (Hub)
+	                   cmd:Start
+	                       |
+	                       |
+	                 <-----+
+	cmd:Location     ------------>
+	                                    get location from store
+	                 <------------      resp:Location
+	save location
+	cmd:Temps        ------------>
+	                                    get temps from store
+	                 <------------      resp:Temps
+	save temps
+
+
+	RUNNING:
+	--------
+
+	                                    new temp/humidity from device
+	                                    save temp/humidity to store
+	                 <------------      spam:Temp (Broadcast)
+	update temps
+
+	                                    new location from device
+	                                    save location to store
+	                 <------------      spam:Temp (Broadcast)
+	update location
+
+4) hub device to hub device
+
 
 Security
 
