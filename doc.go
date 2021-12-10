@@ -3,8 +3,6 @@
 // in the LICENSE file.
 
 /*
-Overview
-
 A device in Merle is the "Thing" in IoT.  A device is modeled with an IModel
 interface.
 
