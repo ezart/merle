@@ -219,13 +219,23 @@ connection back to the device for each client.
 	===============================================================
 
 	// Everything same as 1) above except for cmd:Restart handling
+	// and a new command from the hub to update the device's status
+	// (online or offline)
 
 	restart button
 	cmd:Restart      ------------>
 	                                    cmd:Restart (Sink)
 
+	                     (Hub)
+	              cmd:Status (Broadcast)
+	                       |
+	                       |
+	                 <-----+
+	update status
+
 Sink will send the message down to the real device, and the real device will
-restart.
+restart.  cmd:Status is sent from the hub when the hub device goes online or
+offline.  The Javascript client can update page elements base on status change.
 
 3) hub device to real device
 
@@ -262,8 +272,72 @@ restart.
 	                 <------------      spam:Temp (Broadcast)
 	update location
 
+Here the cmd:Start comes from the hub itself when the hub starts the device.
+cmd:Start is a special command only sent to hub devices on startup.
+
 4) hub device to hub device
 
+	Hub Device (model60.go)             Hub Device (model60.go)
+	===============================================================
+
+	// Same as 3) above
+
+Now that's we've defined the protocol for the different websocket clients, we
+can consolidate into one final listing for the protocol:
+
+	Websocket Client                    Device
+	===============================================================
+
+	START:
+	--------
+
+	cmd:Identify     ------------>
+	                                    get identity
+	                 <------------      resp:Identify
+	save identity
+	cmd:Location     ------------>  +->
+	                                |   get location from store
+	                 <------------  |   resp:Location
+	save location                   |
+	cmd:Temps        ------------>  |
+	                                |   get temps from store
+	                 <------------  |   resp:Temps
+	save temps                      |
+	                                |
+	                     (Hub)      |
+	                   cmd:Start    |
+	                       |        |
+	                       |        |
+	                 <-----+        |
+	cmd:Location     ---------------+
+	                                    
+
+	RUNNING:
+	--------
+
+	                                    new temp/humidity from device
+	                                    save temp/humidity to store
+	                 <------------      spam:Temp (Broadcast)
+	update temps
+
+	                                    new location from device
+	                                    save location to store
+	                 <------------      spam:Temp (Broadcast)
+	update location
+
+	restart button
+	cmd:Restart      ------------>
+	                                    if inHub
+	                                        cmd:Restart (Sink)
+	                                    else
+	                                        restart device
+
+	                     (Hub)
+	              cmd:Status (Broadcast)
+	                       |
+	                       |
+	                 <-----+
+	update status
 
 Security
 
