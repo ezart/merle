@@ -10,7 +10,7 @@ Alpha quatility of code here...
 
 ## Installation
 
-Merle is two packages: core and devices.  Install the core package from here:
+Merle comprises two packages: core and devices.  Install the core package from here:
 
 ```go
 go get github.com/scottfeldman/merle
@@ -229,34 +229,34 @@ START:
 --------
 
 cmd:Identify   ------------>
-				get identity
-	       <------------	resp:Identify
+                                get identity
+               <------------    resp:Identify
 save identity
 cmd:Location   ------------>
-				get location from store
-	       <------------	resp:Location
+                                get location from store
+               <------------    resp:Location
 save location
 cmd:Temps      ------------>
-				get temps from store
-	       <------------	resp:Temps
+                                get temps from store
+               <------------    resp:Temps
 save temps
 
 RUNNING:
 --------
 
-				new temp/humidity
-				save temp/humidity to store
-		<------------	spam:Temp (Broadcast)
+                                new temp/humidity from device
+                                save temp/humidity to store
+                <------------   spam:Temp (Broadcast)
 update temps
 
-				new location
-				save location to store
-		<------------	spam:Temp (Broadcast)
+                                new location from device
+                                save location to store
+                <------------   spam:Temp (Broadcast)
 update location
 
 presses restart button
 cmd:Restart     ------------>
-				restart device
+                                restart device
 ```
 
 The spam broadcasts broadcast to all the connected clients.  For example,
