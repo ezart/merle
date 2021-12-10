@@ -9,24 +9,14 @@ remotely at a device hub.  A device hub is an aggregator of devices.  Merle
 uses websockets for all messaging between the device and the framework.
 Websocket messaging between the device and hub is through a SSH tunnel.
 
+Merle has a companion project called merle_devices.  Merle_devices is a libary
+of device drivers for common IoT devices.
+
+	https://github.com/scottfeldman/merle_devices
+
 ## Status
 
 Alpha quatility of code here...
-
-## Installation
-
-Merle comprises two packages: core and devices.  Install the core package:
-
-```go
-git clone https://github.com/scottfeldman/merle
-```
-
-The devices package contains a library of devices.  Install the merle devices
-package:
-
-```go
-git clone https://github.com/scottfeldman/merle_devices
-```
 
 ## Quickstart
 
