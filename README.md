@@ -27,5 +27,5 @@ go get github.com/scottfeldman/merle_devices
 
 ## Quickstart
 
-See Quickstart in github.com/scottfeldman/merle_devices for building sample
+See Quickstart in https://github.com/scottfeldman/merle_devices for building sample
 devices for common IoT device hardware configurations.
