@@ -197,16 +197,16 @@ let's start with
 
 	                                new temp/humidity from device
 	                                save temp/humidity to store
-	                <------------   spam:Temp (Broadcast)
+	               <------------    spam:Temp (Broadcast)
 	update temps
 
 	                                new location from device
 	                                save location to store
-	                <------------   spam:Temp (Broadcast)
+	               <------------    spam:Temp (Broadcast)
 	update location
 
 	presses restart button
-	cmd:Restart     ------------>
+	cmd:Restart    ------------>
 	                                restart device
 
 The spam broadcasts broadcast to all the connected clients.  For example,
