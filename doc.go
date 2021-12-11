@@ -211,7 +211,8 @@ let's start with
 
 The spam broadcasts broadcast to all the connected clients.  For example,
 multiple web clients viewing the device's home page would open a websocket
-connection back to the device for each client.
+connection back to the device for each client.  When the device broadcasts the
+spam, all clients get a copy.
 
 2) javascript websocket connection to hub device
 
@@ -295,7 +296,7 @@ can consolidate into one final listing for the protocol:
 	                                    get identity
 	                 <------------      resp:Identify
 	save identity
-	cmd:Location     ------------>  +->
+	cmd:Location     ---------------+->
 	                                |   get location from store
 	                 <------------  |   resp:Location
 	save location                   |
@@ -310,7 +311,7 @@ can consolidate into one final listing for the protocol:
 	                       |        |
 	                 <-----+        |
 	cmd:Location     ---------------+
-	                                    
+
 
 	RUNNING:
 	--------
