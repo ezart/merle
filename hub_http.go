@@ -44,11 +44,15 @@ func (h *Hub) wsDevice(w http.ResponseWriter, r *http.Request, id string) {
 }
 
 func (h *Hub) wsHub(w http.ResponseWriter, r *http.Request) {
+	h.connQ <- true
+	defer func() { <-h.connQ }()
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Websocket upgrader error:", err)
 		return
 	}
+	defer conn.Close()
 
 	h.connAdd(conn)
 
@@ -66,7 +70,6 @@ func (h *Hub) wsHub(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.connDelete(conn)
-	conn.Close()
 }
 
 func (h *Hub) ws(w http.ResponseWriter, r *http.Request) {

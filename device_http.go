@@ -25,6 +25,7 @@ func (d *Device) ws(w http.ResponseWriter, r *http.Request) {
 		log.Println("Websocket upgrader error:", err)
 		return
 	}
+	defer conn.Close()
 
 	d.connAdd(conn)
 
@@ -42,7 +43,6 @@ func (d *Device) ws(w http.ResponseWriter, r *http.Request) {
 	}
 
 	d.connDelete(conn)
-	conn.Close()
 }
 
 func (d *Device) home(w http.ResponseWriter, r *http.Request) {

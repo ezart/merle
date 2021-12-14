@@ -20,15 +20,17 @@ type Hub struct {
 	modelGen func(model string) IModel
 	devices  map[string]*Device
 	conns    map[*websocket.Conn]bool
+	connQ    chan bool
 	db       *sql.DB
 	templ    *template.Template
 }
 
-func NewHub(modelGen func(model string) IModel, templ string) *Hub {
+func NewHub(modelGen func(model string) IModel, templ string, connsMax int) *Hub {
 	return &Hub{
 		modelGen: modelGen,
 		devices:  make(map[string]*Device),
 		conns:    make(map[*websocket.Conn]bool),
+		connQ:    make(chan bool, connsMax),
 		templ:    template.Must(template.ParseFiles(templ)),
 	}
 }
