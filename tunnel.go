@@ -27,6 +27,11 @@ func (d *Device) tunnelCreate(hubHost, hubUser, hubKey string) {
 
 	for {
 
+		// TODO Need to use golang.org/x/crypto/ssh instead of
+		// TODO os/exec'ing these ssh calls.  Also, look into
+		// TODO using golang.org/x/crypto/ssh on hub-side of
+		// TODO merle for bespoke ssh server.
+
 		// ssh -i <key> <user>@<hub> curl -s localhost:8080/port?id=xxx
 
 		log.Printf("Getting port...[ssh -i %s %s@%s curl -s localhost:8080/port?id=%s]...",
