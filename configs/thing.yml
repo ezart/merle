@@ -1,0 +1,14 @@
+# Device configuration
+Device:
+  #Id: <device_id>
+  Model: <device_model>
+  Name: <device_name>
+  User: <device_user>
+  PortPublic: <device_port_public>
+  PortPrivate: <device_port_private>
+
+# Hub configuration
+Hub:
+  Host: <hub_host>
+  User: <hub_user>
+  Key: <hub_key>

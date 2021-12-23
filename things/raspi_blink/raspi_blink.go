@@ -81,12 +81,16 @@ func (b *blinker) resume(p *merle.Packet) {
 	b.Broadcast(p)
 }
 
-func NewThing(name string) *merle.Thing {
+func NewThing(id, model, name string) *merle.Thing {
 	b := blinker{}
 
+	if id == "" {
+		id = merle.DefaultId_()
+	}
+
 	b.Status = "online"
-	b.Id = merle.DefaultId_()
-	b.Model = "blinker"
+	b.Id = id
+	b.Model = model
 	b.Name = name
 	b.StartupTime = time.Now()
 
