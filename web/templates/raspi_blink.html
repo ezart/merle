@@ -1,0 +1,53 @@
+<!--
+Copyright 2021 Scott Feldman (sfeldma@gmail.com). All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file. 
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta name="viewport"
+		      content="width=device-width, initial-scale=1">
+
+		<title>{{.Name}}</title>
+
+		<link rel="stylesheet" type="text/css"
+		      href="/web/css/{{.Model}}.css">
+
+	</head>
+
+	<body>
+
+		<div class="columns">
+			<div class="labels-hidden" id="lables">
+				<pre>Id:</pre>
+				<pre>Model:</pre>
+				<pre>Name:</pre>
+			</div>
+			<div class="data">
+				<pre id="id"></pre>
+				<pre id="model"></pre>
+				<pre id="name"></pre>
+			</div>
+		</div>
+
+		<div class="rows">
+			<div>
+				<img id="image" src="./web/images/{{.Model}}/{{.Id}}.jpg"
+					style="visibility: hidden;">
+			</div>
+			<div>
+				<input type="range" id="position" min="0" max="50"
+					style="visibility: hidden;" onchange="change()">
+			</div>
+		</div>
+
+		<script src="/web/js/{{.Model}}.js"></script>
+
+	<script>Run({{.Scheme}}, {{.Host}}, {{.Id}})</script>
+
+	</body>
+
+</html>
