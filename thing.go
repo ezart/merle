@@ -29,7 +29,7 @@ type Thing struct {
 	handlers      map[string]func(*Packet)
 	conns         map[*websocket.Conn]bool
 	port          *port
-	inHub         bool
+	metal         bool
 
 	// http servers
 	sync.WaitGroup
@@ -58,7 +58,7 @@ func (d *Thing) connDelete(c *websocket.Conn) {
 }
 
 func (t *Thing) logPrefix() string {
-	if t.inHub {
+	if !t.metal {
 		return "["+t.Id+","+t.Model+","+t.Name+"]"
 	}
 	return ""
@@ -115,9 +115,14 @@ func (t *Thing) HttpConfig(authUser string, portPublic, portPrivate int) {
 	t.portPrivate = portPrivate
 }
 
-// Start the thing
-func (t *Thing) Start() {
+// Start the thing.
+func (t *Thing) Start(metal bool) {
+	t.metal = metal
 	t.conns = make(map[*websocket.Conn]bool)
+
+	if !t.metal {
+		return
+	}
 
 	if t.Init != nil {
 		log.Println(t.logPrefix(), "Init...")
@@ -155,9 +160,9 @@ func (t *Thing) Reply(p *Packet) {
 	}
 }
 
-// Sink sends Packet down towards bottom-most thing.
+// Sink sends Packet down towards bottom-most metal thing.
 func (t *Thing) Sink(p *Packet) {
-	if !t.inHub {
+	if t.metal {
 		return
 	}
 
