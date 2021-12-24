@@ -60,6 +60,16 @@ function updateStatus(msg) {
 	refreshAll()
 }
 
+function pause() {
+	var cmd = {Type: "pause"}
+	conn.send(JSON.stringify(cmd))
+}
+
+function resume() {
+	var cmd = {Type: "resume"}
+	conn.send(JSON.stringify(cmd))
+}
+
 function Run(scheme, host, id) {
 
 	conn = new WebSocket(scheme + host + "/ws?id=" + id)
