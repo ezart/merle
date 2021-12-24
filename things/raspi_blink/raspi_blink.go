@@ -30,7 +30,7 @@ func (b *blinker) init() error {
 	b.adaptor = raspi.NewAdaptor()
 	b.adaptor.Connect()
 
-	b.led = gpio.NewLedDriver(b.adaptor, "7")
+	b.led = gpio.NewLedDriver(b.adaptor, "11")
 	b.led.Start()
 
 	return nil
