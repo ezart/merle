@@ -61,13 +61,15 @@ function updateStatus(msg) {
 }
 
 function pause() {
-	var cmd = {Type: "pause"}
-	conn.send(JSON.stringify(cmd))
-}
+	var button = document.getElementById("pause")
 
-function resume() {
-	var cmd = {Type: "resume"}
-	conn.send(JSON.stringify(cmd))
+	if (button.textContent == "Pause") {
+		conn.send(JSON.stringify({Type: "pause"}))
+		button.textContent = "Resume"
+	} else {
+		conn.send(JSON.stringify({Type: "resume"}))
+		button.textContent = "Pause"
+	}
 }
 
 function Run(scheme, host, id) {
