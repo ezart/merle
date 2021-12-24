@@ -92,7 +92,7 @@ function Run(scheme, host, id) {
 			saveIdentity(msg)
 			refreshAll()
 			break;
-		case "ledState":
+		case "state":
 			saveLedState(msg)
 			refreshLed()
 			break;

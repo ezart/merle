@@ -43,7 +43,7 @@ type msgState struct {
 
 func (b *blinker) sendState() {
 	var msg = msgState{
-		Type:  "ledState",
+		Type:  "state",
 		State: b.led.State(),
 	}
 	b.Broadcast(merle.NewPacket(&msg))
