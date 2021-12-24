@@ -1,11 +1,11 @@
-# Device configuration
-Device:
-  #Id: <device_id>
-  Model: <device_model>
-  Name: <device_name>
-  User: <device_user>
-  PortPublic: <device_port_public>
-  PortPrivate: <device_port_private>
+# Thing configuration
+Thing:
+  #Id: <thing_id>
+  Model: <thing_model>
+  Name: <thing_name>
+  User: <thing_user>
+  PortPublic: <thing_port_public>
+  PortPrivate: <thing_port_private>
 
 # Hub configuration
 Hub:
