@@ -39,8 +39,15 @@ function refreshBase() {
 }
 
 function refreshLed() {
-	var preLed = document.getElementById("led")
-	preLed.textContent = ledState
+	var image = document.getElementById("raspi")
+	image.style.visibility = "visible"
+	on = "off"
+	if (ledState) {
+		on = "on"
+	}
+	// force refresh of image by using getTime() trick
+	image.src = "./web/images/" + model + "/led-gpio17-" + on + ".png?t=" +
+		new Date().getTime()
 }
 
 function refreshAll() {
@@ -74,9 +81,11 @@ function Run(scheme, host, id) {
 		case "identity":
 			saveIdentity(msg)
 			refreshAll()
+			break;
 		case "ledState":
 			saveLedState(msg)
 			refreshLed()
+			break;
 		}
 	}
 }

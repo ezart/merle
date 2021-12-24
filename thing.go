@@ -32,12 +32,12 @@ type Thing struct {
 	inHub         bool
 
 	// http servers
+	sync.WaitGroup
 	authUser      string
 	portPublic    int
 	portPrivate   int
 	httpPublic    *http.Server
 	httpPrivate   *http.Server
-	sync.WaitGroup
 
 	// tunnel to hub
 	hubHost       string
@@ -58,7 +58,10 @@ func (d *Thing) connDelete(c *websocket.Conn) {
 }
 
 func (t *Thing) logPrefix() string {
-	return "["+t.Id+","+t.Model+","+t.Name+"]"
+	if t.inHub {
+		return "["+t.Id+","+t.Model+","+t.Name+"]"
+	}
+	return ""
 }
 
 func (t *Thing) identify(p *Packet) {
