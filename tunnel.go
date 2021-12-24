@@ -13,15 +13,10 @@ import (
 	"time"
 )
 
-func (d *Device) tunnelCreate(hubHost, hubUser, hubKey string) {
+func (t *Thing) _tunnelCreate() {
 
 	var remote string
 	var port string
-
-	if hubHost == "" || hubUser == "" || hubKey == "" {
-		log.Println("Missing hub connection parameters; skipping tunnel")
-		return
-	}
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -34,30 +29,34 @@ func (d *Device) tunnelCreate(hubHost, hubUser, hubKey string) {
 
 		// ssh -i <key> <user>@<hub> curl -s localhost:8080/port?id=xxx
 
-		log.Printf("Getting port...[ssh -i %s %s@%s curl -s localhost:8080/port?id=%s]...",
-			hubKey, hubUser, hubHost, d.id)
-		cmd := exec.Command("ssh", "-i", hubKey,
-			hubUser+"@"+hubHost,
-			"curl", "-s", "localhost:8080/port?id="+d.id)
+		log.Printf("%s Getting port...[ssh -i %s %s@%s curl -s localhost:8080/port?id=%s]...",
+			t.logPrefix(), t.hubKey, t.hubUser, t.hubHost, t.Id)
+		cmd := exec.Command("ssh", "-i", t.hubKey,
+			t.hubUser+"@"+t.hubHost,
+			"curl", "-s", "localhost:8080/port?id="+t.Id)
+
 		// If the parent process (this app) dies, kill the ssh cmd also
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig: syscall.SIGTERM,
 		}
+
 		stdoutStderr, err := cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("Get port failed: %s, err %v", stdoutStderr, err)
+			log.Printf("%s Get port failed: %s, err %v",
+				t.logPrefix(), stdoutStderr, err)
 			goto again
 		}
+
 		port = string(stdoutStderr)
 		if port == "no ports available" {
-			log.Print("No ports available; trying again\n")
+			log.Println(t.logPrefix(), "No ports available; trying again\n")
 			goto again
 		}
 		if port == "port busy" {
-			log.Print("Port is busy; trying again\n")
+			log.Println(t.logPrefix(), "Port is busy; trying again\n")
 			goto again
 		}
-		log.Printf("Got port %s", port)
+		log.Println(t.logPrefix(), "Got port", port)
 
 		// ssh -o ExitOnForwardFailure=yes -CNT -i <key> -R 8081:localhost:8080 <hub>
 		//
@@ -65,18 +64,21 @@ func (d *Device) tunnelCreate(hubHost, hubUser, hubKey string) {
 		//   most likely from port already being in-use on the server side).
 
 		remote = fmt.Sprintf("%s:localhost:8080", port)
-		log.Printf("Creating tunnel...[ssh -o ExitOnForwardFailure=yes -CNT -i %s -R %s %s@%s]...",
-			hubKey, remote, hubUser, hubHost)
+		log.Printf("%s Creating tunnel...[ssh -o ExitOnForwardFailure=yes -CNT -i %s -R %s %s@%s]...",
+			t.logPrefix(), t.hubKey, remote, t.hubUser, t.hubHost)
 		cmd = exec.Command("ssh", "-o", "ExitOnForwardFailure=yes",
-			"-CNT", "-i", hubKey,
-			"-R", remote, hubUser+"@"+hubHost)
+			"-CNT", "-i", t.hubKey,
+			"-R", remote, t.hubUser+"@"+t.hubHost)
+
 		// If the parent process (this app) dies, kill the ssh cmd also
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig: syscall.SIGTERM,
 		}
+
 		stdoutStderr, err = cmd.CombinedOutput()
 		if err != nil {
-			log.Printf("Create tunnel failed: %s, err %v", stdoutStderr, err)
+			log.Printf("%s Create tunnel failed: %s, err %v",
+				t.logPrefix(), stdoutStderr, err)
 		}
 
 	again:
@@ -89,8 +91,25 @@ func (d *Device) tunnelCreate(hubHost, hubUser, hubKey string) {
 		// avoid port contention.
 
 		f := rand.Float32() * 10
-		log.Printf("Sleeping for %f seconds", f)
+		log.Printf("%s Sleeping for %f seconds", t.logPrefix(), f)
 		time.Sleep(time.Duration(f*1000) * time.Millisecond)
-
 	}
+}
+
+func (t *Thing) tunnelCreate() {
+
+	if t.hubHost == "" || t.hubUser == "" || t.hubKey == "" {
+		log.Println(t.logPrefix(),
+			"Skipping tunnel; missing hub connection parameters")
+		return
+	}
+
+	go t._tunnelCreate()
+}
+
+// Configure tunnel
+func (t *Thing) TunnelConfig(host, user, key string) {
+	t.hubHost = host
+	t.hubUser = user
+	t.hubKey = key
 }

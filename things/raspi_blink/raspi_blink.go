@@ -43,10 +43,10 @@ type msgState struct {
 
 func (b *blinker) sendState() {
 	var msg = msgState{
-		Type:  "state",
+		Type:  "ledState",
 		State: b.led.State(),
 	}
-	b.Broadcast(b.NewPacket(&msg))
+	b.Broadcast(merle.NewPacket(&msg))
 }
 
 func (b *blinker) run() {
@@ -84,6 +84,9 @@ func (b *blinker) resume(p *merle.Packet) {
 func NewThing(id, model, name string) *merle.Thing {
 	b := blinker{}
 
+	if model == "" || name == "" {
+		return nil
+	}
 	if id == "" {
 		id = merle.DefaultId_()
 	}

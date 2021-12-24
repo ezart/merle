@@ -6,6 +6,7 @@ package merle
 
 import (
 	"github.com/gorilla/websocket"
+	"encoding/json"
 	"log"
 )
 
@@ -13,6 +14,12 @@ import (
 type Packet struct {
 	conn *websocket.Conn
 	Msg  []byte
+}
+
+func NewPacket(msg interface {}) *Packet {
+	var p Packet
+	p.Msg, _ = json.Marshal(&msg)
+	return &p
 }
 
 func (p *Packet) writeMessage() error {

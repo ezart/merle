@@ -21,18 +21,8 @@ func main() {
 		log.Fatalf("No model named '%s'", cfg.Thing.Model)
 	}
 
+	//t.TunnelConfig(cfg.Hub.Host, cfg.Hub.User, cfg.Hub.Key)
+	t.HttpConfig(cfg.Thing.User, cfg.Thing.PortPublic, cfg.Thing.PortPrivate)
+
 	t.Start()
-
-	/*
-	d := merle.NewDevice(m, false, cfg.Device.Id, cfg.Device.Model,
-		cfg.Device.Name, "online", time.Now())
-	if d == nil {
-		log.Fatalf("Device creation failed, model '%s'", cfg.Device.Model)
-	}
-
-	err := d.Run(cfg.Device.User, cfg.Device.PortPublic,
-		cfg.Device.PortPrivate, cfg.Hub.Host, cfg.Hub.User,
-		cfg.Hub.Key)
-	log.Fatalln(err)
-	*/
 }

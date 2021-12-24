@@ -19,15 +19,15 @@ import (
 
 var upgrader = websocket.Upgrader{}
 
-func (d *Device) ws(w http.ResponseWriter, r *http.Request) {
+func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Websocket upgrader error:", err)
+		log.Println(t.logPrefix(), "Websocket upgrader error:", err)
 		return
 	}
 	defer conn.Close()
 
-	d.connAdd(conn)
+	t.connAdd(conn)
 
 	for {
 		var p = &Packet{
@@ -36,16 +36,16 @@ func (d *Device) ws(w http.ResponseWriter, r *http.Request) {
 
 		_, p.Msg, err = conn.ReadMessage()
 		if err != nil {
-			log.Println("Websocket read message error:", err)
+			log.Println(t.logPrefix(), "Websocket read error:", err)
 			break
 		}
-		d.receive(p)
+		t.receive(p)
 	}
 
-	d.connDelete(conn)
+	t.connDelete(conn)
 }
 
-func (d *Device) home(w http.ResponseWriter, r *http.Request) {
+func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.Error(w, "Not found", http.StatusNotFound)
 		return
@@ -55,7 +55,12 @@ func (d *Device) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	d.m.HomePage(w, r)
+	if t.Home == nil {
+		http.Error(w, "Home page not set up", http.StatusNotFound)
+		return
+	}
+
+	t.Home(w, r)
 }
 
 func pamValidate(user, passwd string) (bool, error) {
@@ -111,69 +116,86 @@ func basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (d *Device) shutdown() {
-	d.Lock()
-	for c := range d.conns {
+func (t *Thing) httpShutdown() {
+	t.Lock()
+	for c := range t.conns {
 		c.WriteControl(websocket.CloseMessage, nil, time.Now())
 	}
-	d.Unlock()
-	d.wg.Done()
+	t.Unlock()
+	t.Done()
 }
 
-func (d *Device) httpStop() {
-	d.privateServer.Shutdown(context.Background())
-	d.publicServer.Shutdown(context.Background())
-	d.wg.Wait()
+func (t *Thing) httpStop() {
+	if t.portPrivate != 0 {
+		t.httpPrivate.Shutdown(context.Background())
+	}
+	if t.portPublic != 0 {
+		t.httpPublic.Shutdown(context.Background())
+	}
+	t.Wait()
 }
 
-func (d *Device) httpStart(authUser string, publicPort, privatePort int) {
-	publicAddr := ":" + strconv.Itoa(publicPort)
-	privateAddr := ":" + strconv.Itoa(privatePort)
-
-	fs := http.FileServer(http.Dir("web"))
-
-	privateMux := http.NewServeMux()
-	privateMux.HandleFunc("/ws", d.ws)
-
-	publicMux := http.NewServeMux()
-	publicMux.HandleFunc("/ws", basicAuth(authUser, d.ws))
-	publicMux.HandleFunc("/", basicAuth(authUser, d.home))
-	publicMux.Handle("/web/", http.StripPrefix("/web", fs))
-
-	d.privateServer = &http.Server{
-		Addr:    privateAddr,
-		Handler: privateMux,
-	}
-
-	d.publicServer = &http.Server{
-		Addr:    publicAddr,
-		Handler: publicMux,
-	}
-
-	d.wg.Add(2)
-	d.privateServer.RegisterOnShutdown(d.shutdown)
-
-	go func() {
-		log.Printf("Listening HTTP on %s for private", privateAddr)
-		if err := d.privateServer.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalln("Private HTTP server failed:", err)
-		}
-		d.wg.Done()
-	}()
-
-	if authUser == "" {
-		log.Printf("Missing authUser; skipping HTTP on %s for public", publicAddr)
+func (t *Thing) httpStartPrivate() {
+	if t.portPrivate == 0 {
+		log.Println(t.logPrefix(), "Skipping private HTTP")
 		return
 	}
 
-	d.wg.Add(2)
-	d.publicServer.RegisterOnShutdown(d.shutdown)
+	addrPrivate := ":" + strconv.Itoa(t.portPrivate)
+
+	muxPrivate := http.NewServeMux()
+	muxPrivate.HandleFunc("/ws", t.ws)
+
+	t.httpPrivate= &http.Server{
+		Addr:    addrPrivate,
+		Handler: muxPrivate,
+	}
+
+	t.Add(2)
+	t.httpPrivate.RegisterOnShutdown(t.httpShutdown)
 
 	go func() {
-		log.Printf("Listening HTTP on %s for public", publicAddr)
-		if err := d.publicServer.ListenAndServe(); err != http.ErrServerClosed {
+		log.Printf("%s Private HTTP listening on %s", t.logPrefix(), addrPrivate)
+		if err := t.httpPrivate.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalln(t.logPrefix(), "Private HTTP server failed:", err)
+		}
+		t.Done()
+	}()
+}
+
+func (t *Thing) httpStartPublic() {
+	if t.portPublic == 0 || t.authUser == ""{
+		log.Println(t.logPrefix(), "Skipping public HTTP")
+		return
+	}
+
+	addrPublic := ":" + strconv.Itoa(t.portPublic)
+
+	fs := http.FileServer(http.Dir("web"))
+
+	muxPublic := http.NewServeMux()
+	muxPublic.HandleFunc("/ws", basicAuth(t.authUser, t.ws))
+	muxPublic.HandleFunc("/", basicAuth(t.authUser, t.home))
+	muxPublic.Handle("/web/", http.StripPrefix("/web", fs))
+
+	t.httpPublic = &http.Server{
+		Addr:    addrPublic,
+		Handler: muxPublic,
+	}
+
+	t.Add(2)
+	t.httpPublic.RegisterOnShutdown(t.httpShutdown)
+
+	go func() {
+		log.Printf("%s Public HTTP listening on %s", t.logPrefix(), addrPublic)
+		if err := t.httpPublic.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalln("Public HTTP server failed:", err)
 		}
-		d.wg.Done()
+		t.Done()
 	}()
+}
+
+func (t *Thing) httpStart() {
+	t.httpStartPrivate()
+	t.httpStartPublic()
 }
