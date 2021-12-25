@@ -5,11 +5,11 @@
 package merle
 
 import (
-	"fmt"
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
 	"errors"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/msteinert/pam"
@@ -164,7 +164,7 @@ func (t *Thing) httpInitPrivate() {
 func (t *Thing) httpStartPrivate() {
 	addrPrivate := ":" + strconv.Itoa(t.portPrivate)
 
-	t.httpPrivate= &http.Server{
+	t.httpPrivate = &http.Server{
 		Addr:    addrPrivate,
 		Handler: t.muxPrivate,
 		// TODO add timeouts

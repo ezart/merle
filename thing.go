@@ -2,29 +2,29 @@ package merle
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"log"
-	"time"
 	"net"
 	"net/http"
 	"sync"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
+	"time"
 )
 
 type Thing struct {
 	Init func() error
-	Run func()
+	Run  func()
 	Home func(w http.ResponseWriter, r *http.Request)
 
-	Status        string
-	Id            string
-	Model         string
-	Name          string
-	StartupTime   time.Time
-	ConnsMax      int
-	Shadow        bool
+	Status      string
+	Id          string
+	Model       string
+	Name        string
+	StartupTime time.Time
+	ConnsMax    int
+	Shadow      bool
 
-	things        map[string]*Thing
+	things map[string]*Thing
 
 	sync.Mutex
 	msgHandlers   map[string]func(*Packet)
@@ -35,18 +35,18 @@ type Thing struct {
 
 	// http servers
 	sync.WaitGroup
-	authUser      string
-	portPublic    int
-	portPrivate   int
-	muxPublic     *mux.Router
-	muxPrivate    *mux.Router
-	httpPublic    *http.Server
-	httpPrivate   *http.Server
+	authUser    string
+	portPublic  int
+	portPrivate int
+	muxPublic   *mux.Router
+	muxPrivate  *mux.Router
+	httpPublic  *http.Server
+	httpPrivate *http.Server
 
 	// tunnel to mother
-	hubHost       string
-	hubUser       string
-	hubKey        string
+	hubHost string
+	hubUser string
+	hubKey  string
 }
 
 func (t *Thing) connAdd(c *websocket.Conn) {
@@ -63,7 +63,7 @@ func (t *Thing) connDelete(c *websocket.Conn) {
 
 func (t *Thing) logPrefix() string {
 	if t.Shadow {
-		return "["+t.Id+","+t.Model+","+t.Name+"]"
+		return "[" + t.Id + "," + t.Model + "," + t.Name + "]"
 	}
 	return ""
 }
@@ -294,55 +294,54 @@ func DefaultId_() string {
 
 func (t *Thing) changeStatus(child *Thing, status string) {
 	/*
-	child.Status = status
+		child.Status = status
 
-	spam := struct {
-		Msg     string
-		Id      string
-		Status  string
-	}{
-		Msg:    "status",
-		Id:     child.Id,
-		Status: child.Status,
-	}
+		spam := struct {
+			Msg     string
+			Id      string
+			Status  string
+		}{
+			Msg:    "status",
+			Id:     child.Id,
+			Status: child.Status,
+		}
 
-	msg, _ := json.Marshal(&spam)
-	t.broadcast(msg)
+		msg, _ := json.Marshal(&spam)
+		t.broadcast(msg)
 	*/
 }
 
 func (t *Thing) portRun(p *port) {
 	/*
-	var child *Thing
+	   	var child *Thing
 
-	resp, err := p.connect()
-	if err != nil {
-		goto disconnect
-	}
+	   	resp, err := p.connect()
+	   	if err != nil {
+	   		goto disconnect
+	   	}
 
-	child = t.getThing(resp.Id)
-	if child == nil {
-		d = h.newDevice(resp.Id, resp.Model, resp.Name, resp.StartupTime)
-		if d == nil {
-			goto disconnect
-		}
-	} else {
-		d.model = resp.Model
-		d.name = resp.Name
-		d.startupTime = resp.StartupTime
-	}
+	   	child = t.getThing(resp.Id)
+	   	if child == nil {
+	   		d = h.newDevice(resp.Id, resp.Model, resp.Name, resp.StartupTime)
+	   		if d == nil {
+	   			goto disconnect
+	   		}
+	   	} else {
+	   		d.model = resp.Model
+	   		d.name = resp.Name
+	   		d.startupTime = resp.StartupTime
+	   	}
 
-	err = h.saveDevice(d)
-	if err != nil {
-		goto disconnect
-	}
+	   	err = h.saveDevice(d)
+	   	if err != nil {
+	   		goto disconnect
+	   	}
 
-	h.changeStatus(d, "online")
-	p.run(d)
-	h.changeStatus(d, "offline")
+	   	h.changeStatus(d, "online")
+	   	p.run(d)
+	   	h.changeStatus(d, "offline")
 
-disconnect:
-	p.disconnect()
+	   disconnect:
+	   	p.disconnect()
 	*/
 }
-

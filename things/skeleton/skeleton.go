@@ -7,8 +7,8 @@ package skeleton
 
 import (
 	"github.com/scottfeldman/merle"
-	"time"
 	"net/http"
+	"time"
 )
 
 type skeleton struct {
@@ -20,7 +20,8 @@ func (s *skeleton) init() error {
 }
 
 func (s *skeleton) run() {
-	for {}
+	for {
+	}
 }
 
 func (s *skeleton) home(w http.ResponseWriter, r *http.Request) {

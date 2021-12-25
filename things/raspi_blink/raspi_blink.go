@@ -5,12 +5,12 @@
 package raspi_blink
 
 import (
-	"html/template"
 	"github.com/scottfeldman/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
-	"time"
+	"html/template"
 	"net/http"
+	"time"
 )
 
 var templ *template.Template
@@ -22,8 +22,8 @@ func init() {
 type blinker struct {
 	merle.Thing
 	adaptor *raspi.Adaptor
-	led *gpio.LedDriver
-	paused bool
+	led     *gpio.LedDriver
+	paused  bool
 }
 
 func (b *blinker) init() error {
@@ -37,7 +37,7 @@ func (b *blinker) init() error {
 }
 
 type msgState struct {
-	Type string
+	Type  string
 	State bool
 }
 

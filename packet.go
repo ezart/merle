@@ -5,8 +5,8 @@
 package merle
 
 import (
-	"github.com/gorilla/websocket"
 	"encoding/json"
+	"github.com/gorilla/websocket"
 	"log"
 )
 
@@ -16,7 +16,7 @@ type Packet struct {
 	Msg  []byte
 }
 
-func NewPacket(msg interface {}) *Packet {
+func NewPacket(msg interface{}) *Packet {
 	var p Packet
 	p.Msg, _ = json.Marshal(&msg)
 	return &p

@@ -8,8 +8,8 @@ package hub
 
 import (
 	"github.com/scottfeldman/merle"
-	"time"
 	"net/http"
+	"time"
 )
 
 type hub struct {
@@ -24,12 +24,12 @@ func (h *hub) run() {
 	h.ListenForThings()
 
 	/*
-	for {
-		select {
-		case t := <-h.NewConnection:
-			h.things[t.Id] = t
+		for {
+			select {
+			case t := <-h.NewConnection:
+				h.things[t.Id] = t
+			}
 		}
-	}
 	*/
 }
 

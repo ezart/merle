@@ -12,12 +12,12 @@ import (
 
 type config struct {
 	Thing struct {
-		Id    string `yaml:"Id"`
-		Model string `yaml:"Model"`
-		Name  string `yaml:"Name"`
-		User  string `yaml:"User"`
-		PortPublic int `yaml:"PortPublic"`
-		PortPrivate int `yaml:"PortPrivate"`
+		Id          string `yaml:"Id"`
+		Model       string `yaml:"Model"`
+		Name        string `yaml:"Name"`
+		User        string `yaml:"User"`
+		PortPublic  int    `yaml:"PortPublic"`
+		PortPrivate int    `yaml:"PortPrivate"`
 	} `yaml:"Thing"`
 	Hub struct {
 		Host string `yaml:"Host"`
