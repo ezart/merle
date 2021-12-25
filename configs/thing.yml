@@ -7,8 +7,8 @@ Thing:
   PortPublic: <thing_port_public>
   PortPrivate: <thing_port_private>
 
-# Hub configuration
-Hub:
-  Host: <hub_host>
-  User: <hub_user>
-  Key: <hub_key>
+# Mother configuration
+Mother:
+  Host: <mother_host>
+  User: <mother_user>
+  Key: <mother_key>

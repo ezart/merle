@@ -19,11 +19,11 @@ type config struct {
 		PortPublic  int    `yaml:"PortPublic"`
 		PortPrivate int    `yaml:"PortPrivate"`
 	} `yaml:"Thing"`
-	Hub struct {
+	Mother struct {
 		Host string `yaml:"Host"`
 		User string `yaml:"User"`
 		Key  string `yaml:"Key"`
-	} `yaml:"Hub"`
+	} `yaml:"Mother"`
 }
 
 var cfg config
