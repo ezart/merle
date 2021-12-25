@@ -24,5 +24,5 @@ func main() {
 	//t.TunnelConfig(cfg.Hub.Host, cfg.Hub.User, cfg.Hub.Key)
 	t.HttpConfig(cfg.Thing.User, cfg.Thing.PortPublic, cfg.Thing.PortPrivate)
 
-	t.Start(true)
+	t.Start()
 }

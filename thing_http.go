@@ -20,6 +20,9 @@ import (
 var upgrader = websocket.Upgrader{}
 
 func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
+	t.connQ <- true
+	defer func() { <-t.connQ }()
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(t.logPrefix(), "Websocket upgrader error:", err)

@@ -28,8 +28,10 @@ type Thing struct {
 	sync.Mutex
 	handlers      map[string]func(*Packet)
 	conns         map[*websocket.Conn]bool
+	connQ         chan bool
+	ConnsMax      int
 	port          *port
-	metal         bool
+	Shadow        bool
 
 	// http servers
 	sync.WaitGroup
@@ -58,7 +60,7 @@ func (d *Thing) connDelete(c *websocket.Conn) {
 }
 
 func (t *Thing) logPrefix() string {
-	if !t.metal {
+	if t.Shadow {
 		return "["+t.Id+","+t.Model+","+t.Name+"]"
 	}
 	return ""
@@ -115,12 +117,16 @@ func (t *Thing) HttpConfig(authUser string, portPublic, portPrivate int) {
 	t.portPrivate = portPrivate
 }
 
-// Start the thing.
-func (t *Thing) Start(metal bool) {
-	t.metal = metal
+// Start the Thing
+func (t *Thing) Start() {
 	t.conns = make(map[*websocket.Conn]bool)
 
-	if !t.metal {
+	if t.ConnsMax == 0 {
+		t.ConnsMax = 10
+	}
+	t.connQ = make(chan bool, t.ConnsMax)
+
+	if t.Shadow {
 		return
 	}
 
@@ -160,9 +166,9 @@ func (t *Thing) Reply(p *Packet) {
 	}
 }
 
-// Sink sends Packet down towards bottom-most metal thing.
+// Sink sends Packet down towards bottom-most non-shadow Thing
 func (t *Thing) Sink(p *Packet) {
-	if t.metal {
+	if !t.Shadow {
 		return
 	}
 
@@ -196,7 +202,7 @@ func (t *Thing) Sink(p *Packet) {
 	}
 }
 
-// Broadcast packet to all except self.
+// Broadcast packet to all except self
 func (t *Thing) Broadcast(p *Packet) {
 	src := p.conn
 
