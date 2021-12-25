@@ -5,10 +5,12 @@
 package merle
 
 import (
+	"fmt"
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
 	"errors"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/msteinert/pam"
 	"log"
@@ -18,6 +20,32 @@ import (
 )
 
 var upgrader = websocket.Upgrader{}
+
+func (t *Thing) wsThing(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	child := t.getThing(id)
+	if child == nil {
+		http.Error(w, "Unknown device ID "+id, http.StatusNotFound)
+		return
+	}
+
+	child.ws(w, r)
+}
+
+func (t *Thing) homeThing(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	child := t.getThing(id)
+	if child == nil {
+		http.Error(w, "Unknown device ID "+id, http.StatusNotFound)
+		return
+	}
+
+	child.home(w, r)
+}
 
 func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	t.connQ <- true
@@ -128,6 +156,81 @@ func (t *Thing) httpShutdown() {
 	t.Done()
 }
 
+func (t *Thing) httpInitPrivate() {
+	t.muxPrivate = mux.NewRouter()
+	t.muxPrivate.HandleFunc("/ws", t.ws)
+}
+
+func (t *Thing) httpStartPrivate() {
+	addrPrivate := ":" + strconv.Itoa(t.portPrivate)
+
+	t.httpPrivate= &http.Server{
+		Addr:    addrPrivate,
+		Handler: t.muxPrivate,
+		// TODO add timeouts
+	}
+
+	t.Add(2)
+	t.httpPrivate.RegisterOnShutdown(t.httpShutdown)
+
+	log.Printf("%s Private HTTP listening on %s", t.logPrefix(), addrPrivate)
+
+	go func() {
+		if err := t.httpPrivate.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalln(t.logPrefix(), "Private HTTP server failed:", err)
+		}
+		t.Done()
+	}()
+}
+
+func (t *Thing) httpInitPublic() {
+	fs := http.FileServer(http.Dir("web"))
+	t.muxPublic = mux.NewRouter()
+	t.muxPublic.HandleFunc("/ws", basicAuth(t.authUser, t.ws))
+	t.muxPublic.HandleFunc("/", basicAuth(t.authUser, t.home))
+	t.muxPublic.PathPrefix("/web/").Handler(http.StripPrefix("/web/", fs))
+}
+
+func (t *Thing) httpStartPublic() {
+	addrPublic := ":" + strconv.Itoa(t.portPublic)
+
+	t.httpPublic = &http.Server{
+		Addr:    addrPublic,
+		Handler: t.muxPublic,
+		// TODO add timeouts
+	}
+
+	t.Add(2)
+	t.httpPublic.RegisterOnShutdown(t.httpShutdown)
+
+	log.Printf("%s Public HTTP listening on %s", t.logPrefix(), addrPublic)
+
+	go func() {
+		if err := t.httpPublic.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalln("Public HTTP server failed:", err)
+		}
+		t.Done()
+	}()
+}
+
+func (t *Thing) httpInit() {
+	t.httpInitPrivate()
+	t.httpInitPublic()
+}
+
+func (t *Thing) httpStart() {
+	if t.portPrivate == 0 {
+		log.Println(t.logPrefix(), "Skipping private HTTP")
+	} else {
+		t.httpStartPrivate()
+	}
+	if t.portPublic == 0 {
+		log.Println(t.logPrefix(), "Skipping public HTTP")
+	} else {
+		t.httpStartPublic()
+	}
+}
+
 func (t *Thing) httpStop() {
 	if t.portPrivate != 0 {
 		t.httpPrivate.Shutdown(context.Background())
@@ -138,67 +241,29 @@ func (t *Thing) httpStop() {
 	t.Wait()
 }
 
-func (t *Thing) httpStartPrivate() {
-	if t.portPrivate == 0 {
-		log.Println(t.logPrefix(), "Skipping private HTTP")
-		return
+func getPort(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	port := portFromId(id)
+
+	switch port {
+	case -1:
+		fmt.Fprintf(w, "no ports available")
+	case -2:
+		fmt.Fprintf(w, "port busy")
+	default:
+		fmt.Fprintf(w, "%d", port)
 	}
-
-	addrPrivate := ":" + strconv.Itoa(t.portPrivate)
-
-	muxPrivate := http.NewServeMux()
-	muxPrivate.HandleFunc("/ws", t.ws)
-
-	t.httpPrivate= &http.Server{
-		Addr:    addrPrivate,
-		Handler: muxPrivate,
-	}
-
-	t.Add(2)
-	t.httpPrivate.RegisterOnShutdown(t.httpShutdown)
-
-	go func() {
-		log.Printf("%s Private HTTP listening on %s", t.logPrefix(), addrPrivate)
-		if err := t.httpPrivate.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalln(t.logPrefix(), "Private HTTP server failed:", err)
-		}
-		t.Done()
-	}()
 }
 
-func (t *Thing) httpStartPublic() {
-	if t.portPublic == 0 || t.authUser == ""{
-		log.Println(t.logPrefix(), "Skipping public HTTP")
-		return
+func (t *Thing) ListenForThings() {
+	if t.things == nil {
+		t.things = make(map[string]*Thing)
 	}
-
-	addrPublic := ":" + strconv.Itoa(t.portPublic)
-
-	fs := http.FileServer(http.Dir("web"))
-
-	muxPublic := http.NewServeMux()
-	muxPublic.HandleFunc("/ws", basicAuth(t.authUser, t.ws))
-	muxPublic.HandleFunc("/", basicAuth(t.authUser, t.home))
-	muxPublic.Handle("/web/", http.StripPrefix("/web", fs))
-
-	t.httpPublic = &http.Server{
-		Addr:    addrPublic,
-		Handler: muxPublic,
-	}
-
-	t.Add(2)
-	t.httpPublic.RegisterOnShutdown(t.httpShutdown)
-
-	go func() {
-		log.Printf("%s Public HTTP listening on %s", t.logPrefix(), addrPublic)
-		if err := t.httpPublic.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalln("Public HTTP server failed:", err)
-		}
-		t.Done()
-	}()
-}
-
-func (t *Thing) httpStart() {
-	t.httpStartPrivate()
-	t.httpStartPublic()
+	t.muxPrivate.HandleFunc("/port/{id}", getPort)
+	t.muxPrivate.HandleFunc("/ws/{id}", t.wsThing)
+	t.muxPublic.HandleFunc("/home/{id}", t.homeThing)
+	t.muxPublic.HandleFunc("/ws/{id}", t.wsThing)
+	//go t.portScan()
 }

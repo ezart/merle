@@ -7,12 +7,9 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
-
-type port struct {
-	ws *websocket.Conn
-}
 
 type Thing struct {
 	Init func() error
@@ -24,39 +21,44 @@ type Thing struct {
 	Model         string
 	Name          string
 	StartupTime   time.Time
+	ConnsMax      int
+	Shadow        bool
+
+	things        map[string]*Thing
 
 	sync.Mutex
-	handlers      map[string]func(*Packet)
+	msgHandlers   map[string]func(*Packet)
 	conns         map[*websocket.Conn]bool
 	connQ         chan bool
-	ConnsMax      int
 	port          *port
-	Shadow        bool
+	NewConnection chan *Thing
 
 	// http servers
 	sync.WaitGroup
 	authUser      string
 	portPublic    int
 	portPrivate   int
+	muxPublic     *mux.Router
+	muxPrivate    *mux.Router
 	httpPublic    *http.Server
 	httpPrivate   *http.Server
 
-	// tunnel to hub
+	// tunnel to mother
 	hubHost       string
 	hubUser       string
 	hubKey        string
 }
 
-func (d *Thing) connAdd(c *websocket.Conn) {
-	d.Lock()
-	defer d.Unlock()
-	d.conns[c] = true
+func (t *Thing) connAdd(c *websocket.Conn) {
+	t.Lock()
+	defer t.Unlock()
+	t.conns[c] = true
 }
 
-func (d *Thing) connDelete(c *websocket.Conn) {
-	d.Lock()
-	defer d.Unlock()
-	delete(d.conns, c)
+func (t *Thing) connDelete(c *websocket.Conn) {
+	t.Lock()
+	defer t.Unlock()
+	delete(t.conns, c)
 }
 
 func (t *Thing) logPrefix() string {
@@ -68,14 +70,14 @@ func (t *Thing) logPrefix() string {
 
 func (t *Thing) identify(p *Packet) {
 	resp := struct {
-		Type        string
+		Msg         string
 		Status      string
 		Id          string
 		Model       string
 		Name        string
 		StartupTime time.Time
 	}{
-		Type:        "identity",
+		Msg:         "identity",
 		Status:      t.Status,
 		Id:          t.Id,
 		Model:       t.Model,
@@ -86,14 +88,21 @@ func (t *Thing) identify(p *Packet) {
 	t.Reply(p)
 }
 
+func (t *Thing) getThing(id string) *Thing {
+	if thing, ok := t.things[id]; ok {
+		return thing
+	}
+	return nil
+}
+
 func (t *Thing) receive(p *Packet) {
 	msg := struct {
-		Type string
+		Msg string
 	}{}
 
 	json.Unmarshal(p.Msg, &msg)
 
-	f := t.handlers[msg.Type]
+	f := t.msgHandlers[msg.Msg]
 	if f == nil {
 		log.Printf("%s Skipping msg; no handler: %.80s",
 			t.logPrefix(), p.Msg)
@@ -103,11 +112,11 @@ func (t *Thing) receive(p *Packet) {
 }
 
 // Add a message handler
-func (t *Thing) AddHandler(msgType string, f func(*Packet)) {
-	if t.handlers == nil {
-		t.handlers = make(map[string]func(*Packet))
+func (t *Thing) HandleMsg(msg string, f func(*Packet)) {
+	if t.msgHandlers == nil {
+		t.msgHandlers = make(map[string]func(*Packet))
 	}
-	t.handlers[msgType] = f
+	t.msgHandlers[msg] = f
 }
 
 // Configure local http server
@@ -130,6 +139,8 @@ func (t *Thing) Start() {
 		return
 	}
 
+	t.httpInit()
+
 	if t.Init != nil {
 		log.Println(t.logPrefix(), "Init...")
 		if err := t.Init(); err != nil {
@@ -137,7 +148,7 @@ func (t *Thing) Start() {
 		}
 	}
 
-	t.AddHandler("identify", t.identify)
+	t.HandleMsg("identify", t.identify)
 
 	t.tunnelCreate()
 
@@ -280,3 +291,58 @@ func DefaultId_() string {
 
 	return ""
 }
+
+func (t *Thing) changeStatus(child *Thing, status string) {
+	/*
+	child.Status = status
+
+	spam := struct {
+		Msg     string
+		Id      string
+		Status  string
+	}{
+		Msg:    "status",
+		Id:     child.Id,
+		Status: child.Status,
+	}
+
+	msg, _ := json.Marshal(&spam)
+	t.broadcast(msg)
+	*/
+}
+
+func (t *Thing) portRun(p *port) {
+	/*
+	var child *Thing
+
+	resp, err := p.connect()
+	if err != nil {
+		goto disconnect
+	}
+
+	child = t.getThing(resp.Id)
+	if child == nil {
+		d = h.newDevice(resp.Id, resp.Model, resp.Name, resp.StartupTime)
+		if d == nil {
+			goto disconnect
+		}
+	} else {
+		d.model = resp.Model
+		d.name = resp.Name
+		d.startupTime = resp.StartupTime
+	}
+
+	err = h.saveDevice(d)
+	if err != nil {
+		goto disconnect
+	}
+
+	h.changeStatus(d, "online")
+	p.run(d)
+	h.changeStatus(d, "offline")
+
+disconnect:
+	p.disconnect()
+	*/
+}
+

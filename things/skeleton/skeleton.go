@@ -42,7 +42,7 @@ func NewThing(id, model, name string) *merle.Thing {
 	s.Run = s.run
 	s.Home = s.home
 
-	s.AddHandler("animate", s.animate)
+	s.HandleMsg("animate", s.animate)
 
 	return &s.Thing
 }

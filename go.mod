@@ -5,6 +5,7 @@ go 1.17
 replace github.com/scottfeldman/merle => /home/admin/merle
 
 require (
+	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/msteinert/pam v0.0.0-20201130170657-e61372126161
 	gobot.io/x/gobot v1.15.0
@@ -19,13 +20,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sigurn/crc8 v0.0.0-20160107002456-e55481d6f45c // indirect
 	github.com/sigurn/utils v0.0.0-20190728110027-e1fefb11a144 // indirect
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
-	golang.org/x/text v0.3.7 // indirect
 	periph.io/x/periph v3.6.2+incompatible // indirect
 )
 
-require (
-	github.com/bgentry/speakeasy v0.1.0 // indirect
-	github.com/mattn/go-sqlite3 v1.14.9
-	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
-)
+require github.com/bgentry/speakeasy v0.1.0 // indirect

@@ -21,13 +21,19 @@ func (h *hub) init() error {
 }
 
 func (h *hub) run() {
-	for {}
+	h.ListenForThings()
+
+	/*
+	for {
+		select {
+		case t := <-h.NewConnection:
+			h.things[t.Id] = t
+		}
+	}
+	*/
 }
 
 func (h *hub) home(w http.ResponseWriter, r *http.Request) {
-}
-
-func (h *hub) animate(p *merle.Packet) {
 }
 
 func NewThing(id, model, name string) *merle.Thing {
@@ -42,8 +48,6 @@ func NewThing(id, model, name string) *merle.Thing {
 	h.Init = h.init
 	h.Run = h.run
 	h.Home = h.home
-
-	h.AddHandler("animate", h.animate)
 
 	return &h.Thing
 }

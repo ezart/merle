@@ -101,9 +101,9 @@ func NewThing(id, model, name string) *merle.Thing {
 	b.Run = b.run
 	b.Home = b.home
 
-	b.AddHandler("pause", b.pause)
-	b.AddHandler("resume", b.resume)
-	b.AddHandler("state", b.Broadcast)
+	b.HandleMsg("pause", b.pause)
+	b.HandleMsg("resume", b.resume)
+	b.HandleMsg("state", b.Broadcast)
 
 	return &b.Thing
 }

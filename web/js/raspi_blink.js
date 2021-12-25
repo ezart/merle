@@ -9,10 +9,10 @@ let model
 let name
 let status
 let ledState
+let paused = false
 
 function sendForIdentity() {
-	var cmd = {Type: "identify"}
-	conn.send(JSON.stringify(cmd))
+	conn.send(JSON.stringify({Msg: "identify"}))
 }
 
 function saveIdentity(msg) {
@@ -50,9 +50,20 @@ function refreshLed() {
 		new Date().getTime()
 }
 
+function refreshButton() {
+	var button = document.getElementById("pause")
+
+	if (paused) {
+		button.textContent = "Resume"
+	} else {
+		button.textContent = "Pause"
+	}
+}
+
 function refreshAll() {
 	refreshBase()
 	refreshLed()
+	refreshButton()
 }
 
 function updateStatus(msg) {
@@ -61,15 +72,13 @@ function updateStatus(msg) {
 }
 
 function pause() {
-	var button = document.getElementById("pause")
-
-	if (button.textContent == "Pause") {
-		conn.send(JSON.stringify({Type: "pause"}))
-		button.textContent = "Resume"
+	if (paused) {
+		conn.send(JSON.stringify({Msg: "resume"}))
 	} else {
-		conn.send(JSON.stringify({Type: "resume"}))
-		button.textContent = "Pause"
+		conn.send(JSON.stringify({Msg: "pause"}))
 	}
+	paused = !paused
+	refreshButton()
 }
 
 function Run(scheme, host, id) {
@@ -89,7 +98,7 @@ function Run(scheme, host, id) {
 
 		console.log('event', msg)
 
-		switch(msg.Type) {
+		switch(msg.Msg) {
 		case "identity":
 			saveIdentity(msg)
 			refreshAll()
@@ -97,6 +106,14 @@ function Run(scheme, host, id) {
 		case "state":
 			saveLedState(msg)
 			refreshLed()
+			break;
+		case "pause":
+			paused = true
+			refreshButton()
+			break;
+		case "resume":
+			paused = false
+			refreshButton()
 			break;
 		}
 	}

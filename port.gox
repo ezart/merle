@@ -255,7 +255,7 @@ func getPortRange() (begin int, end int, err error) {
 	return begin, end, nil
 }
 
-func (h *Hub) portScan() {
+func (t *Thing) portScan() {
 	var err error
 
 	portBegin, portEnd, err = getPortRange()
