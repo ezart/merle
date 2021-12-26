@@ -5,6 +5,7 @@
 package merle
 
 import (
+	"fmt"
 	"github.com/gorilla/websocket"
 	"io/ioutil"
 	"log"
@@ -225,16 +226,21 @@ func (t *Thing) scanPorts() {
 
 func getPortRange() (begin int, end int, err error) {
 
-	c, err := ioutil.ReadFile("/proc/sys/net/ipv4/ip_local_reserved_ports")
+	bytes, err := ioutil.ReadFile("/proc/sys/net/ipv4/ip_local_reserved_ports")
 	if err != nil {
 		return 0, 0, err
 	}
 
 	// strip whitespace
-	reservedPorts := strings.Fields(string(c))[0]
+	fields := strings.Fields(string(bytes))
+	if len(fields) == 0 {
+		return 0, 0, fmt.Errorf("Missing /proc/sys/net/ipv4/ip_local_reserved_ports?")
+	}
 
 	// TODO better parsing of reserved ports is needed.  This parser
 	// TODO assumes reserved_ports is a single range: [begin-end]
+
+	reservedPorts := fields[0]
 
 	begin, err = strconv.Atoi(strings.Split(reservedPorts, "-")[0])
 	if err != nil {

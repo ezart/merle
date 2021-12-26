@@ -30,10 +30,10 @@ func (t *Thing) _tunnelCreate() {
 		// ssh -i <key> <user>@<hub> curl -s localhost:8080/port?id=xxx
 
 		log.Printf("%s Getting port...[ssh -i %s %s@%s curl -s localhost:8080/port?id=%s]...",
-			t.logPrefix(), t.motherKey, t.motherUser, t.motherHost, t.Id)
+			t.logPrefix(), t.motherKey, t.motherUser, t.motherHost, t.id)
 		cmd := exec.Command("ssh", "-i", t.motherKey,
 			t.motherUser+"@"+t.motherHost,
-			"curl", "-s", "localhost:8080/port?id="+t.Id)
+			"curl", "-s", "localhost:8080/port?id="+t.id)
 
 		// If the parent process (this app) dies, kill the ssh cmd also
 		cmd.SysProcAttr = &syscall.SysProcAttr{

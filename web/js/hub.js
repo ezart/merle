@@ -2,11 +2,26 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
-function sendForDevices() {
-	conn.send(JSON.stringify({Msg: "devices"}))
+let status
+
+function sendForThings() {
+	conn.send(JSON.stringify({Msg: "things"}))
 }
 
-function updateStatus(device) {
+function addThing(thing) {
+}
+
+function saveThings(msg) {
+	if (msg.Things != null) {
+		for (const thing of msg.Things) {
+			console.log('thing', thing)
+			addThing(thing)
+		}
+	}
+}
+
+function updateStatus(msg) {
+	status = msg.Status
 }
 
 function Run(scheme, host, id) {
@@ -14,7 +29,7 @@ function Run(scheme, host, id) {
 	conn = new WebSocket(scheme + host + "/ws/" + id)
 
 	conn.onopen = function(evt) {
-		sendForDevices()
+		sendForThings()
 	}
 
 	conn.onclose = function(evt) {
@@ -27,7 +42,8 @@ function Run(scheme, host, id) {
 		console.log('event', msg)
 
 		switch(msg.Msg) {
-		case "devicesResp":
+		case "things":
+			saveThings(msg)
 			break
 		case "status":
 			updateStatus(msg)

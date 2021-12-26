@@ -15,13 +15,13 @@ type Thing struct {
 	Run  func()
 	Home func(w http.ResponseWriter, r *http.Request)
 
-	Status      string
-	Id          string
-	Model       string
-	Name        string
-	StartupTime time.Time
-	ConnsMax    int
-	Shadow      bool
+	status      string
+	id          string
+	model       string
+	name        string
+	startupTime time.Time
+	shadow      bool
+	connsMax    int
 
 	things map[string]*Thing
 
@@ -62,20 +62,19 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 		log.Println("Thing ID defaulting to", id)
 	}
 
-	t.Id = id
-	t.Model = model
-	t.Name = name
-	t.Status = "online"
-	t.StartupTime = time.Now()
+	t.id = id
+	t.model = model
+	t.name = name
+	t.status = "online"
+	t.startupTime = time.Now()
 
 	t.things = make(map[string]*Thing)
 	t.conns = make(map[*websocket.Conn]bool)
 
-	if t.ConnsMax == 0 {
-		t.ConnsMax = 10
+	if t.connsMax == 0 {
+		t.connsMax = 10
 	}
-	t.connQ = make(chan bool, t.ConnsMax)
-
+	t.connQ = make(chan bool, t.connsMax)
 
 	return t
 }
@@ -93,8 +92,8 @@ func (t *Thing) connDelete(c *websocket.Conn) {
 }
 
 func (t *Thing) logPrefix() string {
-	if t.Shadow {
-		return "[" + t.Id + "," + t.Model + "," + t.Name + "]"
+	if t.shadow {
+		return "[" + t.id + "," + t.model + "," + t.name + "] "
 	}
 	return ""
 }
@@ -109,11 +108,11 @@ func (t *Thing) identify(p *Packet) {
 		StartupTime time.Time
 	}{
 		Msg:         "identity",
-		Status:      t.Status,
-		Id:          t.Id,
-		Model:       t.Model,
-		Name:        t.Name,
-		StartupTime: t.StartupTime,
+		Status:      t.status,
+		Id:          t.id,
+		Model:       t.model,
+		Name:        t.name,
+		StartupTime: t.startupTime,
 	}
 	t.Reply(UpdatePacket(p, &resp))
 }
@@ -134,7 +133,7 @@ func (t *Thing) receive(p *Packet) {
 
 	f := t.msgHandlers[msg.Msg]
 	if f == nil {
-		log.Printf("%s Skipping msg; no handler: %.80s",
+		log.Printf("%sSkipping msg; no handler: %.80s",
 			t.logPrefix(), p.Msg)
 	}
 
@@ -158,7 +157,7 @@ func (t *Thing) HttpConfig(authUser string, portPublic, portPrivate int) {
 
 // Start the Thing
 func (t *Thing) Start() {
-	if t.Shadow {
+	if t.shadow {
 		return
 	}
 
@@ -189,7 +188,7 @@ func (t *Thing) Start() {
 
 // Reply sends Packet back to originator
 func (t *Thing) Reply(p *Packet) {
-	log.Printf("%s Reply: %.80s", t.logPrefix(), p.Msg)
+	log.Printf("%sReply: %.80s", t.logPrefix(), p.Msg)
 
 	t.Lock()
 	defer t.Unlock()
@@ -202,7 +201,7 @@ func (t *Thing) Reply(p *Packet) {
 
 // Sink sends Packet down towards bottom-most non-shadow Thing
 func (t *Thing) Sink(p *Packet) {
-	if !t.Shadow {
+	if !t.shadow {
 		return
 	}
 
@@ -215,18 +214,18 @@ func (t *Thing) Sink(p *Packet) {
 	}()
 
 	if t.port == nil {
-		log.Printf("%s Sink error: not running on port: %.80s",
+		log.Printf("%sSink error: not running on port: %.80s",
 			t.logPrefix(), p.Msg)
 		return
 	}
 
 	if src == t.port.ws {
-		log.Printf("%s Sink reject: message came in on port: %.80s",
+		log.Printf("%sSink reject: message came in on port: %.80s",
 			t.logPrefix(), p.Msg)
 		return
 	}
 
-	log.Printf("%s Sink: %.80s", t.logPrefix(), p.Msg)
+	log.Printf("%sSink: %.80s", t.logPrefix(), p.Msg)
 
 	p.conn = t.port.ws
 
@@ -248,11 +247,11 @@ func (t *Thing) Broadcast(p *Packet) {
 
 	switch len(t.conns) {
 	case 0:
-		log.Printf("%s Would broadcast: %.80s", t.logPrefix(), p.Msg)
+		log.Printf("%sWould broadcast: %.80s", t.logPrefix(), p.Msg)
 		return
 	case 1:
 		if _, ok := t.conns[src]; ok {
-			log.Printf("%s Would broadcast: %.80s",
+			log.Printf("%sWould broadcast: %.80s",
 				t.logPrefix(), p.Msg)
 			return
 		}
@@ -264,12 +263,12 @@ func (t *Thing) Broadcast(p *Packet) {
 	for c := range t.conns {
 		if c == src {
 			// skip self
-			log.Printf("%s Skipping broadcast: %.80s",
+			log.Printf("%sSkipping broadcast: %.80s",
 				t.logPrefix(), p.Msg)
 			continue
 		}
 		p.conn = c
-		log.Printf("%s Broadcast: %.80s", t.logPrefix(), p.Msg)
+		log.Printf("%sBroadcast: %.80s", t.logPrefix(), p.Msg)
 		p.writeMessage()
 	}
 }
@@ -290,10 +289,10 @@ func (t *Thing) HomeParams(r *http.Request) interface{} {
 	}{
 		Scheme: scheme,
 		Host:   r.Host,
-		Status: t.Status,
-		Id:     t.Id,
-		Model:  t.Model,
-		Name:   t.Name,
+		Status: t.status,
+		Id:     t.id,
+		Model:  t.model,
+		Name:   t.name,
 	}
 }
 
@@ -315,13 +314,9 @@ func defaultId() string {
 	return ""
 }
 
-func DefaultId() string {
-	return defaultId()
-}
-
 func (t *Thing) changeStatus(child *Thing, status string) {
 	/*
-		child.Status = status
+		child.status = status
 
 		spam := struct {
 			Msg     string
@@ -329,8 +324,8 @@ func (t *Thing) changeStatus(child *Thing, status string) {
 			Status  string
 		}{
 			Msg:    "status",
-			Id:     child.Id,
-			Status: child.Status,
+			Id:     child.id,
+			Status: child.status,
 		}
 
 		msg, _ := json.Marshal(&spam)

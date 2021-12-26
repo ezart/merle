@@ -265,5 +265,5 @@ func (t *Thing) ListenForThings() {
 	t.muxPrivate.HandleFunc("/port/{id}", getPort)
 	t.muxPublic.HandleFunc("/home/thing/{id}", t.homeThing)
 	t.muxPublic.HandleFunc("/ws/thing/{id}", t.wsThing)
-	//go t.portScan()
+	t.portScan()
 }

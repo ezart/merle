@@ -28,9 +28,10 @@ func (h *hub) init() error {
 }
 
 func (h *hub) run() {
-	//h.ListenForThings()
+	h.ListenForThings()
 
-	for {}
+	for {
+	}
 
 	/*
 		for {
@@ -46,8 +47,8 @@ func (h *hub) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, h.HomeParams(r))
 }
 
-func (h *hub) devices(p *merle.Packet) {
-	log.Println("got devices")
+func (h *hub) things(p *merle.Packet) {
+	log.Println("got things")
 }
 
 func NewThing(id, model, name string) *merle.Thing {
@@ -57,7 +58,7 @@ func NewThing(id, model, name string) *merle.Thing {
 	h.Run = h.run
 	h.Home = h.home
 
-	h.HandleMsg("devices", h.devices)
+	h.HandleMsg("things", h.things)
 
 	return h.InitThing(id, model, name)
 }

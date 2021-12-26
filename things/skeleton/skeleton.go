@@ -8,7 +8,6 @@ package skeleton
 import (
 	"github.com/scottfeldman/merle"
 	"net/http"
-	"time"
 )
 
 type skeleton struct {
@@ -31,13 +30,7 @@ func (s *skeleton) animate(p *merle.Packet) {
 }
 
 func NewThing(id, model, name string) *merle.Thing {
-	s := skeleton{}
-
-	s.Status = "online"
-	s.Id = id
-	s.Model = model
-	s.Name = name
-	s.StartupTime = time.Now()
+	s := &skeleton{}
 
 	s.Init = s.init
 	s.Run = s.run
@@ -45,5 +38,5 @@ func NewThing(id, model, name string) *merle.Thing {
 
 	s.HandleMsg("animate", s.animate)
 
-	return &s.Thing
+	return s.InitThing(id, model, name)
 }

@@ -38,10 +38,10 @@ func (b *blinker) init() error {
 
 func (b *blinker) sendState() {
 	msg := struct {
-		Msg string
+		Msg   string
 		State bool
 	}{
-		Msg:  "state",
+		Msg:   "state",
 		State: b.led.State(),
 	}
 	b.Broadcast(merle.NewPacket(&msg))
@@ -69,10 +69,10 @@ func (b *blinker) home(w http.ResponseWriter, r *http.Request) {
 
 func (b *blinker) getPaused(p *merle.Packet) {
 	msg := struct {
-		Msg string
+		Msg    string
 		Paused bool
 	}{
-		Msg:  "paused",
+		Msg:    "paused",
 		Paused: b.paused,
 	}
 	b.Reply(merle.UpdatePacket(p, &msg))
