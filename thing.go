@@ -49,6 +49,28 @@ type Thing struct {
 	motherKey  string
 }
 
+func (t *Thing) InitThing(id, model, name string) *Thing {
+	if model == "" {
+		log.Println("Thing Model is missing")
+		return nil
+	}
+	if name == "" {
+		log.Println("Thing Name is missing")
+		return nil
+	}
+	if id == "" {
+		id = defaultId()
+	}
+
+	t.Id = id
+	t.Model = model
+	t.Name = name
+	t.Status = "online"
+	t.StartupTime = time.Now()
+
+	return t
+}
+
 func (t *Thing) connAdd(c *websocket.Conn) {
 	t.Lock()
 	defer t.Unlock()
@@ -275,7 +297,7 @@ func (t *Thing) HomeParams(r *http.Request) interface{} {
 }
 
 // DefaultId returns a default ID based on the device's MAC address
-func DefaultId_() string {
+func defaultId() string {
 
 	// Use the MAC address of the first non-lo interface
 	// as the default device ID
@@ -290,6 +312,10 @@ func DefaultId_() string {
 	}
 
 	return ""
+}
+
+func DefaultId() string {
+	return defaultId()
 }
 
 func (t *Thing) changeStatus(child *Thing, status string) {

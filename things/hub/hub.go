@@ -11,7 +11,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"time"
 )
 
 var templ *template.Template
@@ -29,7 +28,7 @@ func (h *hub) init() error {
 }
 
 func (h *hub) run() {
-	h.ListenForThings()
+	//h.ListenForThings()
 
 	for {}
 
@@ -52,13 +51,7 @@ func (h *hub) devices(p *merle.Packet) {
 }
 
 func NewThing(id, model, name string) *merle.Thing {
-	h := hub{}
-
-	h.Status = "online"
-	h.Id = id
-	h.Model = model
-	h.Name = name
-	h.StartupTime = time.Now()
+	h := &hub{}
 
 	h.Init = h.init
 	h.Run = h.run
@@ -66,5 +59,5 @@ func NewThing(id, model, name string) *merle.Thing {
 
 	h.HandleMsg("devices", h.devices)
 
-	return &h.Thing
+	return h.InitThing(id, model, name)
 }

@@ -36,13 +36,11 @@ func (b *blinker) init() error {
 	return nil
 }
 
-type msgState struct {
-	Msg string
-	State bool
-}
-
 func (b *blinker) sendState() {
-	var msg = msgState{
+	msg := struct {
+		Msg string
+		State bool
+	}{
 		Msg:  "state",
 		State: b.led.State(),
 	}
@@ -82,20 +80,7 @@ func (b *blinker) resume(p *merle.Packet) {
 }
 
 func NewThing(id, model, name string) *merle.Thing {
-	b := blinker{}
-
-	if model == "" || name == "" {
-		return nil
-	}
-	if id == "" {
-		id = merle.DefaultId_()
-	}
-
-	b.Status = "online"
-	b.Id = id
-	b.Model = model
-	b.Name = name
-	b.StartupTime = time.Now()
+	b := &blinker{}
 
 	b.Init = b.init
 	b.Run = b.run
@@ -105,5 +90,5 @@ func NewThing(id, model, name string) *merle.Thing {
 	b.HandleMsg("resume", b.resume)
 	b.HandleMsg("state", b.Broadcast)
 
-	return &b.Thing
+	return b.InitThing(id, model, name)
 }
