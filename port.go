@@ -5,7 +5,6 @@
 package merle
 
 import (
-	"encoding/json"
 	"github.com/gorilla/websocket"
 	"io/ioutil"
 	"log"
@@ -144,8 +143,7 @@ func (p *port) run(t *Thing) {
 	t.Unlock()
 
 	msg := struct{ Msg string }{Msg: "start"}
-	pkt.Msg, _ = json.Marshal(&msg)
-	t.receive(pkt)
+	t.receive(UpdatePacket(pkt, &msg))
 
 	for {
 		pkt.Msg, err = p.readMessage()

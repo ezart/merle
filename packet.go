@@ -18,8 +18,17 @@ type Packet struct {
 
 func NewPacket(msg interface{}) *Packet {
 	var p Packet
-	p.Msg, _ = json.Marshal(&msg)
+	p.Msg, _ = json.Marshal(msg)
 	return &p
+}
+
+func UpdatePacket(p *Packet, msg interface{}) *Packet {
+	p.Msg, _ = json.Marshal(msg)
+	return p
+}
+
+func UnpackPacket(p *Packet, msg interface{}) {
+	json.Unmarshal(p.Msg, msg)
 }
 
 func (p *Packet) writeMessage() error {

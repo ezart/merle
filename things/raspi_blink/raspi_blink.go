@@ -67,6 +67,18 @@ func (b *blinker) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, b.HomeParams(r))
 }
 
+func (b *blinker) getPaused(p *merle.Packet) {
+	msg := struct {
+		Msg string
+		Paused bool
+	}{
+		Msg:  "paused",
+		Paused: b.paused,
+	}
+	b.Reply(merle.UpdatePacket(p, &msg))
+
+}
+
 func (b *blinker) pause(p *merle.Packet) {
 	b.paused = true
 	b.Sink(p)
@@ -86,6 +98,7 @@ func NewThing(id, model, name string) *merle.Thing {
 	b.Run = b.run
 	b.Home = b.home
 
+	b.HandleMsg("paused", b.getPaused)
 	b.HandleMsg("pause", b.pause)
 	b.HandleMsg("resume", b.resume)
 	b.HandleMsg("state", b.Broadcast)

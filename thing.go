@@ -1,7 +1,6 @@
 package merle
 
 import (
-	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"log"
@@ -60,6 +59,7 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	}
 	if id == "" {
 		id = defaultId()
+		log.Println("Thing ID defaulting to", id)
 	}
 
 	t.Id = id
@@ -67,6 +67,15 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	t.Name = name
 	t.Status = "online"
 	t.StartupTime = time.Now()
+
+	t.things = make(map[string]*Thing)
+	t.conns = make(map[*websocket.Conn]bool)
+
+	if t.ConnsMax == 0 {
+		t.ConnsMax = 10
+	}
+	t.connQ = make(chan bool, t.ConnsMax)
+
 
 	return t
 }
@@ -106,8 +115,7 @@ func (t *Thing) identify(p *Packet) {
 		Name:        t.Name,
 		StartupTime: t.StartupTime,
 	}
-	p.Msg, _ = json.Marshal(&resp)
-	t.Reply(p)
+	t.Reply(UpdatePacket(p, &resp))
 }
 
 func (t *Thing) getThing(id string) *Thing {
@@ -122,7 +130,7 @@ func (t *Thing) receive(p *Packet) {
 		Msg string
 	}{}
 
-	json.Unmarshal(p.Msg, &msg)
+	UnpackPacket(p, &msg)
 
 	f := t.msgHandlers[msg.Msg]
 	if f == nil {
@@ -150,13 +158,6 @@ func (t *Thing) HttpConfig(authUser string, portPublic, portPrivate int) {
 
 // Start the Thing
 func (t *Thing) Start() {
-	t.conns = make(map[*websocket.Conn]bool)
-
-	if t.ConnsMax == 0 {
-		t.ConnsMax = 10
-	}
-	t.connQ = make(chan bool, t.ConnsMax)
-
 	if t.Shadow {
 		return
 	}

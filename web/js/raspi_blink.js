@@ -22,6 +22,14 @@ function saveIdentity(msg) {
 	name = msg.Name
 }
 
+function sendForPaused() {
+	conn.send(JSON.stringify({Msg: "paused"}))
+}
+
+function savePaused(msg) {
+	paused = msg.Paused
+}
+
 function saveLedState(msg) {
 	ledState = msg.State
 }
@@ -32,15 +40,14 @@ function refreshBase() {
 	var preModel = document.getElementById("model")
 	var preName = document.getElementById("name")
 
-	labels.className = "labels"
 	preId.textContent = id
 	preModel.textContent = model
 	preName.textContent = name
+	labels.className = "labels"
 }
 
 function refreshLed() {
 	var image = document.getElementById("raspi")
-	image.style.visibility = "visible"
 	on = "off"
 	if (ledState) {
 		on = "on"
@@ -48,16 +55,17 @@ function refreshLed() {
 	// force refresh of image by using getTime() trick
 	image.src = "./web/images/" + model + "/led-gpio17-" + on + ".png?t=" +
 		new Date().getTime()
+	image.style.visibility = "visible"
 }
 
 function refreshButton() {
 	var button = document.getElementById("pause")
-
 	if (paused) {
 		button.textContent = "Resume"
 	} else {
 		button.textContent = "Pause"
 	}
+	button.style.visibility = "visible"
 }
 
 function refreshAll() {
@@ -101,6 +109,10 @@ function Run(scheme, host, id) {
 		switch(msg.Msg) {
 		case "identity":
 			saveIdentity(msg)
+			sendForPaused()
+			break
+		case "paused":
+			savePaused(msg)
 			refreshAll()
 			break
 		case "state":

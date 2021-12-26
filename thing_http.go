@@ -190,7 +190,7 @@ func (t *Thing) httpStartPrivate() {
 func (t *Thing) httpInitPublic() {
 	fs := http.FileServer(http.Dir("web"))
 	t.muxPublic = mux.NewRouter()
-	t.muxPublic.HandleFunc("/ws", basicAuth(t.authUser, t.ws))
+	t.muxPublic.HandleFunc("/ws/{id}", basicAuth(t.authUser, t.ws))
 	t.muxPublic.HandleFunc("/", basicAuth(t.authUser, t.home))
 	t.muxPublic.PathPrefix("/web/").Handler(http.StripPrefix("/web/", fs))
 }
@@ -262,12 +262,8 @@ func getPort(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Thing) ListenForThings() {
-	if t.things == nil {
-		t.things = make(map[string]*Thing)
-	}
 	t.muxPrivate.HandleFunc("/port/{id}", getPort)
-	t.muxPrivate.HandleFunc("/ws/{id}", t.wsThing)
-	t.muxPublic.HandleFunc("/home/{id}", t.homeThing)
-	t.muxPublic.HandleFunc("/ws/{id}", t.wsThing)
+	t.muxPublic.HandleFunc("/home/thing/{id}", t.homeThing)
+	t.muxPublic.HandleFunc("/ws/thing/{id}", t.wsThing)
 	//go t.portScan()
 }
