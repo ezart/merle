@@ -37,13 +37,13 @@ func (b *blinker) init() error {
 }
 
 type msgState struct {
-	Type  string
+	Msg string
 	State bool
 }
 
 func (b *blinker) sendState() {
 	var msg = msgState{
-		Type:  "state",
+		Msg:  "state",
 		State: b.led.State(),
 	}
 	b.Broadcast(merle.NewPacket(&msg))

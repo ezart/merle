@@ -43,10 +43,10 @@ type Thing struct {
 	httpPublic  *http.Server
 	httpPrivate *http.Server
 
-	// tunnel to mother
-	hubHost string
-	hubUser string
-	hubKey  string
+	// mother
+	motherHost string
+	motherUser string
+	motherKey  string
 }
 
 func (t *Thing) connAdd(c *websocket.Conn) {
@@ -252,9 +252,9 @@ func (t *Thing) Broadcast(p *Packet) {
 }
 
 func (t *Thing) HomeParams(r *http.Request) interface{} {
-	scheme := "wss:\\"
+	scheme := "wss://"
 	if r.TLS == nil {
-		scheme = "ws:\\"
+		scheme = "ws://"
 	}
 
 	return struct {

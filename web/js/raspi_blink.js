@@ -83,7 +83,7 @@ function pause() {
 
 function Run(scheme, host, id) {
 
-	conn = new WebSocket(scheme + host + "/ws?id=" + id)
+	conn = new WebSocket(scheme + host + "/ws/" + id)
 
 	conn.onopen = function(evt) {
 		sendForIdentity()
@@ -102,19 +102,22 @@ function Run(scheme, host, id) {
 		case "identity":
 			saveIdentity(msg)
 			refreshAll()
-			break;
+			break
 		case "state":
 			saveLedState(msg)
 			refreshLed()
-			break;
+			break
 		case "pause":
 			paused = true
 			refreshButton()
-			break;
+			break
 		case "resume":
 			paused = false
 			refreshButton()
-			break;
+			break
+		case "status":
+			updateStatus(msg)
+			break
 		}
 	}
 }

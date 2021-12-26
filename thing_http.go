@@ -22,6 +22,7 @@ import (
 var upgrader = websocket.Upgrader{}
 
 func (t *Thing) wsThing(w http.ResponseWriter, r *http.Request) {
+	log.Println("hitting wsThing")
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -35,6 +36,7 @@ func (t *Thing) wsThing(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Thing) homeThing(w http.ResponseWriter, r *http.Request) {
+	log.Println("hitting homeThing")
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -48,6 +50,7 @@ func (t *Thing) homeThing(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
+	log.Println("hitting ws")
 	t.connQ <- true
 	defer func() { <-t.connQ }()
 
@@ -77,6 +80,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
+	log.Println("hitting home")
 	if r.URL.Path != "/" {
 		http.Error(w, "Not found", http.StatusNotFound)
 		return

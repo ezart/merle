@@ -30,9 +30,9 @@ func (t *Thing) _tunnelCreate() {
 		// ssh -i <key> <user>@<hub> curl -s localhost:8080/port?id=xxx
 
 		log.Printf("%s Getting port...[ssh -i %s %s@%s curl -s localhost:8080/port?id=%s]...",
-			t.logPrefix(), t.hubKey, t.hubUser, t.hubHost, t.Id)
-		cmd := exec.Command("ssh", "-i", t.hubKey,
-			t.hubUser+"@"+t.hubHost,
+			t.logPrefix(), t.motherKey, t.motherUser, t.motherHost, t.Id)
+		cmd := exec.Command("ssh", "-i", t.motherKey,
+			t.motherUser+"@"+t.motherHost,
 			"curl", "-s", "localhost:8080/port?id="+t.Id)
 
 		// If the parent process (this app) dies, kill the ssh cmd also
@@ -65,10 +65,10 @@ func (t *Thing) _tunnelCreate() {
 
 		remote = fmt.Sprintf("%s:localhost:8080", port)
 		log.Printf("%s Creating tunnel...[ssh -o ExitOnForwardFailure=yes -CNT -i %s -R %s %s@%s]...",
-			t.logPrefix(), t.hubKey, remote, t.hubUser, t.hubHost)
+			t.logPrefix(), t.motherKey, remote, t.motherUser, t.motherHost)
 		cmd = exec.Command("ssh", "-o", "ExitOnForwardFailure=yes",
-			"-CNT", "-i", t.hubKey,
-			"-R", remote, t.hubUser+"@"+t.hubHost)
+			"-CNT", "-i", t.motherKey,
+			"-R", remote, t.motherUser+"@"+t.motherHost)
 
 		// If the parent process (this app) dies, kill the ssh cmd also
 		cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -98,9 +98,9 @@ func (t *Thing) _tunnelCreate() {
 
 func (t *Thing) tunnelCreate() {
 
-	if t.hubHost == "" || t.hubUser == "" || t.hubKey == "" {
+	if t.motherHost == "" || t.motherUser == "" || t.motherKey == "" {
 		log.Println(t.logPrefix(),
-			"Skipping tunnel; missing hub connection parameters")
+			"Skipping tunnel; missing connection parameters")
 		return
 	}
 
@@ -109,7 +109,7 @@ func (t *Thing) tunnelCreate() {
 
 // Configure tunnel
 func (t *Thing) TunnelConfig(host, user, key string) {
-	t.hubHost = host
-	t.hubUser = user
-	t.hubKey = key
+	t.motherHost = host
+	t.motherUser = user
+	t.motherKey = key
 }
