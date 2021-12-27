@@ -34,17 +34,12 @@ func (h *hub) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, h.HomeParams(r))
 }
 
-func (h *hub) things(p *merle.Packet) {
-}
-
 func NewThing(id, model, name string) *merle.Thing {
 	h := &hub{}
 
 	h.Init = h.init
 	h.Run = h.run
 	h.Home = h.home
-
-	h.HandleMsg("GetThings", h.things)
 
 	return h.InitThing(id, model, name)
 }

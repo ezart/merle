@@ -119,7 +119,7 @@ type msgIdentity struct {
 	StartupTime time.Time
 }
 
-func (t *Thing) identity(p *Packet) {
+func (t *Thing) getIdentity(p *Packet) {
 	resp := msgIdentity {
 		Msg:         "RespIdentity",
 		Status:      t.status,
@@ -127,6 +127,29 @@ func (t *Thing) identity(p *Packet) {
 		Model:       t.model,
 		Name:        t.name,
 		StartupTime: t.startupTime,
+	}
+	t.Reply(p.Marshal(&resp))
+}
+
+type msgThing struct {
+	Id string
+	Model string
+	Name string
+	Status string
+}
+
+type msgThings struct {
+	Msg string
+	Things []msgThing
+}
+
+func (t *Thing) getThings(p *Packet) {
+	resp := msgThings{
+		Msg: "RespThings",
+	}
+	for _, thing := range t.things {
+		resp.Things = append(resp.Things, msgThing{thing.id,
+			thing.model, thing.name, thing.status})
 	}
 	t.Reply(p.Marshal(&resp))
 }
@@ -185,7 +208,8 @@ func (t *Thing) Start() {
 		}
 	}
 
-	t.HandleMsg("GetIdentity", t.identity)
+	t.HandleMsg("GetIdentity", t.getIdentity)
+	t.HandleMsg("GetThings", t.getThings)
 
 	t.tunnelCreate()
 
