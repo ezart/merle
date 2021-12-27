@@ -40,15 +40,11 @@ func (p *port) writeJSON(v interface{}) error {
 }
 
 func (p *port) writeMessage(msg []byte) error {
-	log.Printf("Port writeMessage: %.80s", msg)
 	return p.ws.WriteMessage(websocket.TextMessage, msg)
 }
 
 func (p *port) readMessage() (msg []byte, err error) {
 	_, msg, err = p.ws.ReadMessage()
-	if err == nil {
-		log.Printf("Port readMessage: %.80s", msg)
-	}
 	return msg, err
 }
 
@@ -64,13 +60,13 @@ func (p *port) wsOpen() error {
 	return err
 }
 
-func (p *port) wsIdentify() error {
-	msg := struct{ Msg string }{Msg: "identify"}
+func (p *port) wsIdentity() error {
+	msg := struct{ Msg string }{Msg: "GetIdentity"}
 	return p.writeJSON(&msg)
 }
 
-func (p *port) wsIdentity() (resp *identity, err error) {
-	var identity identity
+func (p *port) wsRespIdentity() (resp *msgIdentity, err error) {
+	var identity msgIdentity
 
 	// Wait for response no longer than a second
 	p.ws.SetReadDeadline(time.Now().Add(time.Second))
@@ -99,22 +95,22 @@ func (p *port) wsClose() {
 	p.ws = nil
 }
 
-func (p *port) connect() (resp *identity, err error) {
+func (p *port) connect() (resp *msgIdentity, err error) {
 	err = p.wsOpen()
 	if err != nil {
 		log.Printf("Port[%d] run wsOpen error: %s", p.port, err)
 		return nil, err
 	}
 
-	err = p.wsIdentify()
+	err = p.wsIdentity()
 	if err != nil {
-		log.Printf("Port[%d] run wsIdentify error: %s", p.port, err)
+		log.Printf("Port[%d] run wsIdentity error: %s", p.port, err)
 		return nil, err
 	}
 
-	resp, err = p.wsIdentity()
+	resp, err = p.wsRespIdentity()
 	if err != nil {
-		log.Printf("Port[%d] run wsIdentity error: %s", p.port, err)
+		log.Printf("Port[%d] run wsRespIdentity error: %s", p.port, err)
 		return nil, err
 	}
 
@@ -142,7 +138,7 @@ func (p *port) run(t *Thing) {
 	t.port = p
 	t.Unlock()
 
-	msg := struct{ Msg string }{Msg: "start"}
+	msg := struct{ Msg string }{Msg: "CmdStart"}
 	t.receive(pkt.Marshal(&msg))
 
 	for {

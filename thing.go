@@ -110,7 +110,7 @@ func (t *Thing) logPrefix() string {
 	return ""
 }
 
-type identity struct {
+type msgIdentity struct {
 	Msg         string
 	Status      string
 	Id          string
@@ -119,9 +119,9 @@ type identity struct {
 	StartupTime time.Time
 }
 
-func (t *Thing) identify(p *Packet) {
-	resp := identity {
-		Msg:         "identity",
+func (t *Thing) identity(p *Packet) {
+	resp := msgIdentity {
+		Msg:         "RespIdentity",
 		Status:      t.status,
 		Id:          t.id,
 		Model:       t.model,
@@ -185,7 +185,7 @@ func (t *Thing) Start() {
 		}
 	}
 
-	t.HandleMsg("identify", t.identify)
+	t.HandleMsg("GetIdentity", t.identity)
 
 	t.tunnelCreate()
 
@@ -203,11 +203,10 @@ func (t *Thing) Start() {
 
 // Reply sends Packet back to originator
 func (t *Thing) Reply(p *Packet) {
-	log.Printf("%sReply: %.80s", t.logPrefix(), p.String())
-
 	t.Lock()
 	defer t.Unlock()
 
+	log.Printf("%sReply: %.80s", t.logPrefix(), p.String())
 	err := p.writeMessage()
 	if err != nil {
 		log.Println(t.logPrefix(), "Reply error:", err)
@@ -235,15 +234,14 @@ func (t *Thing) Sink(p *Packet) {
 	}
 
 	if src == t.port.ws {
-		log.Printf("%sSink reject: message came in on port: %.80s",
-			t.logPrefix(), p.String())
+		//log.Printf("%sSink reject: message came in on port: %.80s",
+		//	t.logPrefix(), p.String())
 		return
 	}
 
-	log.Printf("%sSink: %.80s", t.logPrefix(), p.String())
-
 	p.conn = t.port.ws
 
+	log.Printf("%sSink: %.80s", t.logPrefix(), p.String())
 	err := p.writeMessage()
 	if err != nil {
 		log.Println(t.logPrefix(), "Sink error:", err)
@@ -275,15 +273,15 @@ func (t *Thing) Broadcast(p *Packet) {
 	// TODO Perf optimization: use websocket.NewPreparedMessage
 	// TODO to prepare msg once, and then send on each connection
 
+	log.Printf("%sBroadcast: %.80s", t.logPrefix(), p.String())
 	for c := range t.conns {
 		if c == src {
 			// skip self
-			log.Printf("%sSkipping broadcast: %.80s",
-				t.logPrefix(), p.String())
+			//log.Printf("%sSkipping broadcast: %.80s",
+			//	t.logPrefix(), p.String())
 			continue
 		}
 		p.conn = c
-		log.Printf("%sBroadcast: %.80s", t.logPrefix(), p.String())
 		p.writeMessage()
 	}
 }
@@ -337,7 +335,7 @@ func (t *Thing) changeStatus(child *Thing, status string) {
 		Id      string
 		Status  string
 	}{
-		Msg:    "status",
+		Msg:    "SpamStatus",
 		Id:     child.id,
 		Status: child.status,
 	}
@@ -368,7 +366,10 @@ func (t *Thing) portRun(p *port) {
 			log.Println(t.logPrefix(), "Model mismatch")
 			goto disconnect
 		}
-		child.name = resp.Name
+		if child.name != resp.Name {
+			log.Println(t.logPrefix(), "Name mismatch")
+			goto disconnect
+		}
 	}
 
 

@@ -5,7 +5,7 @@
 let status
 
 function sendForThings() {
-	conn.send(JSON.stringify({Msg: "things"}))
+	conn.send(JSON.stringify({Msg: "GetThings"}))
 }
 
 function addThing(thing) {
@@ -42,10 +42,10 @@ function Run(scheme, host, id) {
 		console.log('event', msg)
 
 		switch(msg.Msg) {
-		case "things":
+		case "RespThings":
 			saveThings(msg)
 			break
-		case "status":
+		case "SpamStatus":
 			updateStatus(msg)
 			break
 		}

@@ -12,7 +12,7 @@ let ledState
 let paused = false
 
 function sendForIdentity() {
-	conn.send(JSON.stringify({Msg: "identify"}))
+	conn.send(JSON.stringify({Msg: "GetIdentity"}))
 }
 
 function saveIdentity(msg) {
@@ -23,7 +23,7 @@ function saveIdentity(msg) {
 }
 
 function sendForPaused() {
-	conn.send(JSON.stringify({Msg: "paused"}))
+	conn.send(JSON.stringify({Msg: "GetPaused"}))
 }
 
 function savePaused(msg) {
@@ -81,9 +81,9 @@ function updateStatus(msg) {
 
 function pause() {
 	if (paused) {
-		conn.send(JSON.stringify({Msg: "resume"}))
+		conn.send(JSON.stringify({Msg: "CmdResume"}))
 	} else {
-		conn.send(JSON.stringify({Msg: "pause"}))
+		conn.send(JSON.stringify({Msg: "CmdPause"}))
 	}
 	paused = !paused
 	refreshButton()
@@ -107,27 +107,27 @@ function Run(scheme, host, id) {
 		console.log('event', msg)
 
 		switch(msg.Msg) {
-		case "identity":
+		case "RespIdentity":
 			saveIdentity(msg)
 			sendForPaused()
 			break
-		case "paused":
+		case "RespPaused":
 			savePaused(msg)
 			refreshAll()
 			break
-		case "state":
+		case "SpamState":
 			saveLedState(msg)
 			refreshLed()
 			break
-		case "pause":
+		case "CmdPause":
 			paused = true
 			refreshButton()
 			break
-		case "resume":
+		case "CmdResume":
 			paused = false
 			refreshButton()
 			break
-		case "status":
+		case "SpamStatus":
 			updateStatus(msg)
 			break
 		}

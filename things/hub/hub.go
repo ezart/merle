@@ -44,7 +44,7 @@ func NewThing(id, model, name string) *merle.Thing {
 	h.Run = h.run
 	h.Home = h.home
 
-	h.HandleMsg("things", h.things)
+	h.HandleMsg("GetThings", h.things)
 
 	return h.InitThing(id, model, name)
 }
