@@ -9,7 +9,6 @@ package hub
 import (
 	"github.com/scottfeldman/merle"
 	"html/template"
-	"log"
 	"net/http"
 )
 
@@ -24,23 +23,11 @@ type hub struct {
 }
 
 func (h *hub) init() error {
-	return nil
+	return h.ListenForThings()
 }
 
 func (h *hub) run() {
-	h.ListenForThings()
-
-	for {
-	}
-
-	/*
-		for {
-			select {
-			case t := <-h.NewConnection:
-				h.things[t.Id] = t
-			}
-		}
-	*/
+	for {}
 }
 
 func (h *hub) home(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +35,6 @@ func (h *hub) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *hub) things(p *merle.Packet) {
-	log.Println("got things")
 }
 
 func NewThing(id, model, name string) *merle.Thing {

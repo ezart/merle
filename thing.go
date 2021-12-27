@@ -23,14 +23,16 @@ type Thing struct {
 	shadow      bool
 	connsMax    int
 
+	// children
+	factory func(string, string, string) *Thing
 	things map[string]*Thing
 
+	// ws connections
 	sync.Mutex
 	msgHandlers   map[string]func(*Packet)
 	conns         map[*websocket.Conn]bool
 	connQ         chan bool
 	port          *port
-	NewConnection chan *Thing
 
 	// http servers
 	sync.WaitGroup
@@ -47,6 +49,10 @@ type Thing struct {
 	motherUser string
 	motherKey  string
 	motherPortPrivate int
+}
+
+func (t *Thing) SetFactory(f func(string, string, string) *Thing) {
+	t.factory = f
 }
 
 func (t *Thing) InitThing(id, model, name string) *Thing {
@@ -69,13 +75,18 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	t.status = "online"
 	t.startupTime = time.Now()
 
-	t.things = make(map[string]*Thing)
 	t.conns = make(map[*websocket.Conn]bool)
 
 	if t.connsMax == 0 {
 		t.connsMax = 10
 	}
 	t.connQ = make(chan bool, t.connsMax)
+
+	t.factory = func(string, string, string) *Thing {
+		log.Println(t.logPrefix(), "Need to set factory")
+		return nil
+	}
+	t.things = make(map[string]*Thing)
 
 	return t
 }
@@ -117,7 +128,7 @@ func (t *Thing) identify(p *Packet) {
 		Name:        t.name,
 		StartupTime: t.startupTime,
 	}
-	t.Reply(UpdatePacket(p, &resp))
+	t.Reply(p.Marshal(&resp))
 }
 
 func (t *Thing) getThing(id string) *Thing {
@@ -132,12 +143,13 @@ func (t *Thing) receive(p *Packet) {
 		Msg string
 	}{}
 
-	UnpackPacket(p, &msg)
+	p.Unmarshal(&msg)
 
 	f := t.msgHandlers[msg.Msg]
 	if f == nil {
 		log.Printf("%sSkipping msg; no handler: %.80s",
-			t.logPrefix(), p.Msg)
+			t.logPrefix(), p.String())
+		return
 	}
 
 	f(p)
@@ -191,7 +203,7 @@ func (t *Thing) Start() {
 
 // Reply sends Packet back to originator
 func (t *Thing) Reply(p *Packet) {
-	log.Printf("%sReply: %.80s", t.logPrefix(), p.Msg)
+	log.Printf("%sReply: %.80s", t.logPrefix(), p.String())
 
 	t.Lock()
 	defer t.Unlock()
@@ -218,17 +230,17 @@ func (t *Thing) Sink(p *Packet) {
 
 	if t.port == nil {
 		log.Printf("%sSink error: not running on port: %.80s",
-			t.logPrefix(), p.Msg)
+			t.logPrefix(), p.String())
 		return
 	}
 
 	if src == t.port.ws {
 		log.Printf("%sSink reject: message came in on port: %.80s",
-			t.logPrefix(), p.Msg)
+			t.logPrefix(), p.String())
 		return
 	}
 
-	log.Printf("%sSink: %.80s", t.logPrefix(), p.Msg)
+	log.Printf("%sSink: %.80s", t.logPrefix(), p.String())
 
 	p.conn = t.port.ws
 
@@ -250,12 +262,12 @@ func (t *Thing) Broadcast(p *Packet) {
 
 	switch len(t.conns) {
 	case 0:
-		log.Printf("%sWould broadcast: %.80s", t.logPrefix(), p.Msg)
+		log.Printf("%sWould broadcast: %.80s", t.logPrefix(), p.String())
 		return
 	case 1:
 		if _, ok := t.conns[src]; ok {
 			log.Printf("%sWould broadcast: %.80s",
-				t.logPrefix(), p.Msg)
+				t.logPrefix(), p.String())
 			return
 		}
 	}
@@ -267,11 +279,11 @@ func (t *Thing) Broadcast(p *Packet) {
 		if c == src {
 			// skip self
 			log.Printf("%sSkipping broadcast: %.80s",
-				t.logPrefix(), p.Msg)
+				t.logPrefix(), p.String())
 			continue
 		}
 		p.conn = c
-		log.Printf("%sBroadcast: %.80s", t.logPrefix(), p.Msg)
+		log.Printf("%sBroadcast: %.80s", t.logPrefix(), p.String())
 		p.writeMessage()
 	}
 }
@@ -318,22 +330,18 @@ func defaultId() string {
 }
 
 func (t *Thing) changeStatus(child *Thing, status string) {
-	/*
-		child.status = status
+	child.status = status
 
-		spam := struct {
-			Msg     string
-			Id      string
-			Status  string
-		}{
-			Msg:    "status",
-			Id:     child.id,
-			Status: child.status,
-		}
-
-		msg, _ := json.Marshal(&spam)
-		t.broadcast(msg)
-	*/
+	spam := struct {
+		Msg     string
+		Id      string
+		Status  string
+	}{
+		Msg:    "status",
+		Id:     child.id,
+		Status: child.status,
+	}
+	t.Broadcast(NewPacket(&spam))
 }
 
 func (t *Thing) portRun(p *port) {
@@ -345,28 +353,28 @@ func (t *Thing) portRun(p *port) {
 	}
 
 	child = t.getThing(resp.Id)
-	child = child
-	/*
+
 	if child == nil {
-		d = h.newDevice(resp.Id, resp.Model, resp.Name, resp.StartupTime)
-		if d == nil {
+		child = t.factory(resp.Id, resp.Model, resp.Name)
+		if child == nil {
+			log.Println(t.logPrefix(), "Model", resp.Model, "unknown")
 			goto disconnect
 		}
+		child.startupTime = resp.StartupTime
+		child.shadow = true
+		t.things[resp.Id] = child
 	} else {
-		d.model = resp.Model
-		d.name = resp.Name
-		d.startupTime = resp.StartupTime
+		if child.model != resp.Model {
+			log.Println(t.logPrefix(), "Model mismatch")
+			goto disconnect
+		}
+		child.name = resp.Name
 	}
 
-	err = h.saveDevice(d)
-	if err != nil {
-		goto disconnect
-	}
 
-	h.changeStatus(d, "online")
-	p.run(d)
-	h.changeStatus(d, "offline")
-	*/
+	t.changeStatus(child, "online")
+	p.run(child)
+	t.changeStatus(child, "offline")
 
    disconnect:
 	p.disconnect()

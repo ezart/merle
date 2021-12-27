@@ -68,12 +68,12 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 			conn: conn,
 		}
 
-		_, p.Msg, err = conn.ReadMessage()
+		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println(t.logPrefix(), "Websocket read error:", err)
 			break
 		}
-		t.receive(p)
+		t.receive(p.update(msg))
 	}
 
 	t.connDelete(conn)
@@ -261,10 +261,10 @@ func getPort(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (t *Thing) ListenForThings() {
+func (t *Thing) ListenForThings() error {
 	log.Println("Listening for Things...")
 	t.muxPrivate.HandleFunc("/port/{id}", getPort)
 	t.muxPublic.HandleFunc("/home/thing/{id}", t.homeThing)
 	t.muxPublic.HandleFunc("/ws/thing/{id}", t.wsThing)
-	t.portScan()
+	return t.portScan()
 }

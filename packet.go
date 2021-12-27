@@ -13,26 +13,35 @@ import (
 // A Packet contains a message and a (hidden) source.
 type Packet struct {
 	conn *websocket.Conn
-	Msg  []byte
+	msg  []byte
 }
 
 func NewPacket(msg interface{}) *Packet {
 	var p Packet
-	p.Msg, _ = json.Marshal(msg)
+	p.msg, _ = json.Marshal(msg)
 	return &p
 }
 
-func UpdatePacket(p *Packet, msg interface{}) *Packet {
-	p.Msg, _ = json.Marshal(msg)
+func (p *Packet) update(msg []byte) *Packet {
+	p.msg = msg
 	return p
 }
 
-func UnpackPacket(p *Packet, msg interface{}) {
-	json.Unmarshal(p.Msg, msg)
+func (p *Packet) Marshal(msg interface{}) *Packet {
+	p.msg, _ = json.Marshal(msg)
+	return p
+}
+
+func (p *Packet) Unmarshal(msg interface{}) {
+	json.Unmarshal(p.msg, msg)
+}
+
+func (p *Packet) String() string {
+	return string(p.msg)
 }
 
 func (p *Packet) writeMessage() error {
-	err := p.conn.WriteMessage(websocket.TextMessage, p.Msg)
+	err := p.conn.WriteMessage(websocket.TextMessage, p.msg)
 	if err != nil {
 		log.Println("Packet writeMessage error:", err)
 	}

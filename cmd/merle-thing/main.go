@@ -28,6 +28,8 @@ func main() {
 		log.Fatalf("No model named '%s'", cfg.Thing.Model)
 	}
 
+	t.SetFactory(factory.NewThing)
+
 	t.TunnelConfig(cfg.Mother.Host, cfg.Mother.User, cfg.Mother.Key,
 		cfg.Mother.PortPrivate)
 

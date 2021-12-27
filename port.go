@@ -132,7 +132,6 @@ func (p *port) run(t *Thing) {
 	var pkt = &Packet{
 		conn: p.ws,
 	}
-	var err error
 
 	t.Lock()
 	if t.port != nil {
@@ -144,15 +143,15 @@ func (p *port) run(t *Thing) {
 	t.Unlock()
 
 	msg := struct{ Msg string }{Msg: "start"}
-	t.receive(UpdatePacket(pkt, &msg))
+	t.receive(pkt.Marshal(&msg))
 
 	for {
-		pkt.Msg, err = p.readMessage()
+		msg, err := p.readMessage()
 		if err != nil {
-			// TODO log err?
+			log.Println(t.logPrefix(), "Port", p.port, "disconnected")
 			break
 		}
-		t.receive(pkt)
+		t.receive(pkt.update(msg))
 	}
 
 	t.Lock()
@@ -282,12 +281,12 @@ func getPortRange() (begin int, end int, err error) {
 	return begin, end, nil
 }
 
-func (t *Thing) portScan() {
+func (t *Thing) portScan() error {
 	var err error
 
 	portBegin, portEnd, err = getPortRange()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	numPorts = portEnd - portBegin + 1
@@ -300,6 +299,8 @@ func (t *Thing) portScan() {
 	}
 
 	go t.scanPorts()
+
+	return nil
 }
 
 func nextPort() (p *port) {
