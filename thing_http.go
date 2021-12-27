@@ -24,7 +24,6 @@ var upgrader = websocket.Upgrader{}
 func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-	log.Println("hitting ws id", id)
 
 	child := t.getThing(id)
 	if child != nil {
@@ -37,6 +36,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Queue any connections beyond max connections (connsMax)
 	t.connQ <- true
 	defer func() { <-t.connQ }()
 
@@ -68,15 +68,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-	log.Println("hitting home id", id)
-	log.Println("hitting home r.URL.Path", r.URL.Path)
 
-	/*
-	if r.URL.Path != "/" {
-		http.Error(w, "Not found", http.StatusNotFound)
-		return
-	}
-	*/
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -84,24 +76,20 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 
 	child := t.getThing(id)
 	if child != nil {
-		log.Println("hitting home for child", child.id)
 		child.home(w, r)
 		return
 	}
 
-	log.Println("hitting home here")
 	if id != "" && id != t.id {
 		http.Error(w, "Mismatch on Ids", http.StatusNotFound)
 		return
 	}
 
-	log.Println("hitting home here2")
 	if t.Home == nil {
 		http.Error(w, "Home page not set up", http.StatusNotFound)
 		return
 	}
 
-	log.Println("hitting home here3")
 	t.Home(w, r)
 }
 
