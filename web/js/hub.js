@@ -8,13 +8,37 @@ function sendForThings() {
 	conn.send(JSON.stringify({Msg: "GetThings"}))
 }
 
+function show(id) {
+	var iframe = document.getElementById("thing")
+	iframe.src = "/" + encodeURIComponent(id)
+}
+
 function addThing(thing) {
+	var iframe = document.getElementById("thing")
+	var things = document.getElementById("things")
+	var newdiv = document.createElement("div")
+	var newpre = document.createElement("pre")
+	var newimg = document.createElement("img")
+
+	newpre.innerText = thing.Name
+	newpre.id = "pre-" + thing.Id
+
+	newimg.src = "/web/images/" + thing.Model + "/" + thing.Status + ".jpg"
+	newimg.onclick = function (){show(thing.Id);}
+	newimg.id = thing.Id
+
+	newdiv.appendChild(newpre)
+	newdiv.appendChild(newimg)
+	things.appendChild(newdiv)
+
+	if (iframe.src == "") {
+		show(thing.Id)
+	}
 }
 
 function saveThings(msg) {
 	if (msg.Things != null) {
 		for (const thing of msg.Things) {
-			console.log('thing', thing)
 			addThing(thing)
 		}
 	}
@@ -42,7 +66,7 @@ function Run(scheme, host, id) {
 		console.log('event', msg)
 
 		switch(msg.Msg) {
-		case "RespThings":
+		case "ReplyThings":
 			saveThings(msg)
 			break
 		case "SpamStatus":

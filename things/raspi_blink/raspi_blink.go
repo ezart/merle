@@ -36,12 +36,12 @@ func (b *blinker) init() error {
 	return nil
 }
 
-func (b *blinker) sendState() {
+func (b *blinker) sendLedState() {
 	msg := struct {
 		Msg   string
 		State bool
 	}{
-		Msg:   "SpamState",
+		Msg:   "SpamLedState",
 		State: b.led.State(),
 	}
 	b.Broadcast(merle.NewPacket(&msg))
@@ -50,14 +50,14 @@ func (b *blinker) sendState() {
 func (b *blinker) run() {
 	ticker := time.NewTicker(time.Second)
 
-	b.sendState()
+	b.sendLedState()
 
 	for {
 		select {
 		case <-ticker.C:
 			if !b.paused {
 				b.led.Toggle()
-				b.sendState()
+				b.sendLedState()
 			}
 		}
 	}
@@ -67,14 +67,14 @@ func (b *blinker) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, b.HomeParams(r))
 }
 
-type msgPausedResp struct {
+type msgReplyPaused struct {
 	Msg    string
 	Paused bool
 }
 
 func (b *blinker) sendPaused(p *merle.Packet) {
-	msg := msgPausedResp{
-		Msg:    "RespPaused",
+	msg := msgReplyPaused{
+		Msg:    "ReplyPaused",
 		Paused: b.paused,
 	}
 	b.Reply(p.Marshal(&msg))
@@ -82,7 +82,7 @@ func (b *blinker) sendPaused(p *merle.Packet) {
 }
 
 func (b *blinker) savePaused(p *merle.Packet) {
-	var msg msgPausedResp
+	var msg msgReplyPaused
 	p.Unmarshal(&msg)
 	b.paused = msg.Paused
 }
@@ -112,11 +112,11 @@ func NewThing(id, model, name string) *merle.Thing {
 	b.Home = b.home
 
 	b.HandleMsg("GetPaused", b.sendPaused)
-	b.HandleMsg("RespPaused", b.savePaused)
+	b.HandleMsg("ReplyPaused", b.savePaused)
 	b.HandleMsg("CmdPause", b.pause)
 	b.HandleMsg("CmdResume", b.resume)
 	b.HandleMsg("CmdStart", b.start)
-	b.HandleMsg("SpamState", b.Broadcast)
+	b.HandleMsg("SpamLedState", b.Broadcast)
 
 	return b.InitThing(id, model, name)
 }

@@ -65,7 +65,7 @@ func (p *port) wsIdentity() error {
 	return p.writeJSON(&msg)
 }
 
-func (p *port) wsRespIdentity() (resp *msgIdentity, err error) {
+func (p *port) wsReplyIdentity() (resp *msgIdentity, err error) {
 	var identity msgIdentity
 
 	// Wait for response no longer than a second
@@ -108,9 +108,9 @@ func (p *port) connect() (resp *msgIdentity, err error) {
 		return nil, err
 	}
 
-	resp, err = p.wsRespIdentity()
+	resp, err = p.wsReplyIdentity()
 	if err != nil {
-		log.Printf("Port[%d] run wsRespIdentity error: %s", p.port, err)
+		log.Printf("Port[%d] run wsReplyIdentity error: %s", p.port, err)
 		return nil, err
 	}
 

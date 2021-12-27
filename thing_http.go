@@ -21,36 +21,22 @@ import (
 
 var upgrader = websocket.Upgrader{}
 
-func (t *Thing) wsThing(w http.ResponseWriter, r *http.Request) {
-	log.Println("hitting wsThing")
-	vars := mux.Vars(r)
-	id := vars["id"]
-
-	child := t.getThing(id)
-	if child == nil {
-		http.Error(w, "Unknown device ID "+id, http.StatusNotFound)
-		return
-	}
-
-	child.ws(w, r)
-}
-
-func (t *Thing) homeThing(w http.ResponseWriter, r *http.Request) {
-	log.Println("hitting homeThing")
-	vars := mux.Vars(r)
-	id := vars["id"]
-
-	child := t.getThing(id)
-	if child == nil {
-		http.Error(w, "Unknown device ID "+id, http.StatusNotFound)
-		return
-	}
-
-	child.home(w, r)
-}
-
 func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
-	log.Println("hitting ws")
+	vars := mux.Vars(r)
+	id := vars["id"]
+	log.Println("hitting ws id", id)
+
+	child := t.getThing(id)
+	if child != nil {
+		child.ws(w, r)
+		return
+	}
+
+	if id != "" && id != t.id {
+		log.Println(t.logPrefix(), "Mismatch on Ids")
+		return
+	}
+
 	t.connQ <- true
 	defer func() { <-t.connQ }()
 
@@ -80,21 +66,42 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
-	log.Println("hitting home")
+	vars := mux.Vars(r)
+	id := vars["id"]
+	log.Println("hitting home id", id)
+	log.Println("hitting home r.URL.Path", r.URL.Path)
+
+	/*
 	if r.URL.Path != "/" {
 		http.Error(w, "Not found", http.StatusNotFound)
 		return
 	}
+	*/
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
+	child := t.getThing(id)
+	if child != nil {
+		log.Println("hitting home for child", child.id)
+		child.home(w, r)
+		return
+	}
+
+	log.Println("hitting home here")
+	if id != "" && id != t.id {
+		http.Error(w, "Mismatch on Ids", http.StatusNotFound)
+		return
+	}
+
+	log.Println("hitting home here2")
 	if t.Home == nil {
 		http.Error(w, "Home page not set up", http.StatusNotFound)
 		return
 	}
 
+	log.Println("hitting home here3")
 	t.Home(w, r)
 }
 
@@ -191,6 +198,7 @@ func (t *Thing) httpInitPublic() {
 	fs := http.FileServer(http.Dir("web"))
 	t.muxPublic = mux.NewRouter()
 	t.muxPublic.HandleFunc("/ws/{id}", basicAuth(t.authUser, t.ws))
+	t.muxPublic.HandleFunc("/{id}", basicAuth(t.authUser, t.home))
 	t.muxPublic.HandleFunc("/", basicAuth(t.authUser, t.home))
 	t.muxPublic.PathPrefix("/web/").Handler(http.StripPrefix("/web/", fs))
 }
@@ -263,8 +271,7 @@ func getPort(w http.ResponseWriter, r *http.Request) {
 
 func (t *Thing) ListenForThings() error {
 	log.Println("Listening for Things...")
+	t.HandleMsg("GetThings", t.getThings)
 	t.muxPrivate.HandleFunc("/port/{id}", getPort)
-	t.muxPublic.HandleFunc("/home/thing/{id}", t.homeThing)
-	t.muxPublic.HandleFunc("/ws/thing/{id}", t.wsThing)
 	return t.portScan()
 }

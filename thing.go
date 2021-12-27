@@ -88,6 +88,8 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	}
 	t.things = make(map[string]*Thing)
 
+	t.HandleMsg("GetIdentity", t.getIdentity)
+
 	return t
 }
 
@@ -121,7 +123,7 @@ type msgIdentity struct {
 
 func (t *Thing) getIdentity(p *Packet) {
 	resp := msgIdentity {
-		Msg:         "RespIdentity",
+		Msg:         "ReplyIdentity",
 		Status:      t.status,
 		Id:          t.id,
 		Model:       t.model,
@@ -145,7 +147,7 @@ type msgThings struct {
 
 func (t *Thing) getThings(p *Packet) {
 	resp := msgThings{
-		Msg: "RespThings",
+		Msg: "ReplyThings",
 	}
 	for _, thing := range t.things {
 		resp.Things = append(resp.Things, msgThing{thing.id,
@@ -174,6 +176,9 @@ func (t *Thing) receive(p *Packet) {
 			t.logPrefix(), p.String())
 		return
 	}
+
+	log.Printf("%sReceived: %.80s",
+		t.logPrefix(), p.String())
 
 	f(p)
 }
@@ -207,9 +212,6 @@ func (t *Thing) Start() {
 			log.Fatalln(t.logPrefix(), "Init failed:", err)
 		}
 	}
-
-	t.HandleMsg("GetIdentity", t.getIdentity)
-	t.HandleMsg("GetThings", t.getThings)
 
 	t.tunnelCreate()
 
@@ -374,6 +376,11 @@ func (t *Thing) portRun(p *port) {
 		goto disconnect
 	}
 
+	if t.id == resp.Id {
+		log.Println(t.logPrefix(), "Sorry, you can't be your own Mother")
+		goto disconnect
+	}
+
 	child = t.getThing(resp.Id)
 
 	if child == nil {
@@ -382,7 +389,6 @@ func (t *Thing) portRun(p *port) {
 			log.Println(t.logPrefix(), "Model", resp.Model, "unknown")
 			goto disconnect
 		}
-		child.startupTime = resp.StartupTime
 		child.shadow = true
 		t.things[resp.Id] = child
 	} else {
@@ -396,6 +402,7 @@ func (t *Thing) portRun(p *port) {
 		}
 	}
 
+	child.startupTime = resp.StartupTime
 
 	t.changeStatus(child, "online")
 	p.run(child)

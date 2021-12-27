@@ -107,15 +107,15 @@ function Run(scheme, host, id) {
 		console.log('event', msg)
 
 		switch(msg.Msg) {
-		case "RespIdentity":
+		case "ReplyIdentity":
 			saveIdentity(msg)
 			sendForPaused()
 			break
-		case "RespPaused":
+		case "ReplyPaused":
 			savePaused(msg)
 			refreshAll()
 			break
-		case "SpamState":
+		case "SpamLedState":
 			saveLedState(msg)
 			refreshLed()
 			break
