@@ -57,3 +57,15 @@ Config SSH server for two minute client timeout (to timeout half-dropped TCP con
 		ClientAliveInterval 30
 		ClientAliveCountMax 4
 ```
+
+Gererating SSH key:
+
+```
+	ssh-keygen
+```
+
+This will make new key pair in ~/.ssh/id_rsa*.  Install with ssh-copy-id:
+
+```
+	ssh-copy-id username@remote_host
+```

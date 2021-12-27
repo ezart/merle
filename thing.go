@@ -46,6 +46,7 @@ type Thing struct {
 	motherHost string
 	motherUser string
 	motherKey  string
+	motherPortPrivate int
 }
 
 func (t *Thing) InitThing(id, model, name string) *Thing {
@@ -98,15 +99,17 @@ func (t *Thing) logPrefix() string {
 	return ""
 }
 
+type identity struct {
+	Msg         string
+	Status      string
+	Id          string
+	Model       string
+	Name        string
+	StartupTime time.Time
+}
+
 func (t *Thing) identify(p *Packet) {
-	resp := struct {
-		Msg         string
-		Status      string
-		Id          string
-		Model       string
-		Name        string
-		StartupTime time.Time
-	}{
+	resp := identity {
 		Msg:         "identity",
 		Status:      t.status,
 		Id:          t.id,
@@ -334,36 +337,37 @@ func (t *Thing) changeStatus(child *Thing, status string) {
 }
 
 func (t *Thing) portRun(p *port) {
+	var child *Thing
+
+	resp, err := p.connect()
+	if err != nil {
+		goto disconnect
+	}
+
+	child = t.getThing(resp.Id)
+	child = child
 	/*
-	   	var child *Thing
+	if child == nil {
+		d = h.newDevice(resp.Id, resp.Model, resp.Name, resp.StartupTime)
+		if d == nil {
+			goto disconnect
+		}
+	} else {
+		d.model = resp.Model
+		d.name = resp.Name
+		d.startupTime = resp.StartupTime
+	}
 
-	   	resp, err := p.connect()
-	   	if err != nil {
-	   		goto disconnect
-	   	}
+	err = h.saveDevice(d)
+	if err != nil {
+		goto disconnect
+	}
 
-	   	child = t.getThing(resp.Id)
-	   	if child == nil {
-	   		d = h.newDevice(resp.Id, resp.Model, resp.Name, resp.StartupTime)
-	   		if d == nil {
-	   			goto disconnect
-	   		}
-	   	} else {
-	   		d.model = resp.Model
-	   		d.name = resp.Name
-	   		d.startupTime = resp.StartupTime
-	   	}
-
-	   	err = h.saveDevice(d)
-	   	if err != nil {
-	   		goto disconnect
-	   	}
-
-	   	h.changeStatus(d, "online")
-	   	p.run(d)
-	   	h.changeStatus(d, "offline")
-
-	   disconnect:
-	   	p.disconnect()
+	h.changeStatus(d, "online")
+	p.run(d)
+	h.changeStatus(d, "offline")
 	*/
+
+   disconnect:
+	p.disconnect()
 }

@@ -23,15 +23,14 @@ type config struct {
 		Host string `yaml:"Host"`
 		User string `yaml:"User"`
 		Key  string `yaml:"Key"`
+		PortPrivate int `yaml:"PortPrivate"`
 	} `yaml:"Mother"`
 }
 
-var cfg config
+func parseCfgFile(file string) config {
+	var cfg config
 
-func init() {
-	log.SetFlags(0)
-
-	f, err := os.Open("/etc/merle/thing.yml")
+	f, err := os.Open(file)
 	if err != nil {
 		log.Fatalln("Opening config file:", err)
 	}
@@ -43,5 +42,8 @@ func init() {
 		log.Fatalln("Decoding config file:", err)
 	}
 
+	log.Println("Config from", file)
 	log.Printf("Config: %+v", cfg)
+
+	return cfg
 }

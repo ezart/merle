@@ -6,11 +6,18 @@ package main
 
 import (
 	"github.com/scottfeldman/merle/factory"
+	"flag"
 	"log"
 	"os"
 )
 
 func main() {
+	log.SetFlags(0)
+
+	cfgFile  := flag.String("config", "/etc/merle/thing.yml", "Config File")
+	flag.Parse()
+
+	cfg := parseCfgFile(*cfgFile)
 
 	if os.Geteuid() != 0 {
 		log.Fatalln("Must run as root")
@@ -21,7 +28,9 @@ func main() {
 		log.Fatalf("No model named '%s'", cfg.Thing.Model)
 	}
 
-	//t.TunnelConfig(cfg.Hub.Host, cfg.Hub.User, cfg.Hub.Key)
+	t.TunnelConfig(cfg.Mother.Host, cfg.Mother.User, cfg.Mother.Key,
+		cfg.Mother.PortPrivate)
+
 	t.HttpConfig(cfg.Thing.User, cfg.Thing.PortPublic, cfg.Thing.PortPrivate)
 
 	t.Start()

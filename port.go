@@ -69,23 +69,23 @@ func (p *port) wsIdentify() error {
 	return p.writeJSON(&msg)
 }
 
-func (p *port) wsIdentifyResp() (r *MsgIdentifyResp, err error) {
-	var resp MsgIdentifyResp
+func (p *port) wsIdentity() (resp *identity, err error) {
+	var identity identity
 
 	// Wait for response no longer than a second
 	p.ws.SetReadDeadline(time.Now().Add(time.Second))
 
-	err = p.ws.ReadJSON(&resp)
+	err = p.ws.ReadJSON(&identity)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("Port wsIdentifyResp: %v", resp)
+	log.Printf("Port wsIdentity: %v", identity)
 
 	// Clear deadline
 	p.ws.SetReadDeadline(time.Time{})
 
-	return &resp, nil
+	return &identity, nil
 }
 
 func (p *port) wsClose() {
@@ -99,7 +99,7 @@ func (p *port) wsClose() {
 	p.ws = nil
 }
 
-func (p *port) connect() (resp *MsgIdentifyResp, err error) {
+func (p *port) connect() (resp *identity, err error) {
 	err = p.wsOpen()
 	if err != nil {
 		log.Printf("Port[%d] run wsOpen error: %s", p.port, err)
@@ -112,9 +112,9 @@ func (p *port) connect() (resp *MsgIdentifyResp, err error) {
 		return nil, err
 	}
 
-	resp, err = p.wsIdentifyResp()
+	resp, err = p.wsIdentity()
 	if err != nil {
-		log.Printf("Port[%d] run wsIdentifyResp error: %s", p.port, err)
+		log.Printf("Port[%d] run wsIdentity error: %s", p.port, err)
 		return nil, err
 	}
 
@@ -277,7 +277,7 @@ func getPortRange() (begin int, end int, err error) {
 		return 0, 0, err
 	}
 
-	log.Printf("Port range [%d-%d]", begin, end)
+	log.Printf("IP local reserved port range: [%d-%d]", begin, end)
 
 	return begin, end, nil
 }
@@ -299,7 +299,7 @@ func (t *Thing) portScan() {
 		ports[i].port = portBegin + i
 	}
 
-	t.scanPorts()
+	go t.scanPorts()
 }
 
 func nextPort() (p *port) {
@@ -340,19 +340,19 @@ func portFromId(id string) int {
 		p.Lock()
 		if p.tunnelConnected {
 			p.Unlock()
-			log.Printf("portFromId ID %s port %d busy", id, p.port)
+			log.Printf("Port %d busy; already used by Id %sID %s port %d busy", id, p.port)
 			return -2 // Port busy; try later
 		}
 		p.Unlock()
 	} else {
 		p = nextPort()
 		if p == nil {
-			log.Printf("portFromId ID %s no more ports", id)
+			log.Printf("No more ports", id)
 			return -1 // No more ports; try later
 		}
 		portMap[id] = p
 	}
 
-	log.Printf("portFromId ID %s port %d", id, p.port)
+	log.Printf("Returning port %d for Id %s", p.port, id)
 	return p.port
 }

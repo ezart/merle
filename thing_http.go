@@ -262,6 +262,7 @@ func getPort(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Thing) ListenForThings() {
+	log.Println("Listening for Things...")
 	t.muxPrivate.HandleFunc("/port/{id}", getPort)
 	t.muxPublic.HandleFunc("/home/thing/{id}", t.homeThing)
 	t.muxPublic.HandleFunc("/ws/thing/{id}", t.wsThing)

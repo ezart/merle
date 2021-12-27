@@ -12,3 +12,4 @@ Mother:
   Host: <mother_host>
   User: <mother_user>
   Key: <mother_key>
+  PortPrivate: <mother_port_private>
