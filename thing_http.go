@@ -47,6 +47,9 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	log.Printf("%sWebsocket opened [%s:%s]", t.logPrefix(),
+		r.RemoteAddr, r.RequestURI)
+
 	t.connAdd(conn)
 
 	for {
@@ -56,9 +59,11 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			log.Println(t.logPrefix(), "Websocket read error:", err)
-			break
+			log.Printf("%sWebsocket closed [%s:%s]", t.logPrefix(),
+				r.RemoteAddr, r.RequestURI)
+				break
 		}
+
 		t.receive(p.update(msg))
 	}
 

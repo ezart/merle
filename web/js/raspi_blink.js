@@ -8,18 +8,21 @@ let id
 let model
 let name
 let status
+let startupTime
 let ledState
 let paused = false
+let refreshTimer
 
 function sendForIdentity() {
 	conn.send(JSON.stringify({Msg: "GetIdentity"}))
 }
 
 function saveIdentity(msg) {
-	status = msg.Status
 	id = msg.Id
 	model = msg.Model
 	name = msg.Name
+	status = msg.Status
+	startupTime = new Date(msg.StartupTime)
 }
 
 function sendForPaused() {
@@ -43,6 +46,7 @@ function refreshBase() {
 	preId.textContent = id
 	preModel.textContent = model
 	preName.textContent = name
+
 	labels.className = "labels"
 }
 
@@ -68,10 +72,31 @@ function refreshButton() {
 	button.style.visibility = "visible"
 }
 
+function refreshUptime() {
+	var uptime = document.getElementById("uptime")
+
+	if (status != "online") {
+		uptime.textContent = "<offline>"
+		return
+	}
+
+	var diffMs = Math.abs(new Date() - startupTime)
+	var diffMins = Math.floor(diffMs / 1000 / 60)
+	var days = Math.floor(diffMins / 60 / 24)
+	var hours = Math.floor((diffMins - (days * 24 * 60)) / 60)
+	var minutes = Math.floor(diffMins - (hours * 60) - (days * 24 * 60))
+
+	uptime.textContent = days + " days " + hours + " hours " + minutes + " mins"
+}
+
 function refreshAll() {
 	refreshBase()
 	refreshLed()
 	refreshButton()
+	refreshUptime()
+	if (typeof refreshTimer == 'undefined') {
+		refreshTimer = setInterval(refreshUptime, 1000 * 60)  // once a sec
+	}
 }
 
 function updateStatus(msg) {
@@ -98,6 +123,7 @@ function Run(scheme, host, id) {
 	}
 
 	conn.onclose = function(evt) {
+		clearInterval(refreshTimer)
 		location.reload(true)
 	}
 

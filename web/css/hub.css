@@ -12,7 +12,7 @@ body, html {
 	flex-direction: column;
 }
 
-.devices {
+.things {
 	display: flex;
 	flex-wrap: nowrap;
 	flex-direction: row;
@@ -21,7 +21,7 @@ body, html {
 	background-color: black;
 }
 
-.devices > div {
+.things > div {
 	margin: 10px;
 	display: flex;
 	flex-direction: column;
@@ -30,12 +30,12 @@ body, html {
 	justify-content: center;
 }
 
-.devices > div > pre {
+.things > div > pre {
 	color: white;
 	font: 14px Arial, sans-serif;
 }
 
-.device {
+.thing {
 	flex-grow: 1;
 	border: none;
 	margin: 0;

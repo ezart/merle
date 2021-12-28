@@ -21,9 +21,10 @@ func init() {
 
 type blinker struct {
 	merle.Thing
-	adaptor *raspi.Adaptor
-	led     *gpio.LedDriver
-	paused  bool
+	adaptor   *raspi.Adaptor
+	led       *gpio.LedDriver
+	demoState bool
+	paused    bool
 }
 
 func (b *blinker) init() error {
@@ -36,13 +37,28 @@ func (b *blinker) init() error {
 	return nil
 }
 
+func (b *blinker) state() bool {
+	if b.DemoMode() {
+		return b.demoState
+	}
+	return b.led.State()
+}
+
+func (b *blinker) toggle() {
+	if b.DemoMode() {
+		b.demoState = !b.demoState
+		return
+	}
+	b.led.Toggle()
+}
+
 func (b *blinker) sendLedState() {
 	msg := struct {
 		Msg   string
 		State bool
 	}{
 		Msg:   "SpamLedState",
-		State: b.led.State(),
+		State: b.state(),
 	}
 	b.Broadcast(merle.NewPacket(&msg))
 }
@@ -56,7 +72,7 @@ func (b *blinker) run() {
 		select {
 		case <-ticker.C:
 			if !b.paused {
-				b.led.Toggle()
+				b.toggle()
 				b.sendLedState()
 			}
 		}

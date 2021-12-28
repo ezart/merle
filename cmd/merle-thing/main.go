@@ -15,6 +15,8 @@ func main() {
 	log.SetFlags(0)
 
 	cfgFile  := flag.String("config", "/etc/merle/thing.yml", "Config File")
+	demoMode := flag.Bool("demo", false, "Run Thing in demo mode; will simulate I/O")
+
 	flag.Parse()
 
 	cfg := parseCfgFile(*cfgFile)
@@ -28,6 +30,7 @@ func main() {
 		log.Fatalf("No model named '%s'", cfg.Thing.Model)
 	}
 
+	t.SetDemoMode(*demoMode)
 	t.SetFactory(factory.NewThing)
 
 	t.TunnelConfig(cfg.Mother.Host, cfg.Mother.User, cfg.Mother.Key,

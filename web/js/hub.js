@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
-let status
-
 function sendForThings() {
 	conn.send(JSON.stringify({Msg: "GetThings"}))
 }
@@ -13,26 +11,26 @@ function show(id) {
 	iframe.src = "/" + encodeURIComponent(id)
 }
 
-function addThing(thing) {
+function addThing(msg) {
 	var iframe = document.getElementById("thing")
 	var things = document.getElementById("things")
 	var newdiv = document.createElement("div")
 	var newpre = document.createElement("pre")
 	var newimg = document.createElement("img")
 
-	newpre.innerText = thing.Name
-	newpre.id = "pre-" + thing.Id
+	newpre.innerText = msg.Name
+	newpre.id = "pre-" + msg.Id
 
-	newimg.src = "/web/images/" + thing.Model + "/" + thing.Status + ".jpg"
-	newimg.onclick = function (){show(thing.Id);}
-	newimg.id = thing.Id
+	newimg.src = "/web/images/" + msg.Model + "/" + msg.Status + ".jpg"
+	newimg.onclick = function (){show(msg.Id);}
+	newimg.id = msg.Id
 
 	newdiv.appendChild(newpre)
 	newdiv.appendChild(newimg)
 	things.appendChild(newdiv)
 
 	if (iframe.src == "") {
-		show(thing.Id)
+		show(msg.Id)
 	}
 }
 
@@ -45,7 +43,16 @@ function saveThings(msg) {
 }
 
 function updateStatus(msg) {
-	status = msg.Status
+	var img = document.getElementById(msg.Id)
+	var pre = document.getElementById("pre-" + msg.Id)
+
+	if (img == null) {
+		addThing(msg)
+	} else {
+		img.src = "/web/images/" + msg.Model + "/" + msg.Status + ".jpg"
+		pre.innerText = msg.Name
+		show(msg.Id)
+	}
 }
 
 function Run(scheme, host, id) {

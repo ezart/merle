@@ -22,6 +22,7 @@ type Thing struct {
 	startupTime time.Time
 	shadow      bool
 	connsMax    int
+	demoMode    bool
 
 	// children
 	factory func(string, string, string) *Thing
@@ -53,6 +54,14 @@ type Thing struct {
 
 func (t *Thing) SetFactory(f func(string, string, string) *Thing) {
 	t.factory = f
+}
+
+func (t *Thing) SetDemoMode(demoMode bool) {
+	t.demoMode = demoMode
+}
+
+func (t *Thing) DemoMode() bool {
+	return t.demoMode
 }
 
 func (t *Thing) InitThing(id, model, name string) *Thing {
@@ -200,6 +209,10 @@ func (t *Thing) HttpConfig(authUser string, portPublic, portPrivate int) {
 
 // Start the Thing
 func (t *Thing) Start() {
+	if t.demoMode {
+		log.Println(t.logPrefix(), "Demo mode ENABLED")
+	}
+
 	if t.shadow {
 		return
 	}
@@ -359,10 +372,14 @@ func (t *Thing) changeStatus(child *Thing, status string) {
 	spam := struct {
 		Msg     string
 		Id      string
+		Model   string
+		Name    string
 		Status  string
 	}{
 		Msg:    "SpamStatus",
 		Id:     child.id,
+		Model:  child.model,
+		Name:   child.name,
 		Status: child.status,
 	}
 	t.Broadcast(NewPacket(&spam))
