@@ -68,7 +68,7 @@ func (t *Thing) tunnelToMother(port string) error {
 	//  (The ExitOnForwardFailure=yes is to exit ssh if the remote port forwarding fails,
 	//   most likely from port already being in-use on the server side).
 
-	remote := fmt.Sprintf("%s:localhost:8080", port)
+	remote := fmt.Sprintf("%s:localhost:%d", port, t.portPrivate)
 
 	args = append(args, "-CNT")
 	args = append(args, "-i", t.motherKey)
