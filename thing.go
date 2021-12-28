@@ -14,6 +14,7 @@ type Thing struct {
 	Init func() error
 	Run  func()
 	Home func(w http.ResponseWriter, r *http.Request)
+	ChildUpdate func(*Thing)
 
 	status      string
 	id          string
@@ -31,6 +32,7 @@ type Thing struct {
 	// ws connections
 	sync.Mutex
 	msgHandlers   map[string]func(*Packet)
+	msgSnoopers   map[string]func(*Thing, *Packet)
 	conns         map[*websocket.Conn]bool
 	connQ         chan bool
 	port          *port
@@ -50,6 +52,14 @@ type Thing struct {
 	motherUser string
 	motherKey  string
 	motherPortPrivate int
+}
+
+func (t *Thing) Id() string {
+	return t.id
+}
+
+func (t *Thing) Status() string {
+	return t.status
 }
 
 func (t *Thing) SetFactory(f func(string, string, string) *Thing) {
@@ -186,10 +196,14 @@ func (t *Thing) receive(p *Packet) {
 		return
 	}
 
-	log.Printf("%sReceived: %.80s",
-		t.logPrefix(), p.String())
+	log.Printf("%sReceived: %.80s", t.logPrefix(), p.String())
 
 	f(p)
+
+	s := t.msgSnoopers[msg.Msg]
+	if s != nil {
+		s(t, p)
+	}
 }
 
 // Add a message handler
@@ -198,6 +212,14 @@ func (t *Thing) HandleMsg(msg string, f func(*Packet)) {
 		t.msgHandlers = make(map[string]func(*Packet))
 	}
 	t.msgHandlers[msg] = f
+}
+
+// Add a message snooper
+func (t *Thing) SnoopMsg(msg string, f func(*Thing, *Packet)) {
+	if t.msgSnoopers == nil {
+		t.msgSnoopers = make(map[string]func(*Thing, *Packet))
+	}
+	t.msgSnoopers[msg] = f
 }
 
 // Configure local http server
@@ -240,6 +262,11 @@ func (t *Thing) Start() {
 	log.Fatalln(t.logPrefix(), "Run() didn't run forever")
 }
 
+// Inject packet
+func (t *Thing) Inject(p *Packet) {
+	t.receive(p)
+}
+
 // Reply sends Packet back to originator
 func (t *Thing) Reply(p *Packet) {
 	t.Lock()
@@ -273,8 +300,8 @@ func (t *Thing) Sink(p *Packet) {
 	}
 
 	if src == t.port.ws {
-		//log.Printf("%sSink reject: message came in on port: %.80s",
-		//	t.logPrefix(), p.String())
+		log.Printf("%sSink reject: message came in on port: %.80s",
+			t.logPrefix(), p.String())
 		return
 	}
 
@@ -383,6 +410,10 @@ func (t *Thing) changeStatus(child *Thing, status string) {
 		Status: child.status,
 	}
 	t.Broadcast(NewPacket(&spam))
+
+	if t.ChildUpdate != nil {
+		t.ChildUpdate(child)
+	}
 }
 
 func (t *Thing) portRun(p *port) {
