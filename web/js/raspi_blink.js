@@ -53,8 +53,12 @@ function refreshBase() {
 function refreshLed() {
 	var image = document.getElementById("raspi")
 	on = "off"
-	if (ledState) {
-		on = "on"
+	if (status == "online") {
+		if (ledState) {
+			on = "on"
+		}
+	} else {
+		image.style.opacity = 0.3
 	}
 	// force refresh of image by using getTime() trick
 	image.src = "./web/images/" + model + "/led-gpio17-" + on + ".png?t=" +
@@ -64,12 +68,13 @@ function refreshLed() {
 
 function refreshButton() {
 	var button = document.getElementById("pause")
-	if (paused) {
+	if (paused && status == "online") {
 		button.textContent = "Resume"
 	} else {
 		button.textContent = "Pause"
 	}
 	button.style.visibility = "visible"
+	button.disabled = (status != "online")
 }
 
 function refreshUptime() {

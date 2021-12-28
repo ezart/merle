@@ -263,6 +263,7 @@ func getPort(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *Thing) ListenForThings() error {
+	// TODO thing filter
 	log.Println("Listening for Things...")
 	t.HandleMsg("GetThings", t.getThings)
 	t.muxPrivate.HandleFunc("/port/{id}", getPort)
