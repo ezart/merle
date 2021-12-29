@@ -22,6 +22,8 @@ import (
 var upgrader = websocket.Upgrader{}
 
 func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
+	var p = &Packet{}
+
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -52,11 +54,9 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 	t.connAdd(conn)
 
-	for {
-		var p = &Packet{
-			conn: conn,
-		}
+	p.conn = conn
 
+	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Printf("%sWebsocket closed [%s:%s]", t.logPrefix(),
@@ -67,7 +67,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 		t.receive(p.update(msg))
 	}
 
-	t.connDelete(conn)
+	t.connDel(conn)
 }
 
 func (t *Thing) home(w http.ResponseWriter, r *http.Request) {

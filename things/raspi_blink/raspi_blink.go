@@ -105,13 +105,11 @@ func (b *blinker) savePaused(p *merle.Packet) {
 
 func (b *blinker) pause(p *merle.Packet) {
 	b.paused = true
-	b.Sink(p)
 	b.Broadcast(p)
 }
 
 func (b *blinker) resume(p *merle.Packet) {
 	b.paused = false
-	b.Sink(p)
 	b.Broadcast(p)
 }
 

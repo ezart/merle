@@ -129,14 +129,7 @@ func (p *port) run(t *Thing) {
 		conn: p.ws,
 	}
 
-	t.Lock()
-	if t.port != nil {
-		t.Unlock()
-		log.Printf("Port[%d] already running", p.port)
-		return
-	}
-	t.port = p
-	t.Unlock()
+	t.connAdd(p.ws)
 
 	msg := struct{ Msg string }{Msg: "CmdStart"}
 	t.receive(pkt.Marshal(&msg))
@@ -150,9 +143,7 @@ func (p *port) run(t *Thing) {
 		t.receive(pkt.update(msg))
 	}
 
-	t.Lock()
-	t.port = nil
-	t.Unlock()
+	t.connDel(p.ws)
 }
 
 func (t *Thing) _scanPorts() {

@@ -35,7 +35,6 @@ type Thing struct {
 	msgSnoopers   map[string]func(*Thing, *Packet)
 	conns         map[*websocket.Conn]bool
 	connQ         chan bool
-	port          *port
 
 	// http servers
 	sync.WaitGroup
@@ -118,7 +117,7 @@ func (t *Thing) connAdd(c *websocket.Conn) {
 	t.conns[c] = true
 }
 
-func (t *Thing) connDelete(c *websocket.Conn) {
+func (t *Thing) connDel(c *websocket.Conn) {
 	t.Lock()
 	defer t.Unlock()
 	delete(t.conns, c)
@@ -279,42 +278,7 @@ func (t *Thing) Reply(p *Packet) {
 	}
 }
 
-// Sink sends Packet down towards bottom-most non-shadow Thing
-func (t *Thing) Sink(p *Packet) {
-	if !t.shadow {
-		return
-	}
-
-	src := p.conn
-
-	t.Lock()
-	defer func() {
-		p.conn = src
-		t.Unlock()
-	}()
-
-	if t.port == nil {
-		log.Printf("%sSink error: not running on port: %.80s",
-			t.logPrefix(), p.String())
-		return
-	}
-
-	if src == t.port.ws {
-		log.Printf("%sSink reject: message came in on port: %.80s",
-			t.logPrefix(), p.String())
-		return
-	}
-
-	p.conn = t.port.ws
-
-	log.Printf("%sSink: %.80s", t.logPrefix(), p.String())
-	err := p.writeMessage()
-	if err != nil {
-		log.Println(t.logPrefix(), "Sink error:", err)
-	}
-}
-
-// Broadcast packet to all except self
+// Broadcast packet to all except packet source
 func (t *Thing) Broadcast(p *Packet) {
 	src := p.conn
 
@@ -342,9 +306,7 @@ func (t *Thing) Broadcast(p *Packet) {
 	log.Printf("%sBroadcast: %.80s", t.logPrefix(), p.String())
 	for c := range t.conns {
 		if c == src {
-			// skip self
-			//log.Printf("%sSkipping broadcast: %.80s",
-			//	t.logPrefix(), p.String())
+			// don't send back to src
 			continue
 		}
 		p.conn = c
