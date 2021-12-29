@@ -6,15 +6,17 @@ package factory
 
 import (
 	"github.com/scottfeldman/merle"
-	"github.com/scottfeldman/merle/things/hub"
-	"github.com/scottfeldman/merle/things/raspi_blink"
 	"github.com/scottfeldman/merle/things/skeleton"
+	"github.com/scottfeldman/merle/things/raspi_blink"
+	"github.com/scottfeldman/merle/things/hub"
+	"github.com/scottfeldman/merle/things/chat"
 )
 
 var things = map[string]func(id, model, name string) *merle.Thing{
-	"raspi_blink": raspi_blink.NewThing,
 	"skeleton":    skeleton.NewThing,
+	"raspi_blink": raspi_blink.NewThing,
 	"hub":         hub.NewThing,
+	"chat":        chat.NewThing,
 }
 
 func NewThing(id, model, name string) *merle.Thing {
