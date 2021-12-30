@@ -23,7 +23,7 @@ type hub struct {
 }
 
 func (h *hub) init() error {
-	return h.ListenForThings()
+	return h.ListenForThings(-1, "[*][*][*]")
 }
 
 func (h *hub) run() {

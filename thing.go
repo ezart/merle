@@ -378,13 +378,15 @@ func (t *Thing) changeStatus(child *Thing, status string) {
 	}
 }
 
-func (t *Thing) portRun(p *port) {
+func (t *Thing) portRun(p *port, match string) {
 	var child *Thing
 
 	resp, err := p.connect()
 	if err != nil {
 		goto disconnect
 	}
+
+	// TODO disconnect if resp doesn't match filter
 
 	if t.id == resp.Id {
 		log.Println(t.logPrefix(), "Sorry, you can't be your own Mother")

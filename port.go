@@ -146,7 +146,7 @@ func (p *port) run(t *Thing) {
 	t.connDel(p.ws)
 }
 
-func (t *Thing) _scanPorts() {
+func (t *Thing) _scanPorts(match string) {
 	// ss -Hntl4p src 127.0.0.1 sport ge 8081 sport le 9080
 
 	cmd := exec.Command("ss", "-Hntl4", "src", "127.0.0.1",
@@ -182,7 +182,7 @@ func (t *Thing) _scanPorts() {
 				log.Printf("Tunnel connected on port %d", port.port)
 				port.tunnelConnected = true
 				port.tunnelTrying = false
-				go t.portRun(port)
+				go t.portRun(port, match)
 			}
 		} else {
 			if port.tunnelConnected {
@@ -196,7 +196,7 @@ func (t *Thing) _scanPorts() {
 	}
 }
 
-func (t *Thing) scanPorts() {
+func (t *Thing) scanPorts(match string) {
 
 	// every second
 
@@ -205,7 +205,7 @@ func (t *Thing) scanPorts() {
 	for {
 		select {
 		case <-ticker.C:
-			t._scanPorts()
+			t._scanPorts(match)
 		}
 	}
 }
@@ -268,8 +268,15 @@ func getPortRange() (begin int, end int, err error) {
 	return begin, end, nil
 }
 
-func (t *Thing) portScan() error {
+func (t *Thing) portScan(max int, match string) error {
 	var err error
+
+	switch {
+	case max == 0:
+		return nil
+	case max < -1:
+		return fmt.Errorf("Invalid max things: %d", max)
+	}
 
 	portBegin, portEnd, err = getPortRange()
 	if err != nil {
@@ -277,6 +284,10 @@ func (t *Thing) portScan() error {
 	}
 
 	numPorts = portEnd - portBegin + 1
+	if max > 0 && numPorts > max {
+		numPorts = max
+	}
+
 	portNext = 0
 
 	ports = make([]port, numPorts)
@@ -285,7 +296,7 @@ func (t *Thing) portScan() error {
 		ports[i].port = portBegin + i
 	}
 
-	go t.scanPorts()
+	go t.scanPorts(match)
 
 	return nil
 }
