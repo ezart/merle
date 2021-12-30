@@ -36,7 +36,7 @@ func NewThing(id, model, name string) *merle.Thing {
 	s.Run = s.run
 	s.Home = s.home
 
-	s.HandleMsg("CmdAnimate", s.animate)
+	s.Subscribe("CmdAnimate", s.animate)
 
 	return s.InitThing(id, model, name)
 }

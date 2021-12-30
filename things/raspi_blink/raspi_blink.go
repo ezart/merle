@@ -125,12 +125,12 @@ func NewThing(id, model, name string) *merle.Thing {
 	b.Run = b.run
 	b.Home = b.home
 
-	b.HandleMsg("GetPaused", b.sendPaused)
-	b.HandleMsg("ReplyPaused", b.savePaused)
-	b.HandleMsg("CmdPause", b.pause)
-	b.HandleMsg("CmdResume", b.resume)
-	b.HandleMsg("CmdStart", b.start)
-	b.HandleMsg("SpamLedState", b.Broadcast)
+	b.Subscribe("GetPaused", b.sendPaused)
+	b.Subscribe("ReplyPaused", b.savePaused)
+	b.Subscribe("CmdPause", b.pause)
+	b.Subscribe("CmdResume", b.resume)
+	b.Subscribe("CmdStart", b.start)
+	b.Subscribe("SpamLedState", b.Broadcast)
 
 	return b.InitThing(id, model, name)
 }

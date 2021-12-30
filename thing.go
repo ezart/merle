@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	//"regexp"
 	"sync"
 	"time"
 )
@@ -14,7 +15,6 @@ type Thing struct {
 	Init func() error
 	Run  func()
 	Home func(w http.ResponseWriter, r *http.Request)
-	ChildUpdate func(*Thing)
 
 	status      string
 	id          string
@@ -31,8 +31,7 @@ type Thing struct {
 
 	// ws connections
 	sync.Mutex
-	msgHandlers   map[string]func(*Packet)
-	msgSnoopers   map[string]func(*Thing, *Packet)
+	subscribers   map[string][]func(*Packet)
 	conns         map[*websocket.Conn]bool
 	connQ         chan bool
 
@@ -106,7 +105,7 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	}
 	t.things = make(map[string]*Thing)
 
-	t.HandleMsg("GetIdentity", t.getIdentity)
+	t.Subscribe("GetIdentity", t.getIdentity)
 
 	return t
 }
@@ -188,37 +187,27 @@ func (t *Thing) receive(p *Packet) {
 
 	p.Unmarshal(&msg)
 
-	f := t.msgHandlers[msg.Msg]
-	if f == nil {
-		log.Printf("%sSkipping msg; no handler: %.80s",
+	subscribers := t.subscribers[msg.Msg]
+	if subscribers == nil {
+		log.Printf("%sSkipping msg; no subscribers: %.80s",
 			t.logPrefix(), p.String())
 		return
 	}
 
 	log.Printf("%sReceived: %.80s", t.logPrefix(), p.String())
 
-	f(p)
-
-	s := t.msgSnoopers[msg.Msg]
-	if s != nil {
-		s(t, p)
+	// TODO rwlock around [] accesses?
+	for _, f := range subscribers {
+		f(p)
 	}
 }
 
-// Add a message handler
-func (t *Thing) HandleMsg(msg string, f func(*Packet)) {
-	if t.msgHandlers == nil {
-		t.msgHandlers = make(map[string]func(*Packet))
+// Subscribe to message
+func (t *Thing) Subscribe(msg string, f func(*Packet)) {
+	if t.subscribers == nil {
+		t.subscribers = make(map[string][]func(*Packet))
 	}
-	t.msgHandlers[msg] = f
-}
-
-// Add a message snooper
-func (t *Thing) SnoopMsg(msg string, f func(*Thing, *Packet)) {
-	if t.msgSnoopers == nil {
-		t.msgSnoopers = make(map[string]func(*Thing, *Packet))
-	}
-	t.msgSnoopers[msg] = f
+	t.subscribers[msg] = append(t.subscribers[msg], f)
 }
 
 // Configure local http server
@@ -372,10 +361,6 @@ func (t *Thing) changeStatus(child *Thing, status string) {
 		Status: child.status,
 	}
 	t.Broadcast(NewPacket(&spam))
-
-	if t.ChildUpdate != nil {
-		t.ChildUpdate(child)
-	}
 }
 
 func (t *Thing) portRun(p *port, match string) {
