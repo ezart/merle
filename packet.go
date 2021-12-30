@@ -22,11 +22,6 @@ func NewPacket(msg interface{}) *Packet {
 	return &p
 }
 
-func (p *Packet) update(msg []byte) *Packet {
-	p.msg = msg
-	return p
-}
-
 func (p *Packet) Marshal(msg interface{}) *Packet {
 	p.msg, _ = json.Marshal(msg)
 	return p

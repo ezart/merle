@@ -128,6 +128,7 @@ func (p *port) run(t *Thing) {
 	var pkt = &Packet{
 		conn: p.ws,
 	}
+	var err error
 
 	t.connAdd(p.ws)
 
@@ -135,12 +136,17 @@ func (p *port) run(t *Thing) {
 	t.receive(pkt.Marshal(&msg))
 
 	for {
-		msg, err := p.readMessage()
+		// new pkt for each rcv
+		var pkt = &Packet{
+			conn: p.ws,
+		}
+
+		pkt.msg, err = p.readMessage()
 		if err != nil {
 			log.Println(t.logPrefix(), "Port", p.port, "disconnected")
 			break
 		}
-		t.receive(pkt.update(msg))
+		t.receive(pkt)
 	}
 
 	t.connDel(p.ws)
