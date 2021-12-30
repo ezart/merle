@@ -1,0 +1,39 @@
+body {
+	max-width: 500px;
+}
+
+.columns {
+	display: flex;
+	flex-direction: row;
+}
+
+.chat {
+	display: flex;
+	flex-direction: column;
+}
+
+.labels-hidden {
+	flex: 0 0 140px;
+	visibility: hidden;
+}
+
+.labels {
+	flex: 0 0 140px;
+}
+
+.data {
+	flex: 1;
+}
+
+.users {
+	flex: 0 0 140px;
+}
+
+.chat {
+	flex: 1;
+}
+
+.input {
+	display: flex;
+	flex-direction: row;
+}

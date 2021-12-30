@@ -1,0 +1,58 @@
+<!--
+Copyright 2021 Scott Feldman (sfeldma@gmail.com). All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file. 
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta name="viewport"
+		      content="width=device-width, initial-scale=1">
+
+		<title>{{.Name}}</title>
+
+		<link rel="stylesheet" type="text/css"
+		      href="/web/css/{{.Model}}.css">
+
+	</head>
+
+	<body>
+
+		<div class="columns">
+			<div class="labels-hidden" id="lables">
+				<pre>Id:</pre>
+				<pre>Model:</pre>
+				<pre>Name:</pre>
+			</div>
+			<div class="data">
+				<pre id="id"></pre>
+				<pre id="model"></pre>
+				<pre id="name"></pre>
+			</div>
+		</div>
+
+		<div class="columns">
+			<div class="users" id="users">
+				<pre>Users</pre>
+			</div>
+			<div class="chat" id="chat">
+				<div class="history" id="history">
+					<pre>History</pre>
+				</div>
+				<div class="input" id="input">
+					<input>
+					<button class="send" id="send" type="button"
+						onclick="send()">Login</button>
+				</div>
+			</div>
+		</div>
+
+		<script src="/web/js/{{.Model}}.js"></script>
+
+	<script>Run({{.Scheme}}, {{.Host}}, {{.Id}})</script>
+
+	</body>
+
+</html>
