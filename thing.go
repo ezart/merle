@@ -23,6 +23,7 @@ type Thing struct {
 	startupTime time.Time
 	shadow      bool
 	connsMax    int
+	cfgFile     string
 	demoMode    bool
 
 	// children
@@ -62,6 +63,14 @@ func (t *Thing) Status() string {
 
 func (t *Thing) SetFactory(f func(string, string, string) *Thing) {
 	t.factory = f
+}
+
+func (t *Thing) SetConfigFile(cfgFile string) {
+	t.cfgFile = cfgFile
+}
+
+func (t *Thing) ConfigFile() string {
+	return t.cfgFile
 }
 
 func (t *Thing) SetDemoMode(demoMode bool) {
@@ -303,7 +312,7 @@ func (t *Thing) Broadcast(p *Packet) {
 	}
 }
 
-func (t *Thing) HomeParams(r *http.Request) interface{} {
+func (t *Thing) HomeParams(r *http.Request, extra interface{}) interface{} {
 	scheme := "wss://"
 	if r.TLS == nil {
 		scheme = "ws://"
@@ -316,6 +325,7 @@ func (t *Thing) HomeParams(r *http.Request) interface{} {
 		Id     string
 		Model  string
 		Name   string
+		Extra  interface{}
 	}{
 		Scheme: scheme,
 		Host:   r.Host,
@@ -323,6 +333,7 @@ func (t *Thing) HomeParams(r *http.Request) interface{} {
 		Id:     t.id,
 		Model:  t.model,
 		Name:   t.name,
+		Extra:  extra,
 	}
 }
 

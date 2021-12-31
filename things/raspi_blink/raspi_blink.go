@@ -80,7 +80,7 @@ func (b *blinker) run() {
 }
 
 func (b *blinker) home(w http.ResponseWriter, r *http.Request) {
-	templ.Execute(w, b.HomeParams(r))
+	templ.Execute(w, b.HomeParams(r, nil))
 }
 
 type msgReplyPaused struct {

@@ -8,6 +8,7 @@ package hub
 
 import (
 	"github.com/scottfeldman/merle"
+	"github.com/scottfeldman/merle/config"
 	"html/template"
 	"net/http"
 )
@@ -18,12 +19,24 @@ func init() {
 	templ = template.Must(template.ParseFiles("web/templates/hub.html"))
 }
 
+var cfg struct {
+	Hub struct {
+		Max   uint   `yaml:"Max"`
+		Match string `yaml:"Match"`
+	} `yaml:"Hub"`
+}
+
 type hub struct {
 	merle.Thing
 }
 
 func (h *hub) init() error {
-	return h.ListenForThings(-1, "[*][*][*]")
+	err := config.ParseFile(h.ConfigFile(), &cfg)
+	if err != nil {
+		return err
+	}
+
+	return h.ListenForThings(cfg.Hub.Max, cfg.Hub.Match)
 }
 
 func (h *hub) run() {
@@ -31,7 +44,7 @@ func (h *hub) run() {
 }
 
 func (h *hub) home(w http.ResponseWriter, r *http.Request) {
-	templ.Execute(w, h.HomeParams(r))
+	templ.Execute(w, h.HomeParams(r, cfg.Hub.Max))
 }
 
 func NewThing(id, model, name string) *merle.Thing {

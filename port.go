@@ -17,15 +17,15 @@ import (
 	"time"
 )
 
-var portBegin int
-var portEnd int
-var portNext int
+var portBegin uint
+var portEnd uint
+var portNext uint
 
-var numPorts int
+var numPorts uint
 
 type port struct {
 	sync.Mutex
-	port              int
+	port              uint
 	tunnelTrying      bool
 	tunnelTryingUntil time.Time
 	tunnelConnected   bool
@@ -52,7 +52,7 @@ func (p *port) wsOpen() error {
 	var err error
 
 	u := url.URL{Scheme: "ws",
-		Host: "localhost:" + strconv.Itoa(p.port),
+		Host: "localhost:" + strconv.FormatUint(uint64(p.port), 10),
 		Path: "/ws"}
 
 	p.ws, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
@@ -156,8 +156,8 @@ func (t *Thing) _scanPorts(match string) {
 	// ss -Hntl4p src 127.0.0.1 sport ge 8081 sport le 9080
 
 	cmd := exec.Command("ss", "-Hntl4", "src", "127.0.0.1",
-		"sport", "ge", strconv.Itoa(portBegin),
-		"sport", "le", strconv.Itoa(portEnd))
+		"sport", "ge", strconv.FormatUint(uint64(portBegin), 10),
+		"sport", "le", strconv.FormatUint(uint64(portEnd), 10))
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Print(err)
@@ -167,18 +167,18 @@ func (t *Thing) _scanPorts(match string) {
 	ss := string(stdoutStderr)
 	ss = strings.TrimSuffix(ss, "\n")
 
-	listeners := make(map[int]bool)
+	listeners := make(map[uint]bool)
 
 	for _, ssLine := range strings.Split(ss, "\n") {
 		if len(ssLine) > 0 {
 			portStr := strings.Split(strings.Split(ssLine,
 				":")[1], " ")[0]
 			port, _ := strconv.Atoi(portStr)
-			listeners[port] = true
+			listeners[uint(port)] = true
 		}
 	}
 
-	for i := 0; i < numPorts; i++ {
+	for i := uint(0); i < numPorts; i++ {
 		port := &ports[i]
 		port.Lock()
 		if listeners[port.port] {
@@ -216,7 +216,7 @@ func (t *Thing) scanPorts(match string) {
 	}
 }
 
-func getPortRange() (begin int, end int, err error) {
+func getPortRange() (begin uint, end uint, err error) {
 
 	// Merle uses ip_local_reserved_ports for incoming Thing
 	// connections.
@@ -259,29 +259,28 @@ func getPortRange() (begin int, end int, err error) {
 
 	reservedPorts := fields[0]
 
-	begin, err = strconv.Atoi(strings.Split(reservedPorts, "-")[0])
+	b, err := strconv.Atoi(strings.Split(reservedPorts, "-")[0])
 	if err != nil {
 		return 0, 0, err
 	}
+	begin = uint(b)
 
-	end, err = strconv.Atoi(strings.Split(reservedPorts, "-")[1])
+	e, err := strconv.Atoi(strings.Split(reservedPorts, "-")[1])
 	if err != nil {
 		return 0, 0, err
 	}
+	end = uint(e)
 
 	log.Printf("IP local reserved port range: [%d-%d]", begin, end)
 
 	return begin, end, nil
 }
 
-func (t *Thing) portScan(max int, match string) error {
+func (t *Thing) portScan(max uint, match string) error {
 	var err error
 
-	switch {
-	case max == 0:
-		return nil
-	case max < -1:
-		return fmt.Errorf("Invalid max things: %d", max)
+	if max == 0 {
+		return fmt.Errorf("Max ports equal zero; nothing to scan")
 	}
 
 	portBegin, portEnd, err = getPortRange()
@@ -290,7 +289,7 @@ func (t *Thing) portScan(max int, match string) error {
 	}
 
 	numPorts = portEnd - portBegin + 1
-	if max > 0 && numPorts > max {
+	if numPorts > max {
 		numPorts = max
 	}
 
@@ -298,7 +297,7 @@ func (t *Thing) portScan(max int, match string) error {
 
 	ports = make([]port, numPorts)
 
-	for i := 0; i < numPorts; i++ {
+	for i := uint(0); i < numPorts; i++ {
 		ports[i].port = portBegin + i
 	}
 
@@ -309,7 +308,7 @@ func (t *Thing) portScan(max int, match string) error {
 
 func nextPort() (p *port) {
 
-	for i := 0; i < numPorts; i++ {
+	for i := uint(0); i < numPorts; i++ {
 		p = &ports[portNext]
 		portNext++
 		if portNext >= numPorts {
@@ -359,5 +358,5 @@ func portFromId(id string) int {
 	}
 
 	log.Printf("Returning port %d for Id %s", p.port, id)
-	return p.port
+	return int(p.port)
 }

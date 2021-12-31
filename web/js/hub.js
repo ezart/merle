@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
+let shadowMode
+
 function sendForThings() {
 	conn.send(JSON.stringify({Msg: "GetThings"}))
 }
@@ -11,7 +13,7 @@ function show(id) {
 	iframe.src = "/" + encodeURIComponent(id)
 }
 
-function addThing(msg) {
+function showIcon(msg) {
 	var iframe = document.getElementById("thing")
 	var things = document.getElementById("things")
 	var newdiv = document.createElement("div")
@@ -28,7 +30,14 @@ function addThing(msg) {
 	newdiv.appendChild(newpre)
 	newdiv.appendChild(newimg)
 	things.appendChild(newdiv)
+}
 
+function addThing(msg) {
+	var iframe = document.getElementById("thing")
+
+	if (!shadowMode) {
+		showIcon(msg)
+	}
 	if (iframe.src == "") {
 		show(msg.Id)
 	}
@@ -43,6 +52,11 @@ function saveThings(msg) {
 }
 
 function updateStatus(msg) {
+	if (shadowMode) {
+		show(msg.Id)
+		return
+	}
+
 	var img = document.getElementById(msg.Id)
 	var pre = document.getElementById("pre-" + msg.Id)
 
@@ -55,7 +69,13 @@ function updateStatus(msg) {
 	}
 }
 
-function Run(scheme, host, id) {
+function Run(scheme, host, id, max) {
+
+	shadowMode = (max == 1)
+
+	if (!shadowMode) {
+		document.getElementById("things").style.height = "100px"
+	}
 
 	conn = new WebSocket(scheme + host + "/ws/" + id)
 

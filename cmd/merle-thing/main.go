@@ -5,13 +5,37 @@
 package main
 
 import (
+	"github.com/scottfeldman/merle/config"
 	"github.com/scottfeldman/merle/factory"
 	"flag"
 	"log"
 	"os"
 )
 
+type cfg struct {
+	Thing struct {
+		Id          string `yaml:"Id"`
+		Model       string `yaml:"Model"`
+		Name        string `yaml:"Name"`
+		User        string `yaml:"User"`
+		PortPublic  int    `yaml:"PortPublic"`
+		PortPrivate int    `yaml:"PortPrivate"`
+	} `yaml:"Thing"`
+	Mother struct {
+		Host string `yaml:"Host"`
+		User string `yaml:"User"`
+		Key  string `yaml:"Key"`
+		PortPrivate int `yaml:"PortPrivate"`
+	} `yaml:"Mother"`
+}
+
 func main() {
+	var cfg cfg
+
+	if os.Geteuid() != 0 {
+		log.Fatalln("Must run as root")
+	}
+
 	log.SetFlags(0)
 
 	cfgFile  := flag.String("config", "/etc/merle/thing.yml", "Config File")
@@ -19,10 +43,9 @@ func main() {
 
 	flag.Parse()
 
-	cfg := parseCfgFile(*cfgFile)
-
-	if os.Geteuid() != 0 {
-		log.Fatalln("Must run as root")
+	err := config.ParseFile(*cfgFile, &cfg)
+	if err != nil {
+		log.Fatalln("Opening config file:", err)
 	}
 
 	t := factory.NewThing(cfg.Thing.Id, cfg.Thing.Model, cfg.Thing.Name)
@@ -30,6 +53,7 @@ func main() {
 		log.Fatalf("No model named '%s'", cfg.Thing.Model)
 	}
 
+	t.SetConfigFile(*cfgFile)
 	t.SetDemoMode(*demoMode)
 	t.SetFactory(factory.NewThing)
 

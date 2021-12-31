@@ -265,7 +265,7 @@ func getPort(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (t *Thing) ListenForThings(max int, match string) error {
+func (t *Thing) ListenForThings(max uint, match string) error {
 	// TODO thing filter
 	log.Println("Listening for Things...")
 	t.Subscribe("GetThings", t.getThings)

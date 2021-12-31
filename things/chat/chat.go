@@ -31,7 +31,7 @@ func (c *chat) run() {
 }
 
 func (c *chat) home(w http.ResponseWriter, r *http.Request) {
-	templ.Execute(w, c.HomeParams(r))
+	templ.Execute(w, c.HomeParams(r, nil))
 }
 
 func NewThing(id, model, name string) *merle.Thing {

@@ -30,7 +30,7 @@ func (s *shadow) run() {
 }
 
 func (s *shadow) home(w http.ResponseWriter, r *http.Request) {
-	templ.Execute(w, s.HomeParams(r))
+	templ.Execute(w, s.HomeParams(r, nil))
 }
 
 func NewThing(id, model, name string) *merle.Thing {
