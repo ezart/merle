@@ -15,7 +15,6 @@ import (
 
 var things = map[string]func(id, model, name string) *merle.Thing{
 	"skeleton":    skeleton.NewThing,
-	"shadow":      shadow.NewThing,
 	"hub":         hub.NewThing,
 	"raspi_blink": raspi_blink.NewThing,
 	"chat":        chat.NewThing,
