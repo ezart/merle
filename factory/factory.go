@@ -7,7 +7,6 @@ package factory
 import (
 	"github.com/scottfeldman/merle"
 	"github.com/scottfeldman/merle/things/skeleton"
-	"github.com/scottfeldman/merle/things/shadow"
 	"github.com/scottfeldman/merle/things/hub"
 	"github.com/scottfeldman/merle/things/raspi_blink"
 	"github.com/scottfeldman/merle/things/chat"
