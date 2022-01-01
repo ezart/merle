@@ -8,9 +8,7 @@ let id
 let model
 let name
 let status
-let ledState
-let paused = false
-let refreshTimer
+let user = ""
 
 function sendForIdentity() {
 	conn.send(JSON.stringify({Msg: "GetIdentity"}))
@@ -45,6 +43,58 @@ function updateStatus(msg) {
 	refreshAll()
 }
 
+function sendNewUser(id) {
+	conn.send(JSON.stringify({Msg: "CmdNewUser", User: id}))
+}
+
+function newUser(id) {
+	var users = document.getElementById("users")
+	var newpre = document.createElement("pre")
+
+	newpre.innerText = id 
+	users.appendChild(newpre)
+}
+
+function sendText(text) {
+	conn.send(JSON.stringify({Msg: "CmdText", Text: text}))
+}
+
+function newText(text) {
+	var newpre = document.createElement("pre")
+	var history = document.getElementById("history")
+
+	if (user != "") {
+		newpre.innerText = text
+		history.appendChild(newpre)
+	}
+}
+
+function enter(event) {
+	if (event.keyCode == 13)
+		document.getElementById('send').click()
+}
+
+function send() {
+	var button = document.getElementById("send")
+	var input = document.getElementById("input")
+
+	if (input.value == "") {
+		return
+	}
+
+	if (button.textContent == "Login") {
+		button.textContent = "Send"
+		user = input.value
+		sendNewUser(user)
+		newUser(user)
+		return
+	}
+
+	text = input.value
+	sendText(text)
+	newText(text)
+}
+
 function Run(scheme, host, id) {
 
 	conn = new WebSocket(scheme + host + "/ws/" + id)
@@ -66,6 +116,12 @@ function Run(scheme, host, id) {
 		case "ReplyIdentity":
 			saveIdentity(msg)
 			refreshAll()
+			break
+		case "CmdNewUser":
+			newUser(msg.User)
+			break
+		case "CmdText":
+			newText(msg.Text)
 			break
 		}
 	}

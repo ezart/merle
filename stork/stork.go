@@ -2,12 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
-package factory
+package stork
 
 import (
 	"github.com/scottfeldman/merle"
 	"github.com/scottfeldman/merle/things/skeleton"
 	"github.com/scottfeldman/merle/things/hub"
+	"github.com/scottfeldman/merle/things/bridge"
 	"github.com/scottfeldman/merle/things/raspi_blink"
 	"github.com/scottfeldman/merle/things/chat"
 )
@@ -15,6 +16,7 @@ import (
 var things = map[string]func(id, model, name string) *merle.Thing{
 	"skeleton":    skeleton.NewThing,
 	"hub":         hub.NewThing,
+	"bridge":      bridge.NewThing,
 	"raspi_blink": raspi_blink.NewThing,
 	"chat":        chat.NewThing,
 }

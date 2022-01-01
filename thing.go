@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	//"regexp"
+	"reflect"
 	"sync"
 	"time"
 )
@@ -27,14 +28,17 @@ type Thing struct {
 	demoMode    bool
 
 	// children
-	factory func(string, string, string) *Thing
-	things map[string]*Thing
+	stork    func(string, string, string) *Thing
+	children map[string]*Thing
 
 	// ws connections
-	sync.Mutex
-	subscribers   map[string][]func(*Packet)
+	connLock      sync.RWMutex
 	conns         map[*websocket.Conn]bool
 	connQ         chan bool
+
+	// msg subscribers
+	subLock       sync.RWMutex
+	subscribers   map[string][]func(*Packet)
 
 	// http servers
 	sync.WaitGroup
@@ -61,8 +65,8 @@ func (t *Thing) Status() string {
 	return t.status
 }
 
-func (t *Thing) SetFactory(f func(string, string, string) *Thing) {
-	t.factory = f
+func (t *Thing) SetStork(f func(string, string, string) *Thing) {
+	t.stork = f
 }
 
 func (t *Thing) SetConfigFile(cfgFile string) {
@@ -108,11 +112,11 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	}
 	t.connQ = make(chan bool, t.connsMax)
 
-	t.factory = func(string, string, string) *Thing {
-		log.Println(t.logPrefix(), "Need to set factory")
+	t.stork = func(string, string, string) *Thing {
+		log.Println(t.logPrefix(), "Need to set stork")
 		return nil
 	}
-	t.things = make(map[string]*Thing)
+	t.children = make(map[string]*Thing)
 
 	t.Subscribe("GetIdentity", t.getIdentity)
 
@@ -120,14 +124,14 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 }
 
 func (t *Thing) connAdd(c *websocket.Conn) {
-	t.Lock()
-	defer t.Unlock()
+	t.connLock.Lock()
+	defer t.connLock.Unlock()
 	t.conns[c] = true
 }
 
 func (t *Thing) connDel(c *websocket.Conn) {
-	t.Lock()
-	defer t.Unlock()
+	t.connLock.Lock()
+	defer t.connLock.Unlock()
 	delete(t.conns, c)
 }
 
@@ -175,15 +179,15 @@ func (t *Thing) getThings(p *Packet) {
 	resp := msgThings{
 		Msg: "ReplyThings",
 	}
-	for _, thing := range t.things {
-		resp.Things = append(resp.Things, msgThing{thing.id,
-			thing.model, thing.name, thing.status})
+	for _, child := range t.children {
+		resp.Things = append(resp.Things, msgThing{child.id,
+			child.model, child.name, child.status})
 	}
 	t.Reply(p.Marshal(&resp))
 }
 
-func (t *Thing) getThing(id string) *Thing {
-	if thing, ok := t.things[id]; ok {
+func (t *Thing) GetChild(id string) *Thing {
+	if thing, ok := t.children[id]; ok {
 		return thing
 	}
 	return nil
@@ -196,6 +200,9 @@ func (t *Thing) receive(p *Packet) {
 
 	p.Unmarshal(&msg)
 
+	t.subLock.RLock()
+	defer t.subLock.RUnlock()
+
 	subscribers := t.subscribers[msg.Msg]
 	if subscribers == nil {
 		log.Printf("%sSkipping msg; no subscribers: %.80s",
@@ -205,7 +212,6 @@ func (t *Thing) receive(p *Packet) {
 
 	log.Printf("%sReceived: %.80s", t.logPrefix(), p.String())
 
-	// TODO rwlock around [] accesses?
 	for _, f := range subscribers {
 		f(p)
 	}
@@ -213,10 +219,42 @@ func (t *Thing) receive(p *Packet) {
 
 // Subscribe to message
 func (t *Thing) Subscribe(msg string, f func(*Packet)) {
+	t.subLock.Lock()
+	defer t.subLock.Unlock()
+
 	if t.subscribers == nil {
 		t.subscribers = make(map[string][]func(*Packet))
 	}
 	t.subscribers[msg] = append(t.subscribers[msg], f)
+
+	log.Printf("%sSubscribed to \"%s\"", t.logPrefix(), msg)
+}
+
+// Unsubscribe to message
+func (t *Thing) Unsubscribe(msg string, f func(*Packet)) {
+	t.subLock.Lock()
+	defer t.subLock.Unlock()
+
+	if t.subscribers == nil {
+		return
+	}
+
+	if _, ok := t.subscribers[msg]; !ok {
+		return
+	}
+
+	for i, g := range t.subscribers[msg] {
+		if reflect.ValueOf(g).Pointer() == reflect.ValueOf(f).Pointer() {
+			log.Printf("%sUnsubscribed to \"%s\"", t.logPrefix(), msg)
+			t.subscribers[msg] = append(t.subscribers[msg][:i],
+				t.subscribers[msg][i+1:]...)
+			break
+		}
+	}
+
+	if len(t.subscribers[msg]) == 0 {
+		delete(t.subscribers, msg)
+	}
 }
 
 // Configure local http server
@@ -266,8 +304,8 @@ func (t *Thing) Inject(p *Packet) {
 
 // Reply sends Packet back to originator
 func (t *Thing) Reply(p *Packet) {
-	t.Lock()
-	defer t.Unlock()
+	t.connLock.RLock()
+	defer t.connLock.RUnlock()
 
 	log.Printf("%sReply: %.80s", t.logPrefix(), p.String())
 	err := p.writeMessage()
@@ -280,10 +318,10 @@ func (t *Thing) Reply(p *Packet) {
 func (t *Thing) Broadcast(p *Packet) {
 	src := p.conn
 
-	t.Lock()
+	t.connLock.RLock()
 	defer func() {
 		p.conn = src
-		t.Unlock()
+		t.connLock.RUnlock()
 	}()
 
 	switch len(t.conns) {
@@ -355,16 +393,18 @@ func defaultId() string {
 	return ""
 }
 
+type SpamStatus struct {
+	Msg     string
+	Id      string
+	Model   string
+	Name    string
+	Status  string
+}
+
 func (t *Thing) changeStatus(child *Thing, status string) {
 	child.status = status
 
-	spam := struct {
-		Msg     string
-		Id      string
-		Model   string
-		Name    string
-		Status  string
-	}{
+	spam := SpamStatus{
 		Msg:    "SpamStatus",
 		Id:     child.id,
 		Model:  child.model,
@@ -389,16 +429,16 @@ func (t *Thing) portRun(p *port, match string) {
 		goto disconnect
 	}
 
-	child = t.getThing(resp.Id)
+	child = t.GetChild(resp.Id)
 
 	if child == nil {
-		child = t.factory(resp.Id, resp.Model, resp.Name)
+		child = t.stork(resp.Id, resp.Model, resp.Name)
 		if child == nil {
 			log.Println(t.logPrefix(), "Model", resp.Model, "unknown")
 			goto disconnect
 		}
 		child.shadow = true
-		t.things[resp.Id] = child
+		t.children[resp.Id] = child
 	} else {
 		if child.model != resp.Model {
 			log.Println(t.logPrefix(), "Model mismatch")

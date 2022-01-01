@@ -6,7 +6,7 @@ package main
 
 import (
 	"github.com/scottfeldman/merle/config"
-	"github.com/scottfeldman/merle/factory"
+	"github.com/scottfeldman/merle/stork"
 	"flag"
 	"log"
 	"os"
@@ -48,14 +48,14 @@ func main() {
 		log.Fatalln("Opening config file:", err)
 	}
 
-	t := factory.NewThing(cfg.Thing.Id, cfg.Thing.Model, cfg.Thing.Name)
+	t := stork.NewThing(cfg.Thing.Id, cfg.Thing.Model, cfg.Thing.Name)
 	if t == nil {
 		log.Fatalf("No model named '%s'", cfg.Thing.Model)
 	}
 
 	t.SetConfigFile(*cfgFile)
 	t.SetDemoMode(*demoMode)
-	t.SetFactory(factory.NewThing)
+	t.SetStork(stork.NewThing)
 
 	t.TunnelConfig(cfg.Mother.Host, cfg.Mother.User, cfg.Mother.Key,
 		cfg.Mother.PortPrivate)

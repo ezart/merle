@@ -37,13 +37,13 @@ found in the LICENSE file.
 			<div class="users" id="users">
 				<pre>Users</pre>
 			</div>
-			<div class="chat" id="chat">
+			<div class="chat">
 				<div class="history" id="history">
 					<pre>History</pre>
 				</div>
-				<div class="input" id="input">
-					<input>
-					<button class="send" id="send" type="button"
+				<div class="inputs">
+					<input id="input" onkeydown="enter(event)">
+					<button id="send" type="button"
 						onclick="send()">Login</button>
 				</div>
 			</div>

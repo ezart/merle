@@ -27,7 +27,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	child := t.getThing(id)
+	child := t.GetChild(id)
 	if child != nil {
 		child.ws(w, r)
 		return
@@ -82,7 +82,7 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	child := t.getThing(id)
+	child := t.GetChild(id)
 	if child != nil {
 		child.home(w, r)
 		return
@@ -155,11 +155,11 @@ func basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
 }
 
 func (t *Thing) httpShutdown() {
-	t.Lock()
+	t.connLock.RLock()
 	for c := range t.conns {
 		c.WriteControl(websocket.CloseMessage, nil, time.Now())
 	}
-	t.Unlock()
+	t.connLock.RUnlock()
 	t.Done()
 }
 

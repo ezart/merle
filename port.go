@@ -98,19 +98,21 @@ func (p *port) wsClose() {
 func (p *port) connect() (resp *msgIdentity, err error) {
 	err = p.wsOpen()
 	if err != nil {
-		log.Printf("Port[%d] run wsOpen error: %s", p.port, err)
+		log.Printf("Port[%d] websocket open error: %s", p.port, err)
 		return nil, err
 	}
 
 	err = p.wsIdentity()
 	if err != nil {
-		log.Printf("Port[%d] run wsIdentity error: %s", p.port, err)
+		log.Printf("Port[%d] send request for Identity failed: %s",
+			p.port, err)
 		return nil, err
 	}
 
 	resp, err = p.wsReplyIdentity()
 	if err != nil {
-		log.Printf("Port[%d] run wsReplyIdentity error: %s", p.port, err)
+		log.Printf("Port[%d] didn't reply with Identity in a reasonable time: %s",
+			p.port, err)
 		return nil, err
 	}
 
