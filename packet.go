@@ -12,6 +12,7 @@ import (
 
 // A Packet contains a message and a (hidden) source.
 type Packet struct {
+	tap bool
 	conn *websocket.Conn
 	msg  []byte
 }
@@ -20,6 +21,10 @@ func NewPacket(msg interface{}) *Packet {
 	var p Packet
 	p.msg, _ = json.Marshal(msg)
 	return &p
+}
+
+func (p *Packet) SetTap() {
+	p.tap = true
 }
 
 func (p *Packet) Marshal(msg interface{}) *Packet {
@@ -35,7 +40,7 @@ func (p *Packet) String() string {
 	return string(p.msg)
 }
 
-func (p *Packet) writeMessage() error {
+func (p *Packet) write() error {
 	err := p.conn.WriteMessage(websocket.TextMessage, p.msg)
 	if err != nil {
 		log.Println("Packet writeMessage error:", err)

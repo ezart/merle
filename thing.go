@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
-	//"regexp"
+	"regexp"
 	"reflect"
 	"sync"
 	"time"
@@ -16,6 +16,8 @@ type Thing struct {
 	Init func() error
 	Run  func()
 	Home func(w http.ResponseWriter, r *http.Request)
+	Connect func(*Thing)
+	Tap func(*Thing, *Packet)
 
 	status      string
 	id          string
@@ -194,6 +196,8 @@ func (t *Thing) GetChild(id string) *Thing {
 }
 
 func (t *Thing) receive(p *Packet) {
+	log.Printf("%sReceived: %.80s", t.logPrefix(), p.String())
+
 	msg := struct {
 		Msg string
 	}{}
@@ -203,17 +207,17 @@ func (t *Thing) receive(p *Packet) {
 	t.subLock.RLock()
 	defer t.subLock.RUnlock()
 
-	subscribers := t.subscribers[msg.Msg]
-	if subscribers == nil {
-		log.Printf("%sSkipping msg; no subscribers: %.80s",
-			t.logPrefix(), p.String())
-		return
-	}
-
-	log.Printf("%sReceived: %.80s", t.logPrefix(), p.String())
-
-	for _, f := range subscribers {
-		f(p)
+	for key, subscribers := range t.subscribers {
+		matched, err := regexp.MatchString(key, msg.Msg)
+		if err != nil {
+			log.Printf("%sError compiling regexp \"%s\": %s", t.logPrefix(), key, err)
+			continue
+		}
+		if matched {
+			for _, f := range subscribers {
+				f(p)
+			}
+		}
 	}
 }
 
@@ -297,18 +301,13 @@ func (t *Thing) Start() {
 	log.Fatalln(t.logPrefix(), "Run() didn't run forever")
 }
 
-// Inject packet
-func (t *Thing) Inject(p *Packet) {
-	t.receive(p)
-}
-
 // Reply sends Packet back to originator
 func (t *Thing) Reply(p *Packet) {
 	t.connLock.RLock()
 	defer t.connLock.RUnlock()
 
 	log.Printf("%sReply: %.80s", t.logPrefix(), p.String())
-	err := p.writeMessage()
+	err := p.write()
 	if err != nil {
 		log.Println(t.logPrefix(), "Reply error:", err)
 	}
@@ -323,6 +322,10 @@ func (t *Thing) Broadcast(p *Packet) {
 		p.conn = src
 		t.connLock.RUnlock()
 	}()
+
+	if t.Tap != nil && !p.tap {
+		t.Tap(t, p)
+	}
 
 	switch len(t.conns) {
 	case 0:
@@ -346,7 +349,7 @@ func (t *Thing) Broadcast(p *Packet) {
 			continue
 		}
 		p.conn = c
-		p.writeMessage()
+		p.write()
 	}
 }
 
@@ -411,7 +414,12 @@ func (t *Thing) changeStatus(child *Thing, status string) {
 		Name:   child.name,
 		Status: child.status,
 	}
-	t.Broadcast(NewPacket(&spam))
+	p := NewPacket(&spam)
+	t.Broadcast(p)
+
+	if t.Connect != nil {
+		t.Connect(child)
+	}
 }
 
 func (t *Thing) portRun(p *port, match string) {

@@ -41,5 +41,8 @@ func NewThing(id, model, name string) *merle.Thing {
 	c.Run = c.run
 	c.Home = c.home
 
+	c.Subscribe("CmdNewUser", c.Broadcast)
+	c.Subscribe("CmdText", c.Broadcast)
+
 	return c.InitThing(id, model, name)
 }

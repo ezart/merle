@@ -19,6 +19,6 @@ function Run(scheme, host, id) {
 		console.log('event', msg)
 
 		trace = document.getElementById("trace")
-		trace.inner.Html += msg
+		trace.innerHtml += msg
 	}
 }

@@ -51,6 +51,7 @@ function newUser(id) {
 	var users = document.getElementById("users")
 	var newpre = document.createElement("pre")
 
+	user = id
 	newpre.innerText = id 
 	users.appendChild(newpre)
 }
@@ -84,9 +85,8 @@ function send() {
 
 	if (button.textContent == "Login") {
 		button.textContent = "Send"
-		user = input.value
-		sendNewUser(user)
-		newUser(user)
+		newUser(input.value)
+		sendNewUser(input.value)
 		return
 	}
 

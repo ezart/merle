@@ -9,6 +9,7 @@ import (
 	"github.com/scottfeldman/merle/config"
 	"html/template"
 	"net/http"
+	"log"
 )
 
 var templ *template.Template
@@ -26,6 +27,7 @@ var cfg struct {
 
 type bridge struct {
 	merle.Thing
+	online map[string]*merle.Thing
 }
 
 func (b *bridge) init() error {
@@ -33,6 +35,8 @@ func (b *bridge) init() error {
 	if err != nil {
 		return err
 	}
+
+	b.online = make(map[string]*merle.Thing)
 
 	return b.ListenForThings(cfg.Bridge.Max, cfg.Bridge.Match)
 }
@@ -45,18 +49,24 @@ func (b *bridge) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, b.HomeParams(r, nil))
 }
 
-func (b *bridge) status(p *merle.Packet) {
-	var spam merle.SpamStatus
-	var child *merle.Thing
+func (b *bridge) tap(child *merle.Thing, p *merle.Packet) {
+	b.Broadcast(p)
+	log.Println("tap", p.String())
+	p.SetTap()
+	for id, thing := range b.online {
+		if id != child.Id() {
+			thing.Broadcast(p)
+		}
+	}
+}
 
-	p.Unmarshal(&spam)
-
-	child = b.GetChild(spam.Id)
-
-	if spam.Status == "online" {
-		child.Subscribe(".*", b.Broadcast)
+func (b *bridge) connect(child *merle.Thing) {
+	if child.Status() == "online" {
+		child.Tap = b.tap
+		b.online[child.Id()] = child
 	} else {
-		child.Unsubscribe(".*", b.Broadcast)
+		child.Tap = nil
+		delete(b.online, child.Id())
 	}
 }
 
@@ -66,8 +76,7 @@ func NewThing(id, model, name string) *merle.Thing {
 	b.Init = b.init
 	b.Run = b.run
 	b.Home = b.home
-
-	b.Subscribe("SpamStatus", b.status)
+	b.Connect = b.connect
 
 	return b.InitThing(id, model, name)
 }
