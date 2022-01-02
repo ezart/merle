@@ -17,7 +17,6 @@ type Thing struct {
 	Run  func()
 	Home func(w http.ResponseWriter, r *http.Request)
 	Connect func(*Thing)
-	Tap func(*Thing, *Packet)
 
 	status      string
 	id          string
@@ -322,10 +321,6 @@ func (t *Thing) Broadcast(p *Packet) {
 		p.conn = src
 		t.connLock.RUnlock()
 	}()
-
-	if t.Tap != nil && !p.tap {
-		t.Tap(t, p)
-	}
 
 	switch len(t.conns) {
 	case 0:

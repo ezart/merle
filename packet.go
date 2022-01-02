@@ -12,7 +12,6 @@ import (
 
 // A Packet contains a message and a (hidden) source.
 type Packet struct {
-	tap bool
 	conn *websocket.Conn
 	msg  []byte
 }
@@ -21,10 +20,6 @@ func NewPacket(msg interface{}) *Packet {
 	var p Packet
 	p.msg, _ = json.Marshal(msg)
 	return &p
-}
-
-func (p *Packet) SetTap() {
-	p.tap = true
 }
 
 func (p *Packet) Marshal(msg interface{}) *Packet {

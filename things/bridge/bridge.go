@@ -9,7 +9,6 @@ import (
 	"github.com/scottfeldman/merle/config"
 	"html/template"
 	"net/http"
-	"log"
 )
 
 var templ *template.Template
@@ -49,23 +48,10 @@ func (b *bridge) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, b.HomeParams(r, nil))
 }
 
-func (b *bridge) tap(child *merle.Thing, p *merle.Packet) {
-	b.Broadcast(p)
-	log.Println("tap", p.String())
-	p.SetTap()
-	for id, thing := range b.online {
-		if id != child.Id() {
-			thing.Broadcast(p)
-		}
-	}
-}
-
 func (b *bridge) connect(child *merle.Thing) {
 	if child.Status() == "online" {
-		child.Tap = b.tap
 		b.online[child.Id()] = child
 	} else {
-		child.Tap = nil
 		delete(b.online, child.Id())
 	}
 }
