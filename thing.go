@@ -2,7 +2,6 @@ package merle
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	"log"
 	"net"
 	"net/http"
@@ -24,6 +23,7 @@ type Thing struct {
 	model       string
 	name        string
 	startupTime time.Time
+
 	shadow      bool
 	connsMax    int
 	cfgFile     string
@@ -37,7 +37,7 @@ type Thing struct {
 
 	// ws connections
 	connLock      sync.RWMutex
-	conns         map[*websocket.Conn]bool
+	conns         map[IConn]bool
 	connQ         chan bool
 
 	// msg subscribers
@@ -125,7 +125,7 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	t.status = "online"
 	t.startupTime = time.Now()
 
-	t.conns = make(map[*websocket.Conn]bool)
+	t.conns = make(map[IConn]bool)
 
 	if t.connsMax == 0 {
 		t.connsMax = 10
@@ -145,13 +145,13 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	return t
 }
 
-func (t *Thing) connAdd(c *websocket.Conn) {
+func (t *Thing) connAdd(c IConn) {
 	t.connLock.Lock()
 	defer t.connLock.Unlock()
 	t.conns[c] = true
 }
 
-func (t *Thing) connDel(c *websocket.Conn) {
+func (t *Thing) connDel(c IConn) {
 	t.connLock.Lock()
 	defer t.connLock.Unlock()
 	delete(t.conns, c)
@@ -327,11 +327,8 @@ func (t *Thing) Start() {
 
 // Reply sends Packet back to originator
 func (t *Thing) Reply(p *Packet) {
-	t.connLock.RLock()
-	defer t.connLock.RUnlock()
-
 	t.log.Printf("Reply: %.80s", p.String())
-	err := p.write()
+	err := p.send(p.src)
 	if err != nil {
 		t.log.Println("Reply error:", err)
 	}
@@ -339,13 +336,10 @@ func (t *Thing) Reply(p *Packet) {
 
 // Broadcast packet to all except packet source
 func (t *Thing) Broadcast(p *Packet) {
-	src := p.conn
+	src := p.src
 
 	t.connLock.RLock()
-	defer func() {
-		p.conn = src
-		t.connLock.RUnlock()
-	}()
+	defer t.connLock.RUnlock()
 
 	switch len(t.conns) {
 	case 0:
@@ -367,8 +361,10 @@ func (t *Thing) Broadcast(p *Packet) {
 			// don't send back to src
 			continue
 		}
-		p.conn = c
-		p.write()
+		err := p.send(c)
+		if err != nil {
+			t.log.Println("Packet send error:", err)
+		}
 	}
 }
 

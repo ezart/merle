@@ -15,7 +15,6 @@ import (
 	"github.com/msteinert/pam"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -41,31 +40,31 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	t.connQ <- true
 	defer func() { <-t.connQ }()
 
-	conn, err := upgrader.Upgrade(w, r, nil)
+	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		t.log.Println("Websocket upgrader error:", err)
 		return
 	}
-	defer conn.Close()
+	defer ws.Close()
 
 	t.log.Printf("Websocket opened [%s:%s]", r.RemoteAddr, r.RequestURI)
+
+	var conn = NewWsConn(ws)
 
 	t.connAdd(conn)
 
 	for {
 		// new pkt for each rcv
-		var p = &Packet{
-			conn: conn,
-		}
+		var pkt = &Packet{src: conn}
 
-		_, p.msg, err = conn.ReadMessage()
+		_, pkt.msg, err = ws.ReadMessage()
 		if err != nil {
 			t.log.Printf("Websocket closed [%s:%s]",
 				r.RemoteAddr, r.RequestURI)
 				break
 		}
 
-		t.receive(p)
+		t.receive(pkt)
 	}
 
 	t.connDel(conn)
@@ -156,7 +155,7 @@ func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFu
 func (t *Thing) httpShutdown() {
 	t.connLock.RLock()
 	for c := range t.conns {
-		c.WriteControl(websocket.CloseMessage, nil, time.Now())
+		c.Close()
 	}
 	t.connLock.RUnlock()
 	t.Done()

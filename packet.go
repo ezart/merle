@@ -6,14 +6,12 @@ package merle
 
 import (
 	"encoding/json"
-	"github.com/gorilla/websocket"
-	"log"
 )
 
-// A Packet contains a message and a (hidden) source.
+// A Packet contains a JSON message and a source connection.
 type Packet struct {
-	conn *websocket.Conn
-	msg  []byte
+	src IConn
+	msg []byte
 }
 
 func NewPacket(msg interface{}) *Packet {
@@ -35,10 +33,6 @@ func (p *Packet) String() string {
 	return string(p.msg)
 }
 
-func (p *Packet) write() error {
-	err := p.conn.WriteMessage(websocket.TextMessage, p.msg)
-	if err != nil {
-		log.Println("Packet writeMessage error:", err)
-	}
-	return err
+func (p *Packet) send(dst IConn) error {
+	return dst.Send(p.msg)
 }

@@ -127,21 +127,18 @@ func (p *port) disconnect() {
 }
 
 func (p *port) run(t *Thing) {
-	var pkt = &Packet{
-		conn: p.ws,
-	}
+	var conn = NewWsConn(p.ws)
+	var pkt = &Packet{src: conn}
 	var err error
 
-	t.connAdd(p.ws)
+	t.connAdd(conn)
 
 	msg := struct{ Msg string }{Msg: "CmdStart"}
 	t.receive(pkt.Marshal(&msg))
 
 	for {
 		// new pkt for each rcv
-		var pkt = &Packet{
-			conn: p.ws,
-		}
+		var pkt = &Packet{src: conn}
 
 		pkt.msg, err = p.readMessage()
 		if err != nil {
@@ -151,7 +148,7 @@ func (p *port) run(t *Thing) {
 		t.receive(pkt)
 	}
 
-	t.connDel(p.ws)
+	t.connDel(conn)
 }
 
 func (t *Thing) _scanPorts(match string) {
