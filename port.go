@@ -127,7 +127,8 @@ func (p *port) disconnect() {
 }
 
 func (p *port) run(t *Thing) {
-	var conn = NewWsConn(p.ws)
+	var name = fmt.Sprintf("port:%d", p.port)
+	var conn = NewWsConn(name, p.ws)
 	var pkt = &Packet{src: conn}
 	var err error
 

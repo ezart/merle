@@ -9,7 +9,7 @@ let model
 let name
 let status
 let startupTime
-let ledState
+let ledState = false
 let paused = false
 let refreshTimer
 
@@ -31,6 +31,7 @@ function sendForPaused() {
 
 function savePaused(msg) {
 	paused = msg.Paused
+	ledState = msg.State
 }
 
 function saveLedState(msg) {

@@ -8,14 +8,16 @@ import (
 type IConn interface {
 	Send([]byte) error
 	Close()
+	Name() string
 }
 
 type WsConn struct {
 	conn *websocket.Conn
+	name string
 }
 
-func NewWsConn(conn *websocket.Conn) *WsConn {
-	return &WsConn{conn: conn}
+func NewWsConn(name string, conn *websocket.Conn) *WsConn {
+	return &WsConn{name: name, conn: conn}
 }
 
 func (w *WsConn) Send(msg []byte) error {
@@ -24,4 +26,8 @@ func (w *WsConn) Send(msg []byte) error {
 
 func (w *WsConn) Close() {
 	w.conn.WriteControl(websocket.CloseMessage, nil, time.Now())
+}
+
+func (w *WsConn) Name() string {
+	return w.name
 }

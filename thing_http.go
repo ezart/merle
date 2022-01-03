@@ -47,9 +47,10 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 
-	t.log.Printf("Websocket opened [%s:%s]", r.RemoteAddr, r.RequestURI)
+	name := "ws:" + r.RemoteAddr + r.RequestURI
+	conn := NewWsConn(name, ws)
 
-	var conn = NewWsConn(ws)
+	t.log.Printf("Websocket opened [%s]", name)
 
 	t.connAdd(conn)
 

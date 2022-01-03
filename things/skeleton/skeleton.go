@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
-// Skeleton is a bare bones example of a thing
+// Skeleton is a bare bones example of a Thing
 package skeleton
 
 import (
@@ -14,7 +14,11 @@ type skeleton struct {
 	merle.Thing
 }
 
-func (s *skeleton) init() error {
+func (s *skeleton) animate(p *merle.Packet) {
+}
+
+func (s *skeleton) init(soft bool) error {
+	s.Subscribe("CmdAnimate", s.animate)
 	return nil
 }
 
@@ -26,17 +30,12 @@ func (s *skeleton) run() {
 func (s *skeleton) home(w http.ResponseWriter, r *http.Request) {
 }
 
-func (s *skeleton) animate(p *merle.Packet) {
-}
-
 func NewThing(id, model, name string) *merle.Thing {
 	s := &skeleton{}
 
 	s.Init = s.init
 	s.Run = s.run
 	s.Home = s.home
-
-	s.Subscribe("CmdAnimate", s.animate)
 
 	return s.InitThing(id, model, name)
 }

@@ -13,7 +13,7 @@ import (
 )
 
 type Thing struct {
-	Init    func() error
+	Init    func(bool) error
 	Run     func()
 	Home    func(w http.ResponseWriter, r *http.Request)
 	Connect func(*Thing)
@@ -24,7 +24,6 @@ type Thing struct {
 	name        string
 	startupTime time.Time
 
-	shadow   bool
 	connsMax int
 	cfgFile  string
 	demoMode bool
@@ -67,10 +66,6 @@ func (t *Thing) Id() string {
 
 func (t *Thing) Status() string {
 	return t.status
-}
-
-func (t *Thing) Shadow() bool {
-	return t.shadow
 }
 
 func (t *Thing) SetStork(f func(string, string, string) *Thing) {
@@ -209,7 +204,7 @@ func (t *Thing) GetChild(id string) *Thing {
 }
 
 func (t *Thing) receive(p *Packet) {
-	t.log.Printf("Received: %.80s", p.String())
+	t.log.Printf("Received [%s]: %.80s", p.src.Name(), p.String())
 
 	msg := struct {
 		Msg string
@@ -298,15 +293,11 @@ func (t *Thing) Start() {
 		t.log.Println("Demo mode ENABLED")
 	}
 
-	if t.shadow {
-		return
-	}
-
 	t.httpInit()
 
 	if t.Init != nil {
-		t.log.Println("Init...")
-		if err := t.Init(); err != nil {
+		t.log.Println("Init hardly...")
+		if err := t.Init(false); err != nil {
 			t.log.Fatalln("Init failed:", err)
 		}
 	}
@@ -460,10 +451,10 @@ func (t *Thing) portRun(p *port, match string) {
 			t.log.Println("Model", resp.Model, "unknown")
 			goto disconnect
 		}
-		child.shadow = true
 		if child.Init != nil {
-			t.log.Println("Init child...")
-			if err := child.Init(); err != nil {
+			t.log.Printf("Init child [%s,%s,%s] softly",
+				child.id, child.model, child.name)
+			if err := child.Init(true); err != nil {
 				t.log.Println("Child init failed:", err)
 				goto disconnect
 			}

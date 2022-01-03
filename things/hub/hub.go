@@ -30,7 +30,7 @@ type hub struct {
 	merle.Thing
 }
 
-func (h *hub) init() error {
+func (h *hub) init(soft bool) error {
 	err := config.ParseFile(h.ConfigFile(), &cfg)
 	if err != nil {
 		return err

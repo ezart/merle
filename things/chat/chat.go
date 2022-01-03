@@ -22,7 +22,7 @@ type chat struct {
 	merle.Thing
 }
 
-func (c *chat) init() error {
+func (c *chat) init(soft bool) error {
 	c.Subscribe("CmdNewUser", c.Broadcast)
 	c.Subscribe("CmdText", c.Broadcast)
 

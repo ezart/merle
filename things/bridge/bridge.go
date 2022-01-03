@@ -29,7 +29,7 @@ type bridge struct {
 	online map[string]*merle.Thing
 }
 
-func (b *bridge) init() error {
+func (b *bridge) init(soft bool) error {
 	err := config.ParseFile(b.ConfigFile(), &cfg)
 	if err != nil {
 		return err
