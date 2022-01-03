@@ -9,6 +9,7 @@ import (
 	"github.com/scottfeldman/merle/config"
 	"html/template"
 	"net/http"
+	"log"
 )
 
 var templ *template.Template
@@ -26,7 +27,8 @@ var cfg struct {
 
 type bridge struct {
 	merle.Thing
-	online map[string]*merle.Thing
+	bus    chan *merle.Packet
+	online map[*merle.Thing]merle.IConn
 }
 
 func (b *bridge) init(soft bool) error {
@@ -35,13 +37,19 @@ func (b *bridge) init(soft bool) error {
 		return err
 	}
 
-	b.online = make(map[string]*merle.Thing)
+	//b.bus = make(chan *merle.Packet, cfg.Bridge.Max)
+	b.bus = make(chan *merle.Packet)
+	b.online = make(map[*merle.Thing]merle.IConn)
 
 	return b.ListenForThings(cfg.Bridge.Max, cfg.Bridge.Match)
 }
 
 func (b *bridge) run() {
 	for {
+		select {
+		case p := <-b.bus:
+			log.Println("GOT PACKET", p.String())
+		}
 	}
 }
 
@@ -51,9 +59,12 @@ func (b *bridge) home(w http.ResponseWriter, r *http.Request) {
 
 func (b *bridge) connect(child *merle.Thing) {
 	if child.Status() == "online" {
-		b.online[child.Id()] = child
+		conn := merle.NewChConn("uc:" + child.Id(), b.bus)
+		child.ConnAdd(conn)
+		b.online[child] = conn
 	} else {
-		delete(b.online, child.Id())
+		child.ConnDel(b.online[child])
+		delete(b.online, child)
 	}
 }
 

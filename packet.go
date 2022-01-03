@@ -34,5 +34,5 @@ func (p *Packet) String() string {
 }
 
 func (p *Packet) send(dst IConn) error {
-	return dst.Send(p.msg)
+	return dst.Send(p)
 }

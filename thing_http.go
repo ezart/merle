@@ -52,7 +52,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 	t.log.Printf("Websocket opened [%s]", name)
 
-	t.connAdd(conn)
+	t.ConnAdd(conn)
 
 	for {
 		// new pkt for each rcv
@@ -68,7 +68,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 		t.receive(pkt)
 	}
 
-	t.connDel(conn)
+	t.ConnDel(conn)
 }
 
 func (t *Thing) home(w http.ResponseWriter, r *http.Request) {

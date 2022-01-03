@@ -132,7 +132,7 @@ func (p *port) run(t *Thing) {
 	var pkt = &Packet{src: conn}
 	var err error
 
-	t.connAdd(conn)
+	t.ConnAdd(conn)
 
 	msg := struct{ Msg string }{Msg: "CmdStart"}
 	t.receive(pkt.Marshal(&msg))
@@ -149,7 +149,7 @@ func (p *port) run(t *Thing) {
 		t.receive(pkt)
 	}
 
-	t.connDel(conn)
+	t.ConnDel(conn)
 }
 
 func (t *Thing) _scanPorts(match string) {

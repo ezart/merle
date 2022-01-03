@@ -140,13 +140,13 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	return t
 }
 
-func (t *Thing) connAdd(c IConn) {
+func (t *Thing) ConnAdd(c IConn) {
 	t.connLock.Lock()
 	defer t.connLock.Unlock()
 	t.conns[c] = true
 }
 
-func (t *Thing) connDel(c IConn) {
+func (t *Thing) ConnDel(c IConn) {
 	t.connLock.Lock()
 	defer t.connLock.Unlock()
 	delete(t.conns, c)
@@ -325,7 +325,7 @@ func (t *Thing) Reply(p *Packet) {
 	}
 }
 
-// Broadcast packet to all except packet source
+// Broadcast Packet to all except Packet source
 func (t *Thing) Broadcast(p *Packet) {
 	src := p.src
 
@@ -384,11 +384,10 @@ func (t *Thing) HomeParams(r *http.Request, extra interface{}) interface{} {
 	}
 }
 
-// DefaultId returns a default ID based on the device's MAC address
+// DefaultId returns a default ID based on system MAC address
 func defaultId() string {
 
 	// Use the MAC address of the first non-lo interface
-	// as the default device ID
 
 	ifaces, err := net.Interfaces()
 	if err == nil {

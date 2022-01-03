@@ -6,7 +6,7 @@ import (
 )
 
 type IConn interface {
-	Send([]byte) error
+	Send(*Packet) error
 	Close()
 	Name() string
 }
@@ -20,14 +20,36 @@ func NewWsConn(name string, conn *websocket.Conn) *WsConn {
 	return &WsConn{name: name, conn: conn}
 }
 
-func (w *WsConn) Send(msg []byte) error {
-	return w.conn.WriteMessage(websocket.TextMessage, msg)
+func (c *WsConn) Send(p *Packet) error {
+	return c.conn.WriteMessage(websocket.TextMessage, p.msg)
 }
 
-func (w *WsConn) Close() {
-	w.conn.WriteControl(websocket.CloseMessage, nil, time.Now())
+func (c *WsConn) Close() {
+	c.conn.WriteControl(websocket.CloseMessage, nil, time.Now())
 }
 
-func (w *WsConn) Name() string {
-	return w.name
+func (c *WsConn) Name() string {
+	return c.name
+}
+
+type ChConn struct {
+	conn chan *Packet
+	name string
+}
+
+func NewChConn(name string, conn chan *Packet) *ChConn {
+	return &ChConn{name: name, conn: conn}
+}
+
+func (c *ChConn) Send(p *Packet) error {
+	c.conn <- p
+	return nil
+}
+
+func (c *ChConn) Close() {
+	close(c.conn)
+}
+
+func (c *ChConn) Name() string {
+	return c.name
 }
