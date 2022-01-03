@@ -70,7 +70,7 @@ func (b *blinker) init() error {
 	b.Subscribe("CmdStart", b.start)
 	b.Subscribe("SpamLedState", b.Broadcast)
 
-	if b.Shadow() {
+	if b.Shadow() || b.DemoMode(){
 		return nil
 	}
 

@@ -23,6 +23,9 @@ type chat struct {
 }
 
 func (c *chat) init() error {
+	c.Subscribe("CmdNewUser", c.Broadcast)
+	c.Subscribe("CmdText", c.Broadcast)
+
 	return nil
 }
 
@@ -40,9 +43,6 @@ func NewThing(id, model, name string) *merle.Thing {
 	c.Init = c.init
 	c.Run = c.run
 	c.Home = c.home
-
-	c.Subscribe("CmdNewUser", c.Broadcast)
-	c.Subscribe("CmdText", c.Broadcast)
 
 	return c.InitThing(id, model, name)
 }
