@@ -6,11 +6,11 @@ package stork
 
 import (
 	"github.com/scottfeldman/merle"
-	"github.com/scottfeldman/merle/things/skeleton"
-	"github.com/scottfeldman/merle/things/hub"
 	"github.com/scottfeldman/merle/things/bridge"
-	"github.com/scottfeldman/merle/things/raspi_blink"
 	"github.com/scottfeldman/merle/things/chat"
+	"github.com/scottfeldman/merle/things/hub"
+	"github.com/scottfeldman/merle/things/raspi_blink"
+	"github.com/scottfeldman/merle/things/skeleton"
 )
 
 var things = map[string]func(id, model, name string) *merle.Thing{

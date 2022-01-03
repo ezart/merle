@@ -5,17 +5,17 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"regexp"
-	"reflect"
-	"sync"
 	"os"
+	"reflect"
+	"regexp"
+	"sync"
 	"time"
 )
 
 type Thing struct {
-	Init func() error
-	Run  func()
-	Home func(w http.ResponseWriter, r *http.Request)
+	Init    func() error
+	Run     func()
+	Home    func(w http.ResponseWriter, r *http.Request)
 	Connect func(*Thing)
 
 	status      string
@@ -24,25 +24,25 @@ type Thing struct {
 	name        string
 	startupTime time.Time
 
-	shadow      bool
-	connsMax    int
-	cfgFile     string
-	demoMode    bool
-	log         *log.Logger
-	inited      bool
+	shadow   bool
+	connsMax int
+	cfgFile  string
+	demoMode bool
+	log      *log.Logger
+	inited   bool
 
 	// children
 	stork    func(string, string, string) *Thing
 	children map[string]*Thing
 
 	// ws connections
-	connLock      sync.RWMutex
-	conns         map[IConn]bool
-	connQ         chan bool
+	connLock sync.RWMutex
+	conns    map[IConn]bool
+	connQ    chan bool
 
 	// msg subscribers
-	subLock       sync.RWMutex
-	subscribers   map[string][]func(*Packet)
+	subLock     sync.RWMutex
+	subscribers map[string][]func(*Packet)
 
 	// http servers
 	sync.WaitGroup
@@ -55,9 +55,9 @@ type Thing struct {
 	httpPrivate *http.Server
 
 	// mother
-	motherHost string
-	motherUser string
-	motherKey  string
+	motherHost        string
+	motherUser        string
+	motherKey         string
 	motherPortPrivate int
 }
 
@@ -167,7 +167,7 @@ type msgIdentity struct {
 }
 
 func (t *Thing) getIdentity(p *Packet) {
-	resp := msgIdentity {
+	resp := msgIdentity{
 		Msg:         "ReplyIdentity",
 		Status:      t.status,
 		Id:          t.id,
@@ -179,14 +179,14 @@ func (t *Thing) getIdentity(p *Packet) {
 }
 
 type msgThing struct {
-	Id string
-	Model string
-	Name string
+	Id     string
+	Model  string
+	Name   string
 	Status string
 }
 
 type msgThings struct {
-	Msg string
+	Msg    string
 	Things []msgThing
 }
 
@@ -412,11 +412,11 @@ func defaultId() string {
 }
 
 type SpamStatus struct {
-	Msg     string
-	Id      string
-	Model   string
-	Name    string
-	Status  string
+	Msg    string
+	Id     string
+	Model  string
+	Name   string
+	Status string
 }
 
 func (t *Thing) changeStatus(child *Thing, status string) {
@@ -486,6 +486,6 @@ func (t *Thing) portRun(p *port, match string) {
 	p.run(child)
 	t.changeStatus(child, "offline")
 
-   disconnect:
+disconnect:
 	p.disconnect()
 }

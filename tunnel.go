@@ -24,9 +24,9 @@ func (t *Thing) getPortFromMother() string {
 	// ssh -i <key> <user>@<host> curl -s localhost:<privatePort>/port/<id>
 
 	args = append(args, "-i", t.motherKey)
-	args = append(args, t.motherUser + "@" + t.motherHost)
+	args = append(args, t.motherUser+"@"+t.motherHost)
 	args = append(args, "curl", "-s")
-	args = append(args, "localhost:" + strconv.Itoa(t.motherPortPrivate) + "/port/" + t.id)
+	args = append(args, "localhost:"+strconv.Itoa(t.motherPortPrivate)+"/port/"+t.id)
 
 	t.log.Printf("Tunnel getting port [ssh %s]...", args)
 

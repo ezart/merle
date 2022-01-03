@@ -41,7 +41,8 @@ func (b *bridge) init() error {
 }
 
 func (b *bridge) run() {
-	for {}
+	for {
+	}
 }
 
 func (b *bridge) home(w http.ResponseWriter, r *http.Request) {

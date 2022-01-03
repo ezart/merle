@@ -58,7 +58,7 @@ func (b *blinker) resume(p *merle.Packet) {
 }
 
 func (b *blinker) start(p *merle.Packet) {
-	msg := struct { Msg string }{ Msg: "GetPaused" }
+	msg := struct{ Msg string }{Msg: "GetPaused"}
 	b.Reply(p.Marshal(&msg))
 }
 
@@ -70,7 +70,7 @@ func (b *blinker) init() error {
 	b.Subscribe("CmdStart", b.start)
 	b.Subscribe("SpamLedState", b.Broadcast)
 
-	if b.Shadow() || b.DemoMode(){
+	if b.Shadow() || b.DemoMode() {
 		return nil
 	}
 

@@ -61,7 +61,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			t.log.Printf("Websocket closed [%s:%s]",
 				r.RemoteAddr, r.RequestURI)
-				break
+			break
 		}
 
 		t.receive(pkt)
@@ -101,12 +101,12 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 func (t *Thing) pamValidate(user, passwd string) (bool, error) {
 	trans, err := pam.StartFunc("", user,
 		func(s pam.Style, msg string) (string, error) {
-		switch s {
-		case pam.PromptEchoOff:
-			return passwd, nil
-		}
-		return "", errors.New("Unrecognized message style")
-	})
+			switch s {
+			case pam.PromptEchoOff:
+				return passwd, nil
+			}
+			return "", errors.New("Unrecognized message style")
+		})
 	if err != nil {
 		t.log.Println("PAM Start:", err)
 		return false, err

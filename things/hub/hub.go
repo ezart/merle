@@ -40,7 +40,8 @@ func (h *hub) init() error {
 }
 
 func (h *hub) run() {
-	for {}
+	for {
+	}
 }
 
 func (h *hub) home(w http.ResponseWriter, r *http.Request) {

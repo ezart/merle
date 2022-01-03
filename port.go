@@ -10,12 +10,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/url"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"os"
 )
 
 var portBegin uint
@@ -220,13 +220,13 @@ func (t *Thing) getPortRange() (begin uint, end uint, err error) {
 	// Merle uses ip_local_reserved_ports for incoming Thing
 	// connections.
 	//
-	// Set a range using: 
+	// Set a range using:
 	//
 	//   sudo sysctl -w net.ipv4.ip_local_reserved_ports="8000-8040"
 	//
 	// Or, to persist setting on next boot, add to /etc/sysctl.conf:
 	//
-	//   net.ipv4.ip_local_reserved_ports = 8000-8040 
+	//   net.ipv4.ip_local_reserved_ports = 8000-8040
 	//
 	// And then run sudo sysctl -p
 	//

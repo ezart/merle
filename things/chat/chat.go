@@ -30,7 +30,8 @@ func (c *chat) init() error {
 }
 
 func (c *chat) run() {
-	for {}
+	for {
+	}
 }
 
 func (c *chat) home(w http.ResponseWriter, r *http.Request) {

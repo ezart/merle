@@ -5,9 +5,9 @@
 package main
 
 import (
+	"flag"
 	"github.com/scottfeldman/merle/config"
 	"github.com/scottfeldman/merle/stork"
-	"flag"
 	"log"
 	"os"
 )
@@ -22,10 +22,10 @@ type cfg struct {
 		PortPrivate int    `yaml:"PortPrivate"`
 	} `yaml:"Thing"`
 	Mother struct {
-		Host string `yaml:"Host"`
-		User string `yaml:"User"`
-		Key  string `yaml:"Key"`
-		PortPrivate int `yaml:"PortPrivate"`
+		Host        string `yaml:"Host"`
+		User        string `yaml:"User"`
+		Key         string `yaml:"Key"`
+		PortPrivate int    `yaml:"PortPrivate"`
 	} `yaml:"Mother"`
 }
 
@@ -38,7 +38,7 @@ func main() {
 
 	log.SetFlags(0)
 
-	cfgFile  := flag.String("config", "/etc/merle/thing.yml", "Config File")
+	cfgFile := flag.String("config", "/etc/merle/thing.yml", "Config File")
 	demoMode := flag.Bool("demo", false, "Run Thing in demo mode; will simulate I/O")
 
 	flag.Parse()

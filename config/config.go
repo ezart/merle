@@ -6,8 +6,8 @@ package config
 
 import (
 	"gopkg.in/yaml.v2"
-	"os"
 	"log"
+	"os"
 )
 
 func ParseFile(file string, cfg interface{}) error {
