@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"reflect"
 	"sync"
+	"os"
 	"time"
 )
 
@@ -27,6 +28,8 @@ type Thing struct {
 	connsMax    int
 	cfgFile     string
 	demoMode    bool
+	log         *log.Logger
+	inited      bool
 
 	// children
 	stork    func(string, string, string) *Thing
@@ -66,6 +69,10 @@ func (t *Thing) Status() string {
 	return t.status
 }
 
+func (t *Thing) Shadow() bool {
+	return t.shadow
+}
+
 func (t *Thing) SetStork(f func(string, string, string) *Thing) {
 	t.stork = f
 }
@@ -86,23 +93,35 @@ func (t *Thing) DemoMode() bool {
 	return t.demoMode
 }
 
+func (t *Thing) logPrefix() string {
+	return "[" + t.id + "," + t.model + "," + t.name + "] "
+}
+
 func (t *Thing) InitThing(id, model, name string) *Thing {
-	if model == "" {
-		log.Println("Thing Model is missing")
+	if t.inited {
+		t.log.Println(t.logPrefix(), "Already inited!")
 		return nil
 	}
-	if name == "" {
-		log.Println("Thing Name is missing")
-		return nil
-	}
+
 	if id == "" {
 		id = defaultId()
-		log.Println("Thing ID defaulting to", id)
 	}
 
 	t.id = id
 	t.model = model
 	t.name = name
+
+	t.log = log.New(os.Stderr, t.logPrefix(), 0)
+
+	if model == "" {
+		t.log.Println("Thing Model is missing")
+		return nil
+	}
+	if name == "" {
+		t.log.Println("Thing Name is missing")
+		return nil
+	}
+
 	t.status = "online"
 	t.startupTime = time.Now()
 
@@ -114,10 +133,12 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	t.connQ = make(chan bool, t.connsMax)
 
 	t.stork = func(string, string, string) *Thing {
-		log.Println(t.logPrefix(), "Need to set stork")
+		t.log.Println("Need to set stork")
 		return nil
 	}
 	t.children = make(map[string]*Thing)
+
+	t.inited = true
 
 	t.Subscribe("GetIdentity", t.getIdentity)
 
@@ -134,13 +155,6 @@ func (t *Thing) connDel(c *websocket.Conn) {
 	t.connLock.Lock()
 	defer t.connLock.Unlock()
 	delete(t.conns, c)
-}
-
-func (t *Thing) logPrefix() string {
-	if t.shadow {
-		return "[" + t.id + "," + t.model + "," + t.name + "] "
-	}
-	return ""
 }
 
 type msgIdentity struct {
@@ -195,7 +209,7 @@ func (t *Thing) GetChild(id string) *Thing {
 }
 
 func (t *Thing) receive(p *Packet) {
-	log.Printf("%sReceived: %.80s", t.logPrefix(), p.String())
+	t.log.Printf("Received: %.80s", p.String())
 
 	msg := struct {
 		Msg string
@@ -209,7 +223,7 @@ func (t *Thing) receive(p *Packet) {
 	for key, subscribers := range t.subscribers {
 		matched, err := regexp.MatchString(key, msg.Msg)
 		if err != nil {
-			log.Printf("%sError compiling regexp \"%s\": %s", t.logPrefix(), key, err)
+			t.log.Printf("Error compiling regexp \"%s\": %s", key, err)
 			continue
 		}
 		if matched {
@@ -222,6 +236,12 @@ func (t *Thing) receive(p *Packet) {
 
 // Subscribe to message
 func (t *Thing) Subscribe(msg string, f func(*Packet)) {
+	if !t.inited {
+		log.Printf("Can't subscribe to \"%s\" before initializing Thing",
+			msg)
+		return
+	}
+
 	t.subLock.Lock()
 	defer t.subLock.Unlock()
 
@@ -230,11 +250,16 @@ func (t *Thing) Subscribe(msg string, f func(*Packet)) {
 	}
 	t.subscribers[msg] = append(t.subscribers[msg], f)
 
-	log.Printf("%sSubscribed to \"%s\"", t.logPrefix(), msg)
+	t.log.Printf("Subscribed to \"%s\"", msg)
 }
 
 // Unsubscribe to message
 func (t *Thing) Unsubscribe(msg string, f func(*Packet)) {
+	if !t.inited {
+		log.Println(t.logPrefix(), "Can't subscribe before initializing")
+		return
+	}
+
 	t.subLock.Lock()
 	defer t.subLock.Unlock()
 
@@ -248,7 +273,7 @@ func (t *Thing) Unsubscribe(msg string, f func(*Packet)) {
 
 	for i, g := range t.subscribers[msg] {
 		if reflect.ValueOf(g).Pointer() == reflect.ValueOf(f).Pointer() {
-			log.Printf("%sUnsubscribed to \"%s\"", t.logPrefix(), msg)
+			t.log.Printf("Unsubscribed to \"%s\"", msg)
 			t.subscribers[msg] = append(t.subscribers[msg][:i],
 				t.subscribers[msg][i+1:]...)
 			break
@@ -270,7 +295,7 @@ func (t *Thing) HttpConfig(authUser string, portPublic, portPrivate int) {
 // Start the Thing
 func (t *Thing) Start() {
 	if t.demoMode {
-		log.Println(t.logPrefix(), "Demo mode ENABLED")
+		t.log.Println("Demo mode ENABLED")
 	}
 
 	if t.shadow {
@@ -280,9 +305,9 @@ func (t *Thing) Start() {
 	t.httpInit()
 
 	if t.Init != nil {
-		log.Println(t.logPrefix(), "Init...")
+		t.log.Println("Init...")
 		if err := t.Init(); err != nil {
-			log.Fatalln(t.logPrefix(), "Init failed:", err)
+			t.log.Fatalln("Init failed:", err)
 		}
 	}
 
@@ -291,13 +316,13 @@ func (t *Thing) Start() {
 	t.httpStart()
 
 	if t.Run != nil {
-		log.Println(t.logPrefix(), "Run...")
+		t.log.Println("Run...")
 		t.Run()
 	}
 
 	t.httpStop()
 
-	log.Fatalln(t.logPrefix(), "Run() didn't run forever")
+	t.log.Fatalln("Run() didn't run forever")
 }
 
 // Reply sends Packet back to originator
@@ -305,10 +330,10 @@ func (t *Thing) Reply(p *Packet) {
 	t.connLock.RLock()
 	defer t.connLock.RUnlock()
 
-	log.Printf("%sReply: %.80s", t.logPrefix(), p.String())
+	t.log.Printf("Reply: %.80s", p.String())
 	err := p.write()
 	if err != nil {
-		log.Println(t.logPrefix(), "Reply error:", err)
+		t.log.Println("Reply error:", err)
 	}
 }
 
@@ -324,12 +349,11 @@ func (t *Thing) Broadcast(p *Packet) {
 
 	switch len(t.conns) {
 	case 0:
-		log.Printf("%sWould broadcast: %.80s", t.logPrefix(), p.String())
+		t.log.Printf("Would broadcast: %.80s", p.String())
 		return
 	case 1:
 		if _, ok := t.conns[src]; ok {
-			log.Printf("%sWould broadcast: %.80s",
-				t.logPrefix(), p.String())
+			t.log.Printf("Would broadcast: %.80s", p.String())
 			return
 		}
 	}
@@ -337,7 +361,7 @@ func (t *Thing) Broadcast(p *Packet) {
 	// TODO Perf optimization: use websocket.NewPreparedMessage
 	// TODO to prepare msg once, and then send on each connection
 
-	log.Printf("%sBroadcast: %.80s", t.logPrefix(), p.String())
+	t.log.Printf("Broadcast: %.80s", p.String())
 	for c := range t.conns {
 		if c == src {
 			// don't send back to src
@@ -428,7 +452,7 @@ func (t *Thing) portRun(p *port, match string) {
 	// TODO disconnect if resp doesn't match filter
 
 	if t.id == resp.Id {
-		log.Println(t.logPrefix(), "Sorry, you can't be your own Mother")
+		t.log.Println("Sorry, you can't be your own Mother")
 		goto disconnect
 	}
 
@@ -437,18 +461,25 @@ func (t *Thing) portRun(p *port, match string) {
 	if child == nil {
 		child = t.stork(resp.Id, resp.Model, resp.Name)
 		if child == nil {
-			log.Println(t.logPrefix(), "Model", resp.Model, "unknown")
+			t.log.Println("Model", resp.Model, "unknown")
 			goto disconnect
 		}
 		child.shadow = true
+		if child.Init != nil {
+			t.log.Println("Init child...")
+			if err := child.Init(); err != nil {
+				t.log.Println("Child init failed:", err)
+				goto disconnect
+			}
+		}
 		t.children[resp.Id] = child
 	} else {
 		if child.model != resp.Model {
-			log.Println(t.logPrefix(), "Model mismatch")
+			t.log.Println("Model mismatch")
 			goto disconnect
 		}
 		if child.name != resp.Name {
-			log.Println(t.logPrefix(), "Name mismatch")
+			t.log.Println("Name mismatch")
 			goto disconnect
 		}
 	}

@@ -13,7 +13,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/msteinert/pam"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -34,7 +33,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if id != "" && id != t.id {
-		log.Println(t.logPrefix(), "Mismatch on Ids")
+		t.log.Println("Mismatch on Ids")
 		return
 	}
 
@@ -44,13 +43,12 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(t.logPrefix(), "Websocket upgrader error:", err)
+		t.log.Println("Websocket upgrader error:", err)
 		return
 	}
 	defer conn.Close()
 
-	log.Printf("%sWebsocket opened [%s:%s]", t.logPrefix(),
-		r.RemoteAddr, r.RequestURI)
+	t.log.Printf("Websocket opened [%s:%s]", r.RemoteAddr, r.RequestURI)
 
 	t.connAdd(conn)
 
@@ -62,7 +60,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 		_, p.msg, err = conn.ReadMessage()
 		if err != nil {
-			log.Printf("%sWebsocket closed [%s:%s]", t.logPrefix(),
+			t.log.Printf("Websocket closed [%s:%s]",
 				r.RemoteAddr, r.RequestURI)
 				break
 		}
@@ -101,8 +99,9 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 	t.Home(w, r)
 }
 
-func pamValidate(user, passwd string) (bool, error) {
-	t, err := pam.StartFunc("", user, func(s pam.Style, msg string) (string, error) {
+func (t *Thing) pamValidate(user, passwd string) (bool, error) {
+	trans, err := pam.StartFunc("", user,
+		func(s pam.Style, msg string) (string, error) {
 		switch s {
 		case pam.PromptEchoOff:
 			return passwd, nil
@@ -110,19 +109,19 @@ func pamValidate(user, passwd string) (bool, error) {
 		return "", errors.New("Unrecognized message style")
 	})
 	if err != nil {
-		log.Println("PAM Start:", err)
+		t.log.Println("PAM Start:", err)
 		return false, err
 	}
-	err = t.Authenticate(0)
+	err = trans.Authenticate(0)
 	if err != nil {
-		log.Printf("Authenticate [%s,%s]: %s", user, passwd, err)
+		t.log.Printf("Authenticate [%s,%s]: %s", user, passwd, err)
 		return false, err
 	}
 
 	return true, nil
 }
 
-func basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
+func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		if authUser == "testtest" {
@@ -141,7 +140,7 @@ func basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
 				expectedUserHash[:]) == 1)
 
 			// Use PAM to validate passwd
-			passwdMatch, _ := pamValidate(user, passwd)
+			passwdMatch, _ := t.pamValidate(user, passwd)
 
 			if userMatch && passwdMatch {
 				next.ServeHTTP(w, r)
@@ -180,11 +179,11 @@ func (t *Thing) httpStartPrivate() {
 	t.Add(2)
 	t.httpPrivate.RegisterOnShutdown(t.httpShutdown)
 
-	log.Printf("%s Private HTTP listening on %s", t.logPrefix(), addrPrivate)
+	t.log.Println("Private HTTP listening on", addrPrivate)
 
 	go func() {
 		if err := t.httpPrivate.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalln(t.logPrefix(), "Private HTTP server failed:", err)
+			t.log.Fatalln("Private HTTP server failed:", err)
 		}
 		t.Done()
 	}()
@@ -193,9 +192,9 @@ func (t *Thing) httpStartPrivate() {
 func (t *Thing) httpInitPublic() {
 	fs := http.FileServer(http.Dir("web"))
 	t.muxPublic = mux.NewRouter()
-	t.muxPublic.HandleFunc("/ws/{id}", basicAuth(t.authUser, t.ws))
-	t.muxPublic.HandleFunc("/{id}", basicAuth(t.authUser, t.home))
-	t.muxPublic.HandleFunc("/", basicAuth(t.authUser, t.home))
+	t.muxPublic.HandleFunc("/ws/{id}", t.basicAuth(t.authUser, t.ws))
+	t.muxPublic.HandleFunc("/{id}", t.basicAuth(t.authUser, t.home))
+	t.muxPublic.HandleFunc("/", t.basicAuth(t.authUser, t.home))
 	t.muxPublic.PathPrefix("/web/").Handler(http.StripPrefix("/web/", fs))
 }
 
@@ -211,11 +210,11 @@ func (t *Thing) httpStartPublic() {
 	t.Add(2)
 	t.httpPublic.RegisterOnShutdown(t.httpShutdown)
 
-	log.Printf("%s Public HTTP listening on %s", t.logPrefix(), addrPublic)
+	t.log.Println("Public HTTP listening on", addrPublic)
 
 	go func() {
 		if err := t.httpPublic.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalln("Public HTTP server failed:", err)
+			t.log.Fatalln("Public HTTP server failed:", err)
 		}
 		t.Done()
 	}()
@@ -228,12 +227,12 @@ func (t *Thing) httpInit() {
 
 func (t *Thing) httpStart() {
 	if t.portPrivate == 0 {
-		log.Println(t.logPrefix(), "Skipping private HTTP")
+		t.log.Println("Skipping private HTTP")
 	} else {
 		t.httpStartPrivate()
 	}
 	if t.portPublic == 0 {
-		log.Println(t.logPrefix(), "Skipping public HTTP")
+		t.log.Println("Skipping public HTTP")
 	} else {
 		t.httpStartPublic()
 	}
@@ -249,11 +248,11 @@ func (t *Thing) httpStop() {
 	t.Wait()
 }
 
-func getPort(w http.ResponseWriter, r *http.Request) {
+func (t *Thing) getPort(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	port := portFromId(id)
+	port := t.portFromId(id)
 
 	switch port {
 	case -1:
@@ -267,8 +266,8 @@ func getPort(w http.ResponseWriter, r *http.Request) {
 
 func (t *Thing) ListenForThings(max uint, match string) error {
 	// TODO thing filter
-	log.Println("Listening for Things...")
+	t.log.Println("Listening for Things...")
 	t.Subscribe("GetThings", t.getThings)
-	t.muxPrivate.HandleFunc("/port/{id}", getPort)
+	t.muxPrivate.HandleFunc("/port/{id}", t.getPort)
 	return t.portScan(max, match)
 }

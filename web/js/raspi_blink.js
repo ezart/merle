@@ -135,7 +135,7 @@ function Run(scheme, host, id) {
 	conn.onmessage = function(evt) {
 		var msg = JSON.parse(evt.data)
 
-		console.log('event', msg)
+		console.log('thing msg', msg)
 
 		switch(msg.Msg) {
 		case "ReplyIdentity":

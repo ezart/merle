@@ -27,7 +27,53 @@ type blinker struct {
 	paused    bool
 }
 
+type msgReplyPaused struct {
+	Msg    string
+	Paused bool
+}
+
+func (b *blinker) sendPaused(p *merle.Packet) {
+	msg := msgReplyPaused{
+		Msg:    "ReplyPaused",
+		Paused: b.paused,
+	}
+	b.Reply(p.Marshal(&msg))
+
+}
+
+func (b *blinker) savePaused(p *merle.Packet) {
+	var msg msgReplyPaused
+	p.Unmarshal(&msg)
+	b.paused = msg.Paused
+}
+
+func (b *blinker) pause(p *merle.Packet) {
+	b.paused = true
+	b.Broadcast(p)
+}
+
+func (b *blinker) resume(p *merle.Packet) {
+	b.paused = false
+	b.Broadcast(p)
+}
+
+func (b *blinker) start(p *merle.Packet) {
+	msg := struct { Msg string }{ Msg: "GetPaused" }
+	b.Reply(p.Marshal(&msg))
+}
+
 func (b *blinker) init() error {
+	b.Subscribe("GetPaused", b.sendPaused)
+	b.Subscribe("ReplyPaused", b.savePaused)
+	b.Subscribe("CmdPause", b.pause)
+	b.Subscribe("CmdResume", b.resume)
+	b.Subscribe("CmdStart", b.start)
+	b.Subscribe("SpamLedState", b.Broadcast)
+
+	if b.Shadow() {
+		return nil
+	}
+
 	b.adaptor = raspi.NewAdaptor()
 	b.adaptor.Connect()
 
@@ -83,54 +129,12 @@ func (b *blinker) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, b.HomeParams(r, nil))
 }
 
-type msgReplyPaused struct {
-	Msg    string
-	Paused bool
-}
-
-func (b *blinker) sendPaused(p *merle.Packet) {
-	msg := msgReplyPaused{
-		Msg:    "ReplyPaused",
-		Paused: b.paused,
-	}
-	b.Reply(p.Marshal(&msg))
-
-}
-
-func (b *blinker) savePaused(p *merle.Packet) {
-	var msg msgReplyPaused
-	p.Unmarshal(&msg)
-	b.paused = msg.Paused
-}
-
-func (b *blinker) pause(p *merle.Packet) {
-	b.paused = true
-	b.Broadcast(p)
-}
-
-func (b *blinker) resume(p *merle.Packet) {
-	b.paused = false
-	b.Broadcast(p)
-}
-
-func (b *blinker) start(p *merle.Packet) {
-	msg := struct { Msg string }{ Msg: "GetPaused" }
-	b.Reply(p.Marshal(&msg))
-}
-
 func NewThing(id, model, name string) *merle.Thing {
 	b := &blinker{}
 
 	b.Init = b.init
 	b.Run = b.run
 	b.Home = b.home
-
-	b.Subscribe("GetPaused", b.sendPaused)
-	b.Subscribe("ReplyPaused", b.savePaused)
-	b.Subscribe("CmdPause", b.pause)
-	b.Subscribe("CmdResume", b.resume)
-	b.Subscribe("CmdStart", b.start)
-	b.Subscribe("SpamLedState", b.Broadcast)
 
 	return b.InitThing(id, model, name)
 }

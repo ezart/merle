@@ -16,7 +16,7 @@ function Run(scheme, host, id) {
 	conn.onmessage = function(evt) {
 		var msg = JSON.parse(evt.data)
 
-		console.log('event', msg)
+		console.log('bridge msg', msg)
 
 		trace = document.getElementById("trace")
 		trace.innerHtml += msg

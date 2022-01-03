@@ -90,7 +90,7 @@ function Run(scheme, host, id, max) {
 	conn.onmessage = function(evt) {
 		var msg = JSON.parse(evt.data)
 
-		console.log('event', msg)
+		console.log('hub msg', msg)
 
 		switch(msg.Msg) {
 		case "ReplyThings":

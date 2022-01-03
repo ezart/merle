@@ -6,7 +6,6 @@ package merle
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"os/exec"
 	"strconv"
@@ -29,7 +28,7 @@ func (t *Thing) getPortFromMother() string {
 	args = append(args, "curl", "-s")
 	args = append(args, "localhost:" + strconv.Itoa(t.motherPortPrivate) + "/port/" + t.id)
 
-	log.Printf("%s Getting port [ssh %s]...", t.logPrefix(), args)
+	t.log.Printf("Tunnel getting port [ssh %s]...", args)
 
 	cmd := exec.Command("ssh", args...)
 
@@ -40,8 +39,7 @@ func (t *Thing) getPortFromMother() string {
 
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("%s Get port failed: %s, err %v", t.logPrefix(),
-			stdoutStderr, err)
+		t.log.Printf("Tunnel get port failed: %s, err %v", stdoutStderr, err)
 		return ""
 	}
 
@@ -49,10 +47,10 @@ func (t *Thing) getPortFromMother() string {
 
 	switch port {
 	case "no ports available":
-		log.Println(t.logPrefix(), "No ports available; trying again\n")
+		t.log.Println("Tunnel no ports available; trying again\n")
 		return ""
 	case "port busy":
-		log.Println(t.logPrefix(), "Port is busy; trying again\n")
+		t.log.Println("Tunnel port is busy; trying again\n")
 		return ""
 	}
 
@@ -75,7 +73,7 @@ func (t *Thing) tunnelToMother(port string) error {
 	args = append(args, "-o", "ExitOnForwardFailure=yes")
 	args = append(args, "-R", remote, t.motherUser+"@"+t.motherHost)
 
-	log.Printf("%s Creating tunnel [ssh %s]...", t.logPrefix(), args)
+	t.log.Printf("Creating tunnel [ssh %s]...", args)
 
 	cmd := exec.Command("ssh", args...)
 
@@ -86,8 +84,7 @@ func (t *Thing) tunnelToMother(port string) error {
 
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("%s Create tunnel failed: %s, err %v",
-			t.logPrefix(), stdoutStderr, err)
+		t.log.Printf("Create tunnel failed: %s, err %v", stdoutStderr, err)
 	}
 
 	return err
@@ -106,14 +103,14 @@ func (t *Thing) _tunnelCreate() {
 			goto again
 		}
 
-		log.Println(t.logPrefix(), "Got port", port)
+		t.log.Println("Tunnel create got port", port)
 
 		err = t.tunnelToMother(port)
 		if err != nil {
 			goto again
 		}
 
-		log.Println(t.logPrefix(), "Tunnel disconnected")
+		t.log.Println("Tunnel disconnected")
 
 	again:
 		// TODO maybe try some exponential back-off aglo ala TCP
@@ -125,7 +122,7 @@ func (t *Thing) _tunnelCreate() {
 		// avoid port contention.
 
 		f := rand.Float32() * 10
-		log.Printf("%s Sleeping for %f seconds", t.logPrefix(), f)
+		t.log.Printf("Tunnel create sleeping for %f seconds", f)
 		time.Sleep(time.Duration(f*1000) * time.Millisecond)
 	}
 }
@@ -133,22 +130,22 @@ func (t *Thing) _tunnelCreate() {
 func (t *Thing) tunnelCreate() {
 
 	if t.motherHost == "" {
-		log.Println(t.logPrefix(), "Skipping tunnel; missing Mother host")
+		t.log.Println("Skipping tunnel; missing Mother host")
 		return
 	}
 
 	if t.motherUser == "" {
-		log.Println(t.logPrefix(), "Skipping tunnel; missing Mother user")
+		t.log.Println("Skipping tunnel; missing Mother user")
 		return
 	}
 
 	if t.motherKey == "" {
-		log.Println(t.logPrefix(), "Skipping tunnel; missing Mother key")
+		t.log.Println("Skipping tunnel; missing Mother key")
 		return
 	}
 
 	if t.motherPortPrivate == 0 {
-		log.Println(t.logPrefix(), "Skipping tunnel; missing Mother private port")
+		t.log.Println("Skipping tunnel; missing Mother private port")
 		return
 	}
 
