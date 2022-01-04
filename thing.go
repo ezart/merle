@@ -202,7 +202,7 @@ func (t *Thing) receive(p *Packet) {
 }
 
 func (t *Thing) NewPacket(msg interface {}) *Packet {
-	return newPacket(t.bus, nil, msg)
+	return newPacket(nil, msg)
 }
 
 func (t *Thing) Reply(p *Packet) {

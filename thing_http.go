@@ -52,7 +52,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 	for {
 		// new pkt for each rcv
-		var pkt = newPacket(t.bus, sock, nil)
+		var pkt = newPacket(sock, nil)
 
 		_, pkt.msg, err = ws.ReadMessage()
 		if err != nil {

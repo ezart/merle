@@ -129,7 +129,7 @@ func (p *port) disconnect() {
 func (p *port) run(t *Thing) {
 	var name = fmt.Sprintf("port:%d", p.port)
 	var sock = newWebSocket(name, p.ws)
-	var pkt = newPacket(t.bus, sock, nil)
+	var pkt = newPacket(sock, nil)
 	var err error
 
 	t.bus.plugin(sock)
@@ -139,7 +139,7 @@ func (p *port) run(t *Thing) {
 
 	for {
 		// new pkt for each rcv
-		var pkt = newPacket(t.bus, sock, nil)
+		var pkt = newPacket(sock, nil)
 
 		pkt.msg, err = p.readMessage()
 		if err != nil {
