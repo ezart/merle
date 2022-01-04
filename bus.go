@@ -1,15 +1,14 @@
 package merle
 
 import (
+	"fmt"
 	"reflect"
 	"regexp"
 	"sync"
-	"log"
 )
 
 // Bus is a message bus.  Connect to the bus using Sockets.
 type bus struct {
-	log      *log.Logger
 	// sockets
 	sockLock sync.RWMutex
 	sockets  map[ISocket] bool
@@ -19,9 +18,8 @@ type bus struct {
 	subs     map[string][]func(*Packet)
 }
 
-func NewBus(log *log.Logger, socketsMax uint) *bus {
+func NewBus(socketsMax uint) *bus {
 	return &bus{
-		log: log,
 		sockets: make(map[ISocket]bool),
 		socketQ: make(chan bool, socketsMax),
 		subs: make(map[string][]func(*Packet)),
@@ -52,34 +50,38 @@ func (b *bus) subscribe(msg string, f func(*Packet)) {
 	b.subLock.Lock()
 	defer b.subLock.Unlock()
 	b.subs[msg] = append(b.subs[msg], f)
-	b.log.Printf("Subscribed to \"%s\"", msg)
 }
 
 // Unsubscribe to message
-func (b *bus) unsubscribe(msg string, f func(*Packet)) {
+func (b *bus) unsubscribe(msg string, f func(*Packet)) error {
 	b.subLock.Lock()
 	defer b.subLock.Unlock()
 
 	if _, ok := b.subs[msg]; !ok {
-		return
+		return fmt.Errorf("Not subscribed to \"%s\"", msg)
 	}
 
+	found := false
 	for i, g := range b.subs[msg] {
 		if reflect.ValueOf(g).Pointer() == reflect.ValueOf(f).Pointer() {
-			b.log.Printf("Unsubscribed to \"%s\"", msg)
+			found = true
 			b.subs[msg] = append(b.subs[msg][:i], b.subs[msg][i+1:]...)
 			break
 		}
 	}
 
+	if !found {
+		return fmt.Errorf("Not subscribed to \"%s\" for function", msg)
+	}
+
 	if len(b.subs[msg]) == 0 {
 		delete(b.subs, msg)
 	}
+
+	return nil
 }
 
-func (b *bus) receive(p *Packet) {
-	b.log.Printf("Received [%s]: %.80s", p.src.Name(), p.String())
-
+func (b *bus) receive(p *Packet) error {
 	msg := struct {Msg string}{}
 	p.Unmarshal(&msg)
 
@@ -89,8 +91,7 @@ func (b *bus) receive(p *Packet) {
 	for key, funcs := range b.subs {
 		matched, err := regexp.MatchString(key, msg.Msg)
 		if err != nil {
-			b.log.Printf("Error compiling regexp \"%s\": %s", key, err)
-			continue
+			return fmt.Errorf("Error compiling regexp \"%s\": %s", key, err)
 		}
 		if matched {
 			for _, f := range funcs {
@@ -98,39 +99,39 @@ func (b *bus) receive(p *Packet) {
 			}
 		}
 	}
+
+	return nil
 }
 
-func (b *bus) reply(p *Packet) {
+func (b *bus) reply(p *Packet) error {
 	if p.src == nil {
-		return
+		return fmt.Errorf("Reply aborted; source is missing")
 	}
 
-	b.log.Println("Reply", p.String())
 	p.src.Send(p)
+
+	return nil
 }
 
-func (b *bus) broadcast(p *Packet) {
+func (b *bus) broadcast(p *Packet) error {
 	src := p.src
 
 	b.sockLock.RLock()
 	defer b.sockLock.RUnlock()
 
 	if len(b.sockets) == 0 {
-		b.log.Printf("Would broadcast: %.80s", p.String())
-		return
+		return fmt.Errorf("Would broadcast: %.80s", p.String())
 	}
 
 	if len(b.sockets) == 1 && src != nil {
 		if _, ok := b.sockets[src]; ok {
-			b.log.Printf("Would broadcast: %.80s", p.String())
-			return
+			return fmt.Errorf("Would broadcast: %.80s", p.String())
 		}
 	}
 
 	// TODO Perf optimization: use websocket.NewPreparedMessage
 	// TODO to prepare msg once, and then send on each connection
 
-	b.log.Printf("Broadcast: %.80s", p.String())
 	for sock := range b.sockets {
 		if sock == src {
 			// don't send back to src
@@ -138,11 +139,8 @@ func (b *bus) broadcast(p *Packet) {
 		}
 		sock.Send(p)
 	}
-}
 
-func (b *bus) send(p *Packet, sock ISocket) {
-	b.log.Println("Send", p.String())
-	sock.Send(p)
+	return nil
 }
 
 func (b *bus) close() {

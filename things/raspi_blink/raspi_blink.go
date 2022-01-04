@@ -39,7 +39,7 @@ func (b *blinker) sendPaused(p *merle.Packet) {
 		Paused: b.paused,
 		State: b.lastState,
 	}
-	p.Marshal(&msg).Reply()
+	b.Reply(p.Marshal(&msg))
 }
 
 func (b *blinker) savePaused(p *merle.Packet) {
@@ -51,17 +51,17 @@ func (b *blinker) savePaused(p *merle.Packet) {
 
 func (b *blinker) pause(p *merle.Packet) {
 	b.paused = true
-	p.Broadcast()
+	b.Broadcast(p)
 }
 
 func (b *blinker) resume(p *merle.Packet) {
 	b.paused = false
-	p.Broadcast()
+	b.Broadcast(p)
 }
 
 func (b *blinker) start(p *merle.Packet) {
 	msg := struct{ Msg string }{Msg: "GetPaused"}
-	p.Marshal(&msg).Reply()
+	b.Reply(p.Marshal(&msg))
 }
 
 type spamLedState struct {
@@ -106,7 +106,7 @@ func (b *blinker) sendLedState() {
 		Msg:   "SpamLedState",
 		State: b.state(),
 	}
-	b.NewPacket(&spam).Broadcast()
+	b.Broadcast(b.NewPacket(&spam))
 }
 
 func (b *blinker) run() {

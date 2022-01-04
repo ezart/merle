@@ -33,21 +33,3 @@ func (p *Packet) Unmarshal(msg interface{}) {
 func (p *Packet) String() string {
 	return string(p.msg)
 }
-
-func (p *Packet) Reply() {
-	p.bus.reply(p)
-}
-
-func (p *Packet) Broadcast() {
-	p.bus.broadcast(p)
-}
-
-func (p *Packet) Send(sock ISocket) {
-	p.bus.send(p, sock)
-}
-
-func (p *Packet) Multicast(socks...ISocket) {
-	for _, sock := range socks {
-		sock.Send(p)
-	}
-}

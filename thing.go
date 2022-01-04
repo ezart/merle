@@ -112,7 +112,7 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	t.startupTime = time.Now()
 
 	// TODO pass in connMax from cfg?
-	t.bus = NewBus(t.log, 10)
+	t.bus = NewBus(10)
 
 	t.stork = func(string, string, string) *Thing {
 		t.log.Println("Need to set stork")
@@ -145,7 +145,7 @@ func (t *Thing) getIdentity(p *Packet) {
 		Name:        t.name,
 		StartupTime: t.startupTime,
 	}
-	p.Marshal(&resp).Reply()
+	t.Reply(p.Marshal(&resp))
 }
 
 type msgChild struct {
@@ -168,7 +168,7 @@ func (t *Thing) getChildren(p *Packet) {
 		resp.Children = append(resp.Children, msgChild{child.id,
 			child.model, child.name, child.status})
 	}
-	p.Marshal(&resp).Reply()
+	t.Reply(p.Marshal(&resp))
 }
 
 func (t *Thing) GetChild(id string) *Thing {
@@ -181,20 +181,44 @@ func (t *Thing) GetChild(id string) *Thing {
 
 // Subscribe to message
 func (t *Thing) Subscribe(msg string, f func(*Packet)) {
+	t.log.Printf("Subscribed to \"%s\"", msg)
 	t.bus.subscribe(msg, f)
 }
 
 // Unsubscribe to message
 func (t *Thing) Unsubscribe(msg string, f func(*Packet)) {
-	t.bus.unsubscribe(msg, f)
+	if err := t.bus.unsubscribe(msg, f); err != nil {
+		t.log.Println(err)
+		return
+	}
+	t.log.Printf("Unsubscribed to \"%s\"", msg)
+}
+
+func (t *Thing) receive(p *Packet) {
+	t.log.Printf("Received [%s]: %.80s", p.src.Name(), p.String())
+	if err := t.bus.receive(p); err != nil {
+		t.log.Println(err)
+	}
 }
 
 func (t *Thing) NewPacket(msg interface {}) *Packet {
 	return newPacket(t.bus, nil, msg)
 }
 
+func (t *Thing) Reply(p *Packet) {
+	if err := t.bus.reply(p); err != nil {
+		t.log.Println(err)
+		return
+	}
+	t.log.Println("Reply", p.String())
+}
+
 func (t *Thing) Broadcast(p *Packet) {
-	p.Broadcast()
+	if err := t.bus.broadcast(p); err != nil {
+		t.log.Println(err)
+		return
+	}
+	t.log.Printf("Broadcast: %.80s", p.String())
 }
 
 // Start the Thing
@@ -286,7 +310,7 @@ func (t *Thing) changeStatus(child *Thing, status string) {
 		Name:   child.name,
 		Status: child.status,
 	}
-	t.NewPacket(&spam).Broadcast()
+	t.Broadcast(t.NewPacket(&spam))
 
 	if t.childStatus != nil {
 		t.childStatus(child)
