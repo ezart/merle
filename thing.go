@@ -11,9 +11,9 @@ import (
 )
 
 type Thing struct {
-	Init    func() error
-	Run     func()
-	Home    func(w http.ResponseWriter, r *http.Request)
+	Init func() error
+	Run  func()
+	Home func(w http.ResponseWriter, r *http.Request)
 
 	status      string
 	id          string
@@ -156,7 +156,7 @@ type msgChild struct {
 }
 
 type msgChildren struct {
-	Msg    string
+	Msg      string
 	Children []msgChild
 }
 
@@ -201,7 +201,7 @@ func (t *Thing) receive(p *Packet) {
 	}
 }
 
-func (t *Thing) NewPacket(msg interface {}) *Packet {
+func (t *Thing) NewPacket(msg interface{}) *Packet {
 	return newPacket(nil, msg)
 }
 

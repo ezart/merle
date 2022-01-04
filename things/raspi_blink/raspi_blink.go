@@ -37,7 +37,7 @@ func (b *blinker) sendPaused(p *merle.Packet) {
 	msg := msgReplyPaused{
 		Msg:    "ReplyPaused",
 		Paused: b.paused,
-		State: b.lastState,
+		State:  b.lastState,
 	}
 	b.Reply(p.Marshal(&msg))
 }

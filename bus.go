@@ -11,18 +11,18 @@ import (
 type bus struct {
 	// sockets
 	sockLock sync.RWMutex
-	sockets  map[ISocket] bool
+	sockets  map[ISocket]bool
 	socketQ  chan bool
 	// message subscribers
-	subLock  sync.RWMutex
-	subs     map[string][]func(*Packet)
+	subLock sync.RWMutex
+	subs    map[string][]func(*Packet)
 }
 
 func NewBus(socketsMax uint) *bus {
 	return &bus{
 		sockets: make(map[ISocket]bool),
 		socketQ: make(chan bool, socketsMax),
-		subs: make(map[string][]func(*Packet)),
+		subs:    make(map[string][]func(*Packet)),
 	}
 }
 
@@ -82,7 +82,7 @@ func (b *bus) unsubscribe(msg string, f func(*Packet)) error {
 }
 
 func (b *bus) receive(p *Packet) error {
-	msg := struct {Msg string}{}
+	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
 
 	b.subLock.RLock()
@@ -151,19 +151,3 @@ func (b *bus) close() {
 		sock.Close()
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
