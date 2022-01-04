@@ -9,7 +9,6 @@ import (
 	"github.com/scottfeldman/merle/config"
 	"html/template"
 	"net/http"
-	"log"
 )
 
 var templ *template.Template
@@ -40,15 +39,15 @@ func (b *bridge) bridgePkt(child *merle.Thing, p *merle.Packet) {
 
 func (b *bridge) connect(child *merle.Thing) {
 	if child.Status() == "online" {
-		b.ChildSubscribe(child, ".*", bridgePkt)
+		//b.ChildSubscribe(child, ".*", bridgePkt)
 		b.online[child] = true
 	} else {
-		b.ChildUnSubscribe(child, ".*", bridgePkt)
+		//b.ChildUnSubscribe(child, ".*", bridgePkt)
 		delete(b.online, child)
 	}
 }
 
-func (b *bridge) init(soft bool) error {
+func (b *bridge) init() error {
 	err := config.ParseFile(b.ConfigFile(), &cfg)
 	if err != nil {
 		return err
@@ -69,11 +68,16 @@ func (b *bridge) home(w http.ResponseWriter, r *http.Request) {
 func NewBridge(id, model, name string) *merle.Thing {
 	b := &bridge{}
 
-	b.Init = b.init
-	b.Run = b.run
-	b.Home = b.home
+	t := b.InitThing(id, model, name)
+	if t == nil {
+		return nil
+	}
+
+	t.Init = b.init
+	t.Run = b.run
+	t.Home = b.home
 
 	b.online = make(map[*merle.Thing]bool)
 
-	return b.InitThing(id, model, name)
+	return t
 }

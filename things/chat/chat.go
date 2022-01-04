@@ -22,10 +22,7 @@ type chat struct {
 	merle.Thing
 }
 
-func (c *chat) init(soft bool) error {
-	c.Subscribe("CmdNewUser", c.Broadcast)
-	c.Subscribe("CmdText", c.Broadcast)
-
+func (c *chat) init() error {
 	return nil
 }
 
@@ -41,9 +38,17 @@ func (c *chat) home(w http.ResponseWriter, r *http.Request) {
 func NewChat(id, model, name string) *merle.Thing {
 	c := &chat{}
 
-	c.Init = c.init
-	c.Run = c.run
-	c.Home = c.home
+	t := c.InitThing(id, model, name)
+	if t == nil {
+		return nil
+	}
 
-	return c.InitThing(id, model, name)
+	t.Init = c.init
+	t.Run = c.run
+	t.Home = c.home
+
+	t.Subscribe("CmdNewUser", c.Broadcast)
+	t.Subscribe("CmdText", c.Broadcast)
+
+	return t
 }

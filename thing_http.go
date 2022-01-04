@@ -36,10 +36,6 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Queue any connections beyond max connections (connsMax)
-	t.connQ <- true
-	defer func() { <-t.connQ }()
-
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		t.log.Println("Websocket upgrader error:", err)
@@ -48,15 +44,15 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 
 	name := "ws:" + r.RemoteAddr + r.RequestURI
-	conn := NewWsConn(name, ws)
+	var sock = newWebSocket(name, ws)
 
 	t.log.Printf("Websocket opened [%s]", name)
 
-	t.connAdd(conn)
+	t.bus.plugin(sock)
 
 	for {
 		// new pkt for each rcv
-		var pkt = &Packet{src: conn}
+		var pkt = newPacket(t.bus, sock, nil)
 
 		_, pkt.msg, err = ws.ReadMessage()
 		if err != nil {
@@ -65,10 +61,10 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		t.receive(pkt)
+		t.bus.receive(pkt)
 	}
 
-	t.connDel(conn)
+	t.bus.unplug(sock)
 }
 
 func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
@@ -154,11 +150,7 @@ func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFu
 }
 
 func (t *Thing) httpShutdown() {
-	t.connLock.RLock()
-	for c := range t.conns {
-		c.Close()
-	}
-	t.connLock.RUnlock()
+	t.bus.close()
 	t.Done()
 }
 

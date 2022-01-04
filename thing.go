@@ -6,14 +6,12 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"reflect"
-	"regexp"
 	"sync"
 	"time"
 )
 
 type Thing struct {
-	Init    func(bool) error
+	Init    func() error
 	Run     func()
 	Home    func(w http.ResponseWriter, r *http.Request)
 
@@ -23,25 +21,18 @@ type Thing struct {
 	name        string
 	startupTime time.Time
 
-	connsMax int
 	cfgFile  string
 	demoMode bool
 	log      *log.Logger
 	inited   bool
 
+	// message bus
+	bus *bus
+
 	// children
 	stork       func(string, string, string) *Thing
 	children    map[string]*Thing
 	childStatus func(*Thing)
-
-	// ws connections
-	connLock sync.RWMutex
-	conns    map[IConn]bool
-	connQ    chan bool
-
-	// msg subscribers
-	subLock     sync.RWMutex
-	subscribers map[string][]func(*Packet)
 
 	// http servers
 	sync.WaitGroup
@@ -120,12 +111,8 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	t.status = "online"
 	t.startupTime = time.Now()
 
-	t.conns = make(map[IConn]bool)
-
-	if t.connsMax == 0 {
-		t.connsMax = 10
-	}
-	t.connQ = make(chan bool, t.connsMax)
+	// TODO pass in connMax from cfg?
+	t.bus = NewBus(10)
 
 	t.stork = func(string, string, string) *Thing {
 		t.log.Println("Need to set stork")
@@ -133,23 +120,11 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	}
 	t.children = make(map[string]*Thing)
 
-	t.inited = true
-
 	t.Subscribe("GetIdentity", t.getIdentity)
 
+	t.inited = true
+
 	return t
-}
-
-func (t *Thing) connAdd(c IConn) {
-	t.connLock.Lock()
-	defer t.connLock.Unlock()
-	t.conns[c] = true
-}
-
-func (t *Thing) connDel(c IConn) {
-	t.connLock.Lock()
-	defer t.connLock.Unlock()
-	delete(t.conns, c)
 }
 
 type msgIdentity struct {
@@ -170,7 +145,7 @@ func (t *Thing) getIdentity(p *Packet) {
 		Name:        t.name,
 		StartupTime: t.startupTime,
 	}
-	t.Reply(p.Marshal(&resp))
+	p.Marshal(&resp).Reply()
 }
 
 type msgChild struct {
@@ -193,7 +168,7 @@ func (t *Thing) getChildren(p *Packet) {
 		resp.Children = append(resp.Children, msgChild{child.id,
 			child.model, child.name, child.status})
 	}
-	t.Reply(p.Marshal(&resp))
+	p.Marshal(&resp).Reply()
 }
 
 func (t *Thing) GetChild(id string) *Thing {
@@ -204,81 +179,24 @@ func (t *Thing) GetChild(id string) *Thing {
 	return nil
 }
 
-func (t *Thing) receive(p *Packet) {
-	t.log.Printf("Received [%s]: %.80s", p.src.Name(), p.String())
-
-	msg := struct {
-		Msg string
-	}{}
-
-	p.Unmarshal(&msg)
-
-	t.subLock.RLock()
-	defer t.subLock.RUnlock()
-
-	for key, subscribers := range t.subscribers {
-		matched, err := regexp.MatchString(key, msg.Msg)
-		if err != nil {
-			t.log.Printf("Error compiling regexp \"%s\": %s", key, err)
-			continue
-		}
-		if matched {
-			for _, f := range subscribers {
-				f(p)
-			}
-		}
-	}
-}
-
 // Subscribe to message
 func (t *Thing) Subscribe(msg string, f func(*Packet)) {
-	if !t.inited {
-		log.Printf("Can't subscribe to \"%s\" before initializing Thing",
-			msg)
-		return
-	}
-
-	t.subLock.Lock()
-	defer t.subLock.Unlock()
-
-	if t.subscribers == nil {
-		t.subscribers = make(map[string][]func(*Packet))
-	}
-	t.subscribers[msg] = append(t.subscribers[msg], f)
-
+	t.bus.subscribe(msg, f)
 	t.log.Printf("Subscribed to \"%s\"", msg)
 }
 
 // Unsubscribe to message
 func (t *Thing) Unsubscribe(msg string, f func(*Packet)) {
-	if !t.inited {
-		log.Println(t.logPrefix(), "Can't subscribe before initializing")
-		return
-	}
+	t.bus.unsubscribe(msg, f)
+	t.log.Printf("Unsubscribed to \"%s\"", msg)
+}
 
-	t.subLock.Lock()
-	defer t.subLock.Unlock()
+func (t *Thing) NewPacket(msg interface {}) *Packet {
+	return newPacket(t.bus, nil, msg)
+}
 
-	if t.subscribers == nil {
-		return
-	}
-
-	if _, ok := t.subscribers[msg]; !ok {
-		return
-	}
-
-	for i, g := range t.subscribers[msg] {
-		if reflect.ValueOf(g).Pointer() == reflect.ValueOf(f).Pointer() {
-			t.log.Printf("Unsubscribed to \"%s\"", msg)
-			t.subscribers[msg] = append(t.subscribers[msg][:i],
-				t.subscribers[msg][i+1:]...)
-			break
-		}
-	}
-
-	if len(t.subscribers[msg]) == 0 {
-		delete(t.subscribers, msg)
-	}
+func (t *Thing) Broadcast(p *Packet) {
+	p.Broadcast()
 }
 
 // Start the Thing
@@ -290,8 +208,8 @@ func (t *Thing) Start() {
 	t.httpInit()
 
 	if t.Init != nil {
-		t.log.Println("Init hardly...")
-		if err := t.Init(false); err != nil {
+		t.log.Println("Init...")
+		if err := t.Init(); err != nil {
 			t.log.Fatalln("Init failed:", err)
 		}
 	}
@@ -308,49 +226,6 @@ func (t *Thing) Start() {
 	t.httpStop()
 
 	t.log.Fatalln("Run() didn't run forever")
-}
-
-// Reply sends Packet back to originator
-func (t *Thing) Reply(p *Packet) {
-	t.log.Printf("Reply: %.80s", p.String())
-	err := p.send(p.src)
-	if err != nil {
-		t.log.Println("Reply error:", err)
-	}
-}
-
-// Broadcast Packet to all except Packet source
-func (t *Thing) Broadcast(p *Packet) {
-	src := p.src
-
-	t.connLock.RLock()
-	defer t.connLock.RUnlock()
-
-	switch len(t.conns) {
-	case 0:
-		t.log.Printf("Would broadcast: %.80s", p.String())
-		return
-	case 1:
-		if _, ok := t.conns[src]; ok {
-			t.log.Printf("Would broadcast: %.80s", p.String())
-			return
-		}
-	}
-
-	// TODO Perf optimization: use websocket.NewPreparedMessage
-	// TODO to prepare msg once, and then send on each connection
-
-	t.log.Printf("Broadcast: %.80s", p.String())
-	for c := range t.conns {
-		if c == src {
-			// don't send back to src
-			continue
-		}
-		err := p.send(c)
-		if err != nil {
-			t.log.Println("Packet send error:", err)
-		}
-	}
 }
 
 func (t *Thing) HomeParams(r *http.Request, extra interface{}) interface{} {
@@ -413,8 +288,7 @@ func (t *Thing) changeStatus(child *Thing, status string) {
 		Name:   child.name,
 		Status: child.status,
 	}
-	p := NewPacket(&spam)
-	t.Broadcast(p)
+	t.NewPacket(&spam).Broadcast()
 
 	if t.childStatus != nil {
 		t.childStatus(child)
@@ -443,14 +317,6 @@ func (t *Thing) portRun(p *port, match string) {
 		if child == nil {
 			t.log.Println("Model", resp.Model, "unknown")
 			goto disconnect
-		}
-		if child.Init != nil {
-			t.log.Printf("Init child [%s,%s,%s] softly",
-				child.id, child.model, child.name)
-			if err := child.Init(true); err != nil {
-				t.log.Println("Child init failed:", err)
-				goto disconnect
-			}
 		}
 		t.children[resp.Id] = child
 	} else {

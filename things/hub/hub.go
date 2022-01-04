@@ -30,7 +30,7 @@ type hub struct {
 	merle.Thing
 }
 
-func (h *hub) init(soft bool) error {
+func (h *hub) init() error {
 	err := config.ParseFile(h.ConfigFile(), &cfg)
 	if err != nil {
 		return err
@@ -51,9 +51,14 @@ func (h *hub) home(w http.ResponseWriter, r *http.Request) {
 func NewHub(id, model, name string) *merle.Thing {
 	h := &hub{}
 
-	h.Init = h.init
-	h.Run = h.run
-	h.Home = h.home
+	t := h.InitThing(id, model, name)
+	if t == nil {
+		return nil
+	}
 
-	return h.InitThing(id, model, name)
+	t.Init = h.init
+	t.Run = h.run
+	t.Home = h.home
+
+	return t
 }

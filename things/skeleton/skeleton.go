@@ -17,8 +17,7 @@ type skeleton struct {
 func (s *skeleton) animate(p *merle.Packet) {
 }
 
-func (s *skeleton) init(soft bool) error {
-	s.Subscribe("CmdAnimate", s.animate)
+func (s *skeleton) init() error {
 	return nil
 }
 
@@ -33,9 +32,16 @@ func (s *skeleton) home(w http.ResponseWriter, r *http.Request) {
 func NewSkeleton(id, model, name string) *merle.Thing {
 	s := &skeleton{}
 
-	s.Init = s.init
-	s.Run = s.run
-	s.Home = s.home
+	t := s.InitThing(id, model, name)
+	if t == nil {
+		return nil
+	}
 
-	return s.InitThing(id, model, name)
+	t.Init = s.init
+	t.Run = s.run
+	t.Home = s.home
+
+	t.Subscribe("CmdAnimate", s.animate)
+
+	return t
 }

@@ -39,8 +39,7 @@ func (b *blinker) sendPaused(p *merle.Packet) {
 		Paused: b.paused,
 		State: b.lastState,
 	}
-	b.Reply(p.Marshal(&msg))
-
+	p.Marshal(&msg).Reply()
 }
 
 func (b *blinker) savePaused(p *merle.Packet) {
@@ -52,17 +51,17 @@ func (b *blinker) savePaused(p *merle.Packet) {
 
 func (b *blinker) pause(p *merle.Packet) {
 	b.paused = true
-	b.Broadcast(p)
+	p.Broadcast()
 }
 
 func (b *blinker) resume(p *merle.Packet) {
 	b.paused = false
-	b.Broadcast(p)
+	p.Broadcast()
 }
 
 func (b *blinker) start(p *merle.Packet) {
 	msg := struct{ Msg string }{Msg: "GetPaused"}
-	b.Reply(p.Marshal(&msg))
+	p.Marshal(&msg).Reply()
 }
 
 type spamLedState struct {
@@ -77,18 +76,7 @@ func (b *blinker) ledState(p *merle.Packet) {
 	b.Broadcast(p)
 }
 
-func (b *blinker) init(soft bool) error {
-	b.Subscribe("GetPaused", b.sendPaused)
-	b.Subscribe("ReplyPaused", b.savePaused)
-	b.Subscribe("CmdPause", b.pause)
-	b.Subscribe("CmdResume", b.resume)
-	b.Subscribe("CmdStart", b.start)
-	b.Subscribe("SpamLedState", b.ledState)
-
-	if soft {
-		return nil
-	}
-
+func (b *blinker) init() error {
 	b.adaptor = raspi.NewAdaptor()
 	b.adaptor.Connect()
 
@@ -118,7 +106,7 @@ func (b *blinker) sendLedState() {
 		Msg:   "SpamLedState",
 		State: b.state(),
 	}
-	b.Broadcast(merle.NewPacket(&spam))
+	b.NewPacket(&spam).Broadcast()
 }
 
 func (b *blinker) run() {
@@ -144,9 +132,21 @@ func (b *blinker) home(w http.ResponseWriter, r *http.Request) {
 func NewRaspiBlink(id, model, name string) *merle.Thing {
 	b := &blinker{}
 
-	b.Init = b.init
-	b.Run = b.run
-	b.Home = b.home
+	t := b.InitThing(id, model, name)
+	if t == nil {
+		return nil
+	}
 
-	return b.InitThing(id, model, name)
+	t.Init = b.init
+	t.Run = b.run
+	t.Home = b.home
+
+	t.Subscribe("GetPaused", b.sendPaused)
+	t.Subscribe("ReplyPaused", b.savePaused)
+	t.Subscribe("CmdPause", b.pause)
+	t.Subscribe("CmdResume", b.resume)
+	t.Subscribe("CmdStart", b.start)
+	t.Subscribe("SpamLedState", b.ledState)
+
+	return t
 }

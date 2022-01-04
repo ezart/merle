@@ -10,14 +10,15 @@ import (
 
 // A Packet contains a JSON message and a source connection.
 type Packet struct {
-	src IConn
+	bus *bus
+	src ISocket
 	msg []byte
 }
 
-func NewPacket(msg interface{}) *Packet {
-	var p Packet
+func newPacket(bus *bus, src ISocket, msg interface{}) *Packet {
+	p := &Packet{bus: bus, src: src}
 	p.msg, _ = json.Marshal(msg)
-	return &p
+	return p
 }
 
 func (p *Packet) Marshal(msg interface{}) *Packet {
@@ -33,6 +34,22 @@ func (p *Packet) String() string {
 	return string(p.msg)
 }
 
-func (p *Packet) send(dst IConn) error {
-	return dst.Send(p)
+func (p *Packet) Reply() {
+	if p.src != nil {
+		p.src.Send(p)
+	}
+}
+
+func (p *Packet) Broadcast() {
+	p.bus.broadcast(p)
+}
+
+func (p *Packet) Send(sock ISocket) {
+	sock.Send(p)
+}
+
+func (p *Packet) Multicast(socks...ISocket) {
+	for _, sock := range socks {
+		sock.Send(p)
+	}
 }

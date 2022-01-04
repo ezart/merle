@@ -128,28 +128,28 @@ func (p *port) disconnect() {
 
 func (p *port) run(t *Thing) {
 	var name = fmt.Sprintf("port:%d", p.port)
-	var conn = NewWsConn(name, p.ws)
-	var pkt = &Packet{src: conn}
+	var sock = newWebSocket(name, p.ws)
+	var pkt = newPacket(t.bus, sock, nil)
 	var err error
 
-	t.connAdd(conn)
+	t.bus.plugin(sock)
 
 	msg := struct{ Msg string }{Msg: "CmdStart"}
-	t.receive(pkt.Marshal(&msg))
+	t.bus.receive(pkt.Marshal(&msg))
 
 	for {
 		// new pkt for each rcv
-		var pkt = &Packet{src: conn}
+		var pkt = newPacket(t.bus, sock, nil)
 
 		pkt.msg, err = p.readMessage()
 		if err != nil {
 			p.log.Println("Disconnected")
 			break
 		}
-		t.receive(pkt)
+		t.bus.receive(pkt)
 	}
 
-	t.connDel(conn)
+	t.bus.unplug(sock)
 }
 
 func (t *Thing) _scanPorts(match string) {
