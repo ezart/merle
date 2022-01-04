@@ -141,7 +141,7 @@ func (b *blinker) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, b.HomeParams(r, nil))
 }
 
-func NewThing(id, model, name string) *merle.Thing {
+func NewRaspiBlink(id, model, name string) *merle.Thing {
 	b := &blinker{}
 
 	b.Init = b.init

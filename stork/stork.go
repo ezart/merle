@@ -14,11 +14,11 @@ import (
 )
 
 var things = map[string]func(id, model, name string) *merle.Thing{
-	"skeleton":    skeleton.NewThing,
-	"hub":         hub.NewThing,
-	"bridge":      bridge.NewThing,
-	"raspi_blink": raspi_blink.NewThing,
-	"chat":        chat.NewThing,
+	"skeleton":    skeleton.NewSkeleton,
+	"hub":         hub.NewHub,
+	"bridge":      bridge.NewBridge,
+	"raspi_blink": raspi_blink.NewRaspiBlink,
+	"chat":        chat.NewChat,
 }
 
 func NewThing(id, model, name string) *merle.Thing {

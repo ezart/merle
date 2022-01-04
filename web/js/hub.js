@@ -4,18 +4,18 @@
 
 let shadowMode
 
-function sendForThings() {
-	conn.send(JSON.stringify({Msg: "GetThings"}))
+function sendForChildren() {
+	conn.send(JSON.stringify({Msg: "GetChildren"}))
 }
 
 function show(id) {
-	var iframe = document.getElementById("thing")
+	var iframe = document.getElementById("child")
 	iframe.src = "/" + encodeURIComponent(id)
 }
 
 function showIcon(msg) {
-	var iframe = document.getElementById("thing")
-	var things = document.getElementById("things")
+	var iframe = document.getElementById("child")
+	var children = document.getElementById("children")
 	var newdiv = document.createElement("div")
 	var newpre = document.createElement("pre")
 	var newimg = document.createElement("img")
@@ -29,11 +29,11 @@ function showIcon(msg) {
 
 	newdiv.appendChild(newpre)
 	newdiv.appendChild(newimg)
-	things.appendChild(newdiv)
+	children.appendChild(newdiv)
 }
 
-function addThing(msg) {
-	var iframe = document.getElementById("thing")
+function addChild(msg) {
+	var iframe = document.getElementById("child")
 
 	if (!shadowMode) {
 		showIcon(msg)
@@ -43,10 +43,10 @@ function addThing(msg) {
 	}
 }
 
-function saveThings(msg) {
-	if (msg.Things != null) {
-		for (const thing of msg.Things) {
-			addThing(thing)
+function saveChildren(msg) {
+	if (msg.Children != null) {
+		for (const child of msg.Children) {
+			addChild(child)
 		}
 	}
 }
@@ -61,7 +61,7 @@ function updateStatus(msg) {
 	var pre = document.getElementById("pre-" + msg.Id)
 
 	if (img == null) {
-		addThing(msg)
+		addChild(msg)
 	} else {
 		img.src = "/web/images/" + msg.Model + "/" + msg.Status + ".jpg"
 		pre.innerText = msg.Name
@@ -74,13 +74,13 @@ function Run(scheme, host, id, max) {
 	shadowMode = (max == 1)
 
 	if (!shadowMode) {
-		document.getElementById("things").style.height = "100px"
+		document.getElementById("children").style.height = "100px"
 	}
 
 	conn = new WebSocket(scheme + host + "/ws/" + id)
 
 	conn.onopen = function(evt) {
-		sendForThings()
+		sendForChildren()
 	}
 
 	conn.onclose = function(evt) {
@@ -93,8 +93,8 @@ function Run(scheme, host, id, max) {
 		console.log('hub msg', msg)
 
 		switch(msg.Msg) {
-		case "ReplyThings":
-			saveThings(msg)
+		case "ReplyChildren":
+			saveChildren(msg)
 			break
 		case "SpamStatus":
 			updateStatus(msg)

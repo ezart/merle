@@ -16,7 +16,6 @@ type Thing struct {
 	Init    func(bool) error
 	Run     func()
 	Home    func(w http.ResponseWriter, r *http.Request)
-	Connect func(*Thing)
 
 	status      string
 	id          string
@@ -31,8 +30,9 @@ type Thing struct {
 	inited   bool
 
 	// children
-	stork    func(string, string, string) *Thing
-	children map[string]*Thing
+	stork       func(string, string, string) *Thing
+	children    map[string]*Thing
+	childStatus func(*Thing)
 
 	// ws connections
 	connLock sync.RWMutex
@@ -140,13 +140,13 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	return t
 }
 
-func (t *Thing) ConnAdd(c IConn) {
+func (t *Thing) connAdd(c IConn) {
 	t.connLock.Lock()
 	defer t.connLock.Unlock()
 	t.conns[c] = true
 }
 
-func (t *Thing) ConnDel(c IConn) {
+func (t *Thing) connDel(c IConn) {
 	t.connLock.Lock()
 	defer t.connLock.Unlock()
 	delete(t.conns, c)
@@ -173,32 +173,33 @@ func (t *Thing) getIdentity(p *Packet) {
 	t.Reply(p.Marshal(&resp))
 }
 
-type msgThing struct {
+type msgChild struct {
 	Id     string
 	Model  string
 	Name   string
 	Status string
 }
 
-type msgThings struct {
+type msgChildren struct {
 	Msg    string
-	Things []msgThing
+	Children []msgChild
 }
 
-func (t *Thing) getThings(p *Packet) {
-	resp := msgThings{
-		Msg: "ReplyThings",
+func (t *Thing) getChildren(p *Packet) {
+	resp := msgChildren{
+		Msg: "ReplyChildren",
 	}
 	for _, child := range t.children {
-		resp.Things = append(resp.Things, msgThing{child.id,
+		resp.Children = append(resp.Children, msgChild{child.id,
 			child.model, child.name, child.status})
 	}
 	t.Reply(p.Marshal(&resp))
 }
 
 func (t *Thing) GetChild(id string) *Thing {
-	if thing, ok := t.children[id]; ok {
-		return thing
+	// TODO need R/W lock for t.children[] map
+	if child, ok := t.children[id]; ok {
+		return child
 	}
 	return nil
 }
@@ -278,13 +279,6 @@ func (t *Thing) Unsubscribe(msg string, f func(*Packet)) {
 	if len(t.subscribers[msg]) == 0 {
 		delete(t.subscribers, msg)
 	}
-}
-
-// Configure local http server
-func (t *Thing) HttpConfig(authUser string, portPublic, portPrivate int) {
-	t.authUser = authUser
-	t.portPublic = portPublic
-	t.portPrivate = portPrivate
 }
 
 // Start the Thing
@@ -422,8 +416,8 @@ func (t *Thing) changeStatus(child *Thing, status string) {
 	p := NewPacket(&spam)
 	t.Broadcast(p)
 
-	if t.Connect != nil {
-		t.Connect(child)
+	if t.childStatus != nil {
+		t.childStatus(child)
 	}
 }
 
@@ -478,4 +472,14 @@ func (t *Thing) portRun(p *port, match string) {
 
 disconnect:
 	p.disconnect()
+}
+
+func (t *Thing) ListenForChildren(max uint, match string, status func(*Thing)) error {
+	// TODO thing filter
+	t.log.Println("Listening for Children...")
+	t.childStatus = status
+	t.Subscribe("GetChildren", t.getChildren)
+	t.muxPrivate.HandleFunc("/port/{id}", t.getPort)
+
+	return t.portScan(max, match)
 }

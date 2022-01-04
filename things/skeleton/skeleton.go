@@ -30,7 +30,7 @@ func (s *skeleton) run() {
 func (s *skeleton) home(w http.ResponseWriter, r *http.Request) {
 }
 
-func NewThing(id, model, name string) *merle.Thing {
+func NewSkeleton(id, model, name string) *merle.Thing {
 	s := &skeleton{}
 
 	s.Init = s.init

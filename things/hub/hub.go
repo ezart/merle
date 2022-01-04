@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
-// Hub is a Thing that connects other Things, including other Hubs.  Hub keeps
-// track of Thing connection status and displays each Thing.
+// Hub is a Thing that connects other Things (children).  Hub keeps track of
+// Child connection status and displays each Child.
 package hub
 
 import (
@@ -36,7 +36,7 @@ func (h *hub) init(soft bool) error {
 		return err
 	}
 
-	return h.ListenForThings(cfg.Hub.Max, cfg.Hub.Match)
+	return h.ListenForChildren(cfg.Hub.Max, cfg.Hub.Match, nil)
 }
 
 func (h *hub) run() {
@@ -48,7 +48,7 @@ func (h *hub) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, h.HomeParams(r, cfg.Hub.Max))
 }
 
-func NewThing(id, model, name string) *merle.Thing {
+func NewHub(id, model, name string) *merle.Thing {
 	h := &hub{}
 
 	h.Init = h.init

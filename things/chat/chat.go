@@ -38,7 +38,7 @@ func (c *chat) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, c.HomeParams(r, nil))
 }
 
-func NewThing(id, model, name string) *merle.Thing {
+func NewChat(id, model, name string) *merle.Thing {
 	c := &chat{}
 
 	c.Init = c.init

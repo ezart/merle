@@ -52,7 +52,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 	t.log.Printf("Websocket opened [%s]", name)
 
-	t.ConnAdd(conn)
+	t.connAdd(conn)
 
 	for {
 		// new pkt for each rcv
@@ -68,7 +68,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 		t.receive(pkt)
 	}
 
-	t.ConnDel(conn)
+	t.connDel(conn)
 }
 
 func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
@@ -264,10 +264,9 @@ func (t *Thing) getPort(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (t *Thing) ListenForThings(max uint, match string) error {
-	// TODO thing filter
-	t.log.Println("Listening for Things...")
-	t.Subscribe("GetThings", t.getThings)
-	t.muxPrivate.HandleFunc("/port/{id}", t.getPort)
-	return t.portScan(max, match)
+// Configure local http server
+func (t *Thing) HttpConfig(authUser string, portPublic, portPrivate int) {
+	t.authUser = authUser
+	t.portPublic = portPublic
+	t.portPrivate = portPrivate
 }
