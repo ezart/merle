@@ -112,7 +112,7 @@ func (t *Thing) InitThing(id, model, name string) *Thing {
 	t.startupTime = time.Now()
 
 	// TODO pass in connMax from cfg?
-	t.bus = NewBus(10)
+	t.bus = NewBus(t.log, 10)
 
 	t.stork = func(string, string, string) *Thing {
 		t.log.Println("Need to set stork")
@@ -182,13 +182,11 @@ func (t *Thing) GetChild(id string) *Thing {
 // Subscribe to message
 func (t *Thing) Subscribe(msg string, f func(*Packet)) {
 	t.bus.subscribe(msg, f)
-	t.log.Printf("Subscribed to \"%s\"", msg)
 }
 
 // Unsubscribe to message
 func (t *Thing) Unsubscribe(msg string, f func(*Packet)) {
 	t.bus.unsubscribe(msg, f)
-	t.log.Printf("Unsubscribed to \"%s\"", msg)
 }
 
 func (t *Thing) NewPacket(msg interface {}) *Packet {

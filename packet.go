@@ -35,9 +35,7 @@ func (p *Packet) String() string {
 }
 
 func (p *Packet) Reply() {
-	if p.src != nil {
-		p.src.Send(p)
-	}
+	p.bus.reply(p)
 }
 
 func (p *Packet) Broadcast() {
@@ -45,7 +43,7 @@ func (p *Packet) Broadcast() {
 }
 
 func (p *Packet) Send(sock ISocket) {
-	sock.Send(p)
+	p.bus.send(p, sock)
 }
 
 func (p *Packet) Multicast(socks...ISocket) {

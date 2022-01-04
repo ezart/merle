@@ -9,6 +9,7 @@ import (
 
 // Bus is a message bus.  Connect to the bus using Sockets.
 type bus struct {
+	log      *log.Logger
 	// sockets
 	sockLock sync.RWMutex
 	sockets  map[ISocket] bool
@@ -18,8 +19,9 @@ type bus struct {
 	subs     map[string][]func(*Packet)
 }
 
-func NewBus(socketsMax uint) *bus {
+func NewBus(log *log.Logger, socketsMax uint) *bus {
 	return &bus{
+		log: log,
 		sockets: make(map[ISocket]bool),
 		socketQ: make(chan bool, socketsMax),
 		subs: make(map[string][]func(*Packet)),
@@ -50,6 +52,7 @@ func (b *bus) subscribe(msg string, f func(*Packet)) {
 	b.subLock.Lock()
 	defer b.subLock.Unlock()
 	b.subs[msg] = append(b.subs[msg], f)
+	b.log.Printf("Subscribed to \"%s\"", msg)
 }
 
 // Unsubscribe to message
@@ -63,6 +66,7 @@ func (b *bus) unsubscribe(msg string, f func(*Packet)) {
 
 	for i, g := range b.subs[msg] {
 		if reflect.ValueOf(g).Pointer() == reflect.ValueOf(f).Pointer() {
+			b.log.Printf("Unsubscribed to \"%s\"", msg)
 			b.subs[msg] = append(b.subs[msg][:i], b.subs[msg][i+1:]...)
 			break
 		}
@@ -74,6 +78,8 @@ func (b *bus) unsubscribe(msg string, f func(*Packet)) {
 }
 
 func (b *bus) receive(p *Packet) {
+	b.log.Printf("Received [%s]: %.80s", p.src.Name(), p.String())
+
 	msg := struct {Msg string}{}
 	p.Unmarshal(&msg)
 
@@ -83,7 +89,7 @@ func (b *bus) receive(p *Packet) {
 	for key, funcs := range b.subs {
 		matched, err := regexp.MatchString(key, msg.Msg)
 		if err != nil {
-			log.Printf("Error compiling regexp \"%s\": %s", key, err)
+			b.log.Printf("Error compiling regexp \"%s\": %s", key, err)
 			continue
 		}
 		if matched {
@@ -94,6 +100,15 @@ func (b *bus) receive(p *Packet) {
 	}
 }
 
+func (b *bus) reply(p *Packet) {
+	if p.src == nil {
+		return
+	}
+
+	b.log.Println("Reply", p.String())
+	p.src.Send(p)
+}
+
 func (b *bus) broadcast(p *Packet) {
 	src := p.src
 
@@ -101,13 +116,13 @@ func (b *bus) broadcast(p *Packet) {
 	defer b.sockLock.RUnlock()
 
 	if len(b.sockets) == 0 {
-		//t.log.Printf("Would broadcast: %.80s", p.String())
+		b.log.Printf("Would broadcast: %.80s", p.String())
 		return
 	}
 
 	if len(b.sockets) == 1 && src != nil {
 		if _, ok := b.sockets[src]; ok {
-			//t.log.Printf("Would broadcast: %.80s", p.String())
+			b.log.Printf("Would broadcast: %.80s", p.String())
 			return
 		}
 	}
@@ -115,7 +130,7 @@ func (b *bus) broadcast(p *Packet) {
 	// TODO Perf optimization: use websocket.NewPreparedMessage
 	// TODO to prepare msg once, and then send on each connection
 
-	//t.log.Printf("Broadcast: %.80s", p.String())
+	b.log.Printf("Broadcast: %.80s", p.String())
 	for sock := range b.sockets {
 		if sock == src {
 			// don't send back to src
@@ -123,6 +138,11 @@ func (b *bus) broadcast(p *Packet) {
 		}
 		sock.Send(p)
 	}
+}
+
+func (b *bus) send(p *Packet, sock ISocket) {
+	b.log.Println("Send", p.String())
+	sock.Send(p)
 }
 
 func (b *bus) close() {
