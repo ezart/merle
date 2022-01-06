@@ -129,24 +129,24 @@ func (b *blinker) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, b.HomeParams(r, nil))
 }
 
-func NewRaspiBlink(id, model, name string) *merle.Thing {
+func NewRaspiBlink(id, model, name string) (*merle.Thing, error) {
 	b := &blinker{}
 
-	t := b.InitThing(id, model, name)
-	if t == nil {
-		return nil
+	t, err := b.InitThing(id, model, name)
+	if err != nil {
+		return nil, err
 	}
 
-	t.Init = b.init
-	t.Run = b.run
-	t.Home = b.home
+	b.Init = b.init
+	b.Run = b.run
+	b.Home = b.home
 
-	t.Subscribe("GetPaused", b.sendPaused)
-	t.Subscribe("ReplyPaused", b.savePaused)
-	t.Subscribe("CmdPause", b.pause)
-	t.Subscribe("CmdResume", b.resume)
-	t.Subscribe("CmdStart", b.start)
-	t.Subscribe("SpamLedState", b.ledState)
+	b.Subscribe("GetPaused", b.sendPaused)
+	b.Subscribe("ReplyPaused", b.savePaused)
+	b.Subscribe("CmdPause", b.pause)
+	b.Subscribe("CmdResume", b.resume)
+	b.Subscribe("CmdStart", b.start)
+	b.Subscribe("SpamLedState", b.ledState)
 
-	return t
+	return t, nil
 }

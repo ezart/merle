@@ -5,25 +5,32 @@
 package config
 
 import (
-	"gopkg.in/yaml.v2"
+	"fmt"
+	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 )
 
-func ParseFile(file string, cfg interface{}) error {
-	f, err := os.Open(file)
+var cfgFile string
+
+func SetFile(file string) {
+	cfgFile = file
+}
+
+func Parse(cfg interface{}) error {
+	f, err := os.Open(cfgFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("Opening config file failure: %s", err)
 	}
 	defer f.Close()
 
 	decoder := yaml.NewDecoder(f)
 	err = decoder.Decode(cfg)
 	if err != nil {
-		return err
+		return fmt.Errorf("Config decode error: %s", err)
 	}
 
-	log.Printf("Config [%s] %+v", file, cfg)
+	log.Printf("Config [%s] %+v", cfgFile, cfg)
 
 	return nil
 }

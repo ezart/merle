@@ -8,14 +8,13 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"io/ioutil"
-	"log"
 	"net/url"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+	"log"
 )
 
 var portBegin uint
@@ -31,13 +30,11 @@ type port struct {
 	tunnelTryingUntil time.Time
 	tunnelConnected   bool
 	ws                *websocket.Conn
-	log               *log.Logger
 }
 
 var ports []port
 
 func (p *port) writeJSON(v interface{}) error {
-	p.log.Printf("WriteJSON: %v", v)
 	return p.ws.WriteJSON(v)
 }
 
@@ -78,8 +75,6 @@ func (p *port) wsReplyIdentity() (resp *msgIdentity, err error) {
 		return nil, err
 	}
 
-	p.log.Printf("Port wsIdentity: %v", identity)
-
 	// Clear deadline
 	p.ws.SetReadDeadline(time.Time{})
 
@@ -100,20 +95,19 @@ func (p *port) wsClose() {
 func (p *port) connect() (resp *msgIdentity, err error) {
 	err = p.wsOpen()
 	if err != nil {
-		p.log.Println("Websocket open error:", err)
-		return nil, err
+		return nil, fmt.Errorf("Websocket open error: %s", err)
 	}
 
 	err = p.wsIdentity()
 	if err != nil {
-		p.log.Println("Send request for Identity failed:", err)
-		return nil, err
+		return nil, fmt.Errorf("Send request for Identity failed: %s", err)
 	}
 
 	resp, err = p.wsReplyIdentity()
 	if err != nil {
-		p.log.Println("Didn't reply with Identity in a reasonable time:", err)
-		return nil, err
+		return nil,
+			fmt.Errorf("Didn't reply with Identity in a reasonable time: %s",
+			err)
 	}
 
 	return resp, nil
@@ -126,97 +120,27 @@ func (p *port) disconnect() {
 	p.Unlock()
 }
 
-func (p *port) run(t *Thing) {
-	var name = fmt.Sprintf("port:%d", p.port)
-	var sock = newWebSocket(name, p.ws)
-	var pkt = newPacket(sock, nil)
-	var err error
+type portAttach func(*port, *msgIdentity) error
 
-	t.bus.plugin(sock)
-
-	msg := struct{ Msg string }{Msg: "CmdStart"}
-	t.bus.receive(pkt.Marshal(&msg))
-
-	for {
-		// new pkt for each rcv
-		var pkt = newPacket(sock, nil)
-
-		pkt.msg, err = p.readMessage()
-		if err != nil {
-			p.log.Println("Disconnected")
-			break
-		}
-		t.bus.receive(pkt)
-	}
-
-	t.bus.unplug(sock)
-}
-
-func (t *Thing) _scanPorts(match string) {
-	// ss -Hntl4p src 127.0.0.1 sport ge 8081 sport le 9080
-
-	cmd := exec.Command("ss", "-Hntl4", "src", "127.0.0.1",
-		"sport", "ge", strconv.FormatUint(uint64(portBegin), 10),
-		"sport", "le", strconv.FormatUint(uint64(portEnd), 10))
-	stdoutStderr, err := cmd.CombinedOutput()
+func (p *port) attach(match string, cb portAttach) {
+	resp, err := p.connect()
 	if err != nil {
-		t.log.Print(err)
-		return
+		log.Println("Port connect failure:", err)
+		goto disconnect
 	}
 
-	ss := string(stdoutStderr)
-	ss = strings.TrimSuffix(ss, "\n")
+	// TODO disconnect if resp doesn't match filter
 
-	listeners := make(map[uint]bool)
-
-	for _, ssLine := range strings.Split(ss, "\n") {
-		if len(ssLine) > 0 {
-			portStr := strings.Split(strings.Split(ssLine,
-				":")[1], " ")[0]
-			port, _ := strconv.Atoi(portStr)
-			listeners[uint(port)] = true
-		}
+	err = cb(p, resp)
+	if err != nil {
+		log.Println("Port attach failed:", err)
 	}
 
-	for i := uint(0); i < numPorts; i++ {
-		port := &ports[i]
-		port.Lock()
-		if listeners[port.port] {
-			if port.tunnelConnected {
-				// no change
-			} else {
-				t.log.Printf("Tunnel connected on Port[%d]", port.port)
-				port.tunnelConnected = true
-				port.tunnelTrying = false
-				go t.portRun(port, match)
-			}
-		} else {
-			if port.tunnelConnected {
-				t.log.Println("Closing tunnel on Port[%d]", port.port)
-				port.tunnelConnected = false
-			} else {
-				// no change
-			}
-		}
-		port.Unlock()
-	}
+disconnect:
+	p.disconnect()
 }
 
-func (t *Thing) scanPorts(match string) {
-
-	// every second
-
-	ticker := time.NewTicker(time.Second)
-
-	for {
-		select {
-		case <-ticker.C:
-			t._scanPorts(match)
-		}
-	}
-}
-
-func (t *Thing) getPortRange() (begin uint, end uint, err error) {
+func getPortRange() (begin uint, end uint, err error) {
 
 	// Merle uses ip_local_reserved_ports for incoming Thing
 	// connections.
@@ -271,19 +195,17 @@ func (t *Thing) getPortRange() (begin uint, end uint, err error) {
 	}
 	end = uint(e)
 
-	t.log.Printf("IP local reserved port range: [%d-%d]", begin, end)
-
 	return begin, end, nil
 }
 
-func (t *Thing) portScan(max uint, match string) error {
+func initPorts(max uint) error {
 	var err error
 
 	if max == 0 {
 		return fmt.Errorf("Max ports equal zero; nothing to scan")
 	}
 
-	portBegin, portEnd, err = t.getPortRange()
+	portBegin, portEnd, err = getPortRange()
 	if err != nil {
 		return err
 	}
@@ -291,6 +213,7 @@ func (t *Thing) portScan(max uint, match string) error {
 	numPorts = portEnd - portBegin + 1
 	if numPorts > max {
 		numPorts = max
+		portEnd = portBegin + numPorts - 1
 	}
 
 	portNext = 0
@@ -299,16 +222,87 @@ func (t *Thing) portScan(max uint, match string) error {
 
 	for i := uint(0); i < numPorts; i++ {
 		ports[i].port = portBegin + i
-		prefix := fmt.Sprintf("Port[%d] ", ports[i].port)
-		ports[i].log = log.New(os.Stderr, prefix, 0)
 	}
-
-	go t.scanPorts(match)
 
 	return nil
 }
 
-func (t *Thing) nextPort() (p *port) {
+func _portScan(match string, cb portAttach) error {
+
+	// ss -Hntl4p src 127.0.0.1 sport ge 8081 sport le 9080
+
+	cmd := exec.Command("ss", "-Hntl4", "src", "127.0.0.1",
+		"sport", "ge", strconv.FormatUint(uint64(portBegin), 10),
+		"sport", "le", strconv.FormatUint(uint64(portEnd), 10))
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println("Scanning ports error:", err)
+		return err
+	}
+
+	ss := string(stdoutStderr)
+	ss = strings.TrimSuffix(ss, "\n")
+
+	listeners := make(map[uint]bool)
+
+	for _, ssLine := range strings.Split(ss, "\n") {
+		if len(ssLine) > 0 {
+			portStr := strings.Split(strings.Split(ssLine,
+				":")[1], " ")[0]
+			port, _ := strconv.Atoi(portStr)
+			listeners[uint(port)] = true
+		}
+	}
+
+	for i := uint(0); i < numPorts; i++ {
+		port := &ports[i]
+		port.Lock()
+		if listeners[port.port] {
+			if port.tunnelConnected {
+				// no change
+			} else {
+				log.Printf("Tunnel connected on Port[%d]", port.port)
+				port.tunnelConnected = true
+				port.tunnelTrying = false
+				go port.attach(match, cb)
+			}
+		} else {
+			if port.tunnelConnected {
+				log.Println("Closing tunnel on Port[%d]", port.port)
+				port.tunnelConnected = false
+			} else {
+				// no change
+			}
+		}
+		port.Unlock()
+	}
+
+	return nil
+}
+
+func portScan(max uint, match string, cb portAttach) error {
+
+	if err := initPorts(max); err != nil {
+		return err
+	}
+
+	ticker := time.NewTicker(time.Second)
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				if err := _portScan(match, cb); err != nil {
+					return
+				}
+			}
+		}
+	}()
+
+	return nil
+}
+
+func nextPort() (p *port) {
 
 	for i := uint(0); i < numPorts; i++ {
 		p = &ports[portNext]
@@ -323,7 +317,7 @@ func (t *Thing) nextPort() (p *port) {
 		}
 		if p.tunnelTrying && p.tunnelTryingUntil.After(time.Now()) {
 			p.Unlock()
-			t.log.Printf("Port[%d] still tunnelTrying", p.port)
+			log.Printf("Port[%d] still tunnelTrying", p.port)
 			continue
 		}
 		p.tunnelTrying = true
@@ -338,7 +332,7 @@ func (t *Thing) nextPort() (p *port) {
 
 var portMap = make(map[string]*port)
 
-func (t *Thing) portFromId(id string) int {
+func portFromId(id string) int {
 	var p *port
 	var ok bool
 
@@ -346,19 +340,19 @@ func (t *Thing) portFromId(id string) int {
 		p.Lock()
 		if p.tunnelConnected {
 			p.Unlock()
-			t.log.Printf("Port[%d] busy; already used by Id %s", p.port, id)
+			log.Printf("Port[%d] busy; already used by Id %s", p.port, id)
 			return -2 // Port busy; try later
 		}
 		p.Unlock()
 	} else {
-		p = t.nextPort()
+		p = nextPort()
 		if p == nil {
-			t.log.Println("No more ports Id", id)
+			log.Println("No more ports Id", id)
 			return -1 // No more ports; try later
 		}
 		portMap[id] = p
 	}
 
-	t.log.Println("Returning port", p.port, "for Id", id)
+	log.Println("Returning port", p.port, "for Id", id)
 	return int(p.port)
 }

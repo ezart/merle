@@ -25,59 +25,21 @@ var cfg struct {
 }
 
 type bridge struct {
-	merle.Thing
-	// TODO Need R/W lock for map[]
-	online map[*merle.Thing]bool
-}
-
-func (b *bridge) bridgePkt(child *merle.Thing, p *merle.Packet) {
-	for thing, _ := range b.online {
-		if thing != child {
-		}
-	}
-}
-
-func (b *bridge) connect(child *merle.Thing) {
-	if child.Status() == "online" {
-		//b.ChildSubscribe(child, ".*", bridgePkt)
-		b.online[child] = true
-	} else {
-		//b.ChildUnSubscribe(child, ".*", bridgePkt)
-		delete(b.online, child)
-	}
-}
-
-func (b *bridge) init() error {
-	err := config.ParseFile(b.ConfigFile(), &cfg)
-	if err != nil {
-		return err
-	}
-
-	return b.ListenForChildren(cfg.Bridge.Max, cfg.Bridge.Match, b.connect)
-}
-
-func (b *bridge) run() {
-	for {
-	}
+	merle.Bridge
 }
 
 func (b *bridge) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, b.HomeParams(r, nil))
 }
 
-func NewBridge(id, model, name string) *merle.Thing {
+func NewBridge(id, model, name string) (*merle.Thing, error) {
 	b := &bridge{}
 
-	t := b.InitThing(id, model, name)
-	if t == nil {
-		return nil
+	b.Home = b.home
+
+	if err := config.Parse(&cfg); err != nil {
+		return nil, err
 	}
 
-	t.Init = b.init
-	t.Run = b.run
-	t.Home = b.home
-
-	b.online = make(map[*merle.Thing]bool)
-
-	return t
+	return b.InitBridge(id, model, name, cfg.Bridge.Max, cfg.Bridge.Match)
 }

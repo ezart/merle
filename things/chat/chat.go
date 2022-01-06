@@ -22,33 +22,22 @@ type chat struct {
 	merle.Thing
 }
 
-func (c *chat) init() error {
-	return nil
-}
-
-func (c *chat) run() {
-	for {
-	}
-}
-
 func (c *chat) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, c.HomeParams(r, nil))
 }
 
-func NewChat(id, model, name string) *merle.Thing {
+func NewChat(id, model, name string) (*merle.Thing, error) {
 	c := &chat{}
 
-	t := c.InitThing(id, model, name)
-	if t == nil {
-		return nil
+	t, err := c.InitThing(id, model, name)
+	if err != nil {
+		return nil, err
 	}
 
-	t.Init = c.init
-	t.Run = c.run
-	t.Home = c.home
+	c.Home = c.home
 
-	t.Subscribe("CmdNewUser", c.Broadcast)
-	t.Subscribe("CmdText", c.Broadcast)
+	c.Subscribe("CmdNewUser", c.Broadcast)
+	c.Subscribe("CmdText", c.Broadcast)
 
-	return t
+	return t, nil
 }

@@ -27,38 +27,21 @@ var cfg struct {
 }
 
 type hub struct {
-	merle.Thing
-}
-
-func (h *hub) init() error {
-	err := config.ParseFile(h.ConfigFile(), &cfg)
-	if err != nil {
-		return err
-	}
-
-	return h.ListenForChildren(cfg.Hub.Max, cfg.Hub.Match, nil)
-}
-
-func (h *hub) run() {
-	for {
-	}
+	merle.Bridge
 }
 
 func (h *hub) home(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, h.HomeParams(r, cfg.Hub.Max))
 }
 
-func NewHub(id, model, name string) *merle.Thing {
+func NewHub(id, model, name string) (*merle.Thing, error) {
 	h := &hub{}
 
-	t := h.InitThing(id, model, name)
-	if t == nil {
-		return nil
+	h.Home = h.home
+
+	if err := config.Parse(&cfg); err != nil {
+		return nil, err
 	}
 
-	t.Init = h.init
-	t.Run = h.run
-	t.Home = h.home
-
-	return t
+	return h.InitBridge(id, model, name, cfg.Hub.Max, cfg.Hub.Match)
 }

@@ -43,23 +43,23 @@ func main() {
 
 	flag.Parse()
 
-	err := config.ParseFile(*cfgFile, &cfg)
+	config.SetFile(*cfgFile)
+	if err := config.Parse(&cfg); err != nil {
+		log.Fatalln(err)
+	}
+
+	t, err := stork.NewThing(cfg.Thing.Id, cfg.Thing.Model, cfg.Thing.Name)
 	if err != nil {
-		log.Fatalln("Opening config file:", err)
+		log.Fatalln("Creating new Thing failed:", err)
 	}
 
-	t := stork.NewThing(cfg.Thing.Id, cfg.Thing.Model, cfg.Thing.Name)
-	if t == nil {
-		log.Fatalf("No model named '%s'", cfg.Thing.Model)
-	}
-
-	t.SetConfigFile(*cfgFile)
 	t.SetDemoMode(*demoMode)
 	t.SetStork(stork.NewThing)
 
 	t.TunnelConfig(cfg.Mother.Host, cfg.Mother.User, cfg.Mother.Key,
 		cfg.Mother.PortPrivate)
 
+	log.Println(cfg.Thing.User, cfg.Thing.PortPublic, cfg.Thing.PortPrivate)
 	t.HttpConfig(cfg.Thing.User, cfg.Thing.PortPublic, cfg.Thing.PortPrivate)
 
 	t.Start()

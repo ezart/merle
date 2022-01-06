@@ -25,7 +25,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	child := t.GetChild(id)
+	child := t.childFromId(id)
 	if child != nil {
 		child.ws(w, r)
 		return
@@ -48,7 +48,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 	t.log.Printf("Websocket opened [%s]", name)
 
-	t.bus.plugin(sock)
+	t.plugin(sock)
 
 	for {
 		// new pkt for each rcv
@@ -61,10 +61,10 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		t.bus.receive(pkt)
+		t.receive(pkt)
 	}
 
-	t.bus.unplug(sock)
+	t.unplug(sock)
 }
 
 func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +76,7 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	child := t.GetChild(id)
+	child := t.childFromId(id)
 	if child != nil {
 		child.home(w, r)
 		return
@@ -126,6 +126,7 @@ func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFu
 		}
 
 		user, passwd, ok := r.BasicAuth()
+		t.log.Println("BasicAuth", authUser, user, passwd, ok)
 
 		if ok {
 			userHash := sha256.Sum256([]byte(user))
@@ -138,6 +139,7 @@ func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFu
 			// Use PAM to validate passwd
 			passwdMatch, _ := t.pamValidate(user, passwd)
 
+			t.log.Println("OK", userMatch, passwdMatch)
 			if userMatch && passwdMatch {
 				next.ServeHTTP(w, r)
 				return
@@ -240,11 +242,11 @@ func (t *Thing) httpStop() {
 	t.Wait()
 }
 
-func (t *Thing) getPort(w http.ResponseWriter, r *http.Request) {
+func getPort(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	port := t.portFromId(id)
+	port := portFromId(id)
 
 	switch port {
 	case -1:

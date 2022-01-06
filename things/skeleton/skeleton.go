@@ -29,12 +29,12 @@ func (s *skeleton) run() {
 func (s *skeleton) home(w http.ResponseWriter, r *http.Request) {
 }
 
-func NewSkeleton(id, model, name string) *merle.Thing {
+func NewSkeleton(id, model, name string) (*merle.Thing, error) {
 	s := &skeleton{}
 
-	t := s.InitThing(id, model, name)
-	if t == nil {
-		return nil
+	t, err := s.InitThing(id, model, name)
+	if err != nil {
+		return nil, err
 	}
 
 	t.Init = s.init
@@ -43,5 +43,5 @@ func NewSkeleton(id, model, name string) *merle.Thing {
 
 	t.Subscribe("CmdAnimate", s.animate)
 
-	return t
+	return t, nil
 }
