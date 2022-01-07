@@ -1,24 +1,42 @@
-// Copyright 2021-2022 Scott Feldman (sfeldma@gmail.com). All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be found
-// in the LICENSE file.
-
-package config
+package merle
 
 import (
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"log"
 	"os"
 )
 
-var cfgFile string
-
-func SetFile(file string) {
-	cfgFile = file
+type thingConfig struct {
+	Thing struct {
+		Id          string `yaml:"Id"`
+		Model       string `yaml:"Model"`
+		Name        string `yaml:"Name"`
+		User        string `yaml:"User"`
+		PortPublic  uint   `yaml:"PortPublic"`
+		PortPrivate uint   `yaml:"PortPrivate"`
+	} `yaml:"Thing"`
+	Mother struct {
+		Host        string `yaml:"Host"`
+		User        string `yaml:"User"`
+		Key         string `yaml:"Key"`
+		PortPrivate uint   `yaml:"PortPrivate"`
+	} `yaml:"Mother"`
 }
 
-func Parse(cfg interface{}) error {
-	f, err := os.Open(cfgFile)
+type Configurator interface {
+	Parse(interface{}) error
+}
+
+type yamlConfig struct {
+	file string
+}
+
+func NewYamlConfig(file string) Configurator {
+	return &yamlConfig{ file: file }
+}
+
+func (c *yamlConfig) Parse(cfg interface{}) error {
+	f, err := os.Open(c.file)
 	if err != nil {
 		return fmt.Errorf("Opening config file failure: %s", err)
 	}
@@ -29,8 +47,6 @@ func Parse(cfg interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Config decode error: %s", err)
 	}
-
-	log.Printf("Config [%s] %+v", cfgFile, cfg)
 
 	return nil
 }
