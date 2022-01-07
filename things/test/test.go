@@ -2,6 +2,7 @@ package test
 
 import (
 	"github.com/scottfeldman/merle"
+	"log"
 )
 
 type test struct {
@@ -31,5 +32,10 @@ func (t *test) Config(config merle.Configurator) error {
 	if err := config.Parse(&cfg); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (t *test) Run() error {
+	log.Println("run")
 	return nil
 }

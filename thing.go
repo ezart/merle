@@ -2,6 +2,7 @@ package merle
 
 import (
 	"log"
+	"time"
 )
 
 type Subscribers map[string]func()
@@ -9,16 +10,20 @@ type Subscribers map[string]func()
 type IThing interface {
 	Subscribe() Subscribers
 	Config(Configurator) error
+	Run() error
 }
 
 type Thing struct {
-	thing	IThing
+	thing IThing
+	status string
 	id	string
 	model	string
 	name	string
 	config	Configurator
 	subs	Subscribers
 	demo	bool
+	startupTime time.Time
+	bus *bus
 }
 
 func defaultId(id string) string {
@@ -44,19 +49,44 @@ func NewThing(_thing IThing, _config Configurator, _demo bool) (*Thing, error) {
 
 	return &Thing{
 		thing: _thing,
+		status: "online",
 		id: defaultId(cfg.Thing.Id),
 		model: cfg.Thing.Model,
 		name: cfg.Thing.Name,
 		config: _config,
 		subs: make(Subscribers),
 		demo: _demo,
+		startupTime: time.Now(),
+		bus: NewBus(10),
 	}, nil
 }
 
-func (t *Thing) Http(authUser string, portPublic uint, portPrivate uint) error {
+func (t *Thing) StartHttp(cfg *ThingConfig) error {
+	return nil
+}
+
+func (t *Thing) StartTunnel(cfg *ThingConfig) error {
 	return nil
 }
 
 func (t *Thing) Start() error {
+	var cfg ThingConfig
+
+	if err := must(t.config.Parse(&cfg)); err != nil {
+		return err
+	}
+
+	if err := must(t.StartHttp(&cfg)); err != nil {
+		return err
+	}
+
+	if err := must(t.StartTunnel(&cfg)); err != nil {
+		return err
+	}
+
+	if err := must(t.thing.Run()); err != nil {
+		return err
+	}
+
 	return nil
 }
