@@ -1,7 +1,7 @@
 package test
 
 import (
-	"foo.com/merle"
+	"github.com/scottfeldman/merle"
 )
 
 type test struct {

@@ -7,25 +7,27 @@ package stork
 import (
 	"fmt"
 	"github.com/scottfeldman/merle"
-	"github.com/scottfeldman/merle/things/skeleton"
-	"github.com/scottfeldman/merle/things/raspi_blink"
-	"github.com/scottfeldman/merle/things/chat"
-	"github.com/scottfeldman/merle/things/bridge"
-	"github.com/scottfeldman/merle/things/hub"
+	"github.com/scottfeldman/merle/things/test"
+//	"github.com/scottfeldman/merle/things/skeleton"
+//	"github.com/scottfeldman/merle/things/raspi_blink"
+//	"github.com/scottfeldman/merle/things/chat"
+//	"github.com/scottfeldman/merle/things/bridge"
+//	"github.com/scottfeldman/merle/things/hub"
 )
 
-var things = map[string]func(id, model, name string) (*merle.Thing, error){
-	"skeleton":    skeleton.NewSkeleton,
-	"raspi_blink": raspi_blink.NewRaspiBlink,
-	"chat":        chat.NewChat,
-	"bridge":      bridge.NewBridge,
-	"hub":         hub.NewHub,
+var things = map[string]func() merle.IThing {
+	"test":    test.NewTest,
+//	"skeleton":    skeleton.NewSkeleton,
+//	"raspi_blink": raspi_blink.NewRaspiBlink,
+//	"chat":        chat.NewChat,
+//	"bridge":      bridge.NewBridge,
+//	"hub":         hub.NewHub,
 }
 
-func NewThing(id, model, name string) (*merle.Thing, error) {
+func NewModel(model string) (merle.IThing, error) {
 
 	if f, ok := things[model]; ok {
-		return f(id, model, name)
+		return f(), nil
 	}
 
 	return nil, fmt.Errorf("Model '%s' unknown", model)

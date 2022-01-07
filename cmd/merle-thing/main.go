@@ -6,37 +6,47 @@ package main
 
 import (
 	"flag"
-	"github.com/scottfeldman/merle/config"
+	"github.com/scottfeldman/merle"
 	"github.com/scottfeldman/merle/stork"
 	"log"
 	"os"
 )
 
-type cfg struct {
-	Thing struct {
-		Id          string `yaml:"Id"`
-		Model       string `yaml:"Model"`
-		Name        string `yaml:"Name"`
-		User        string `yaml:"User"`
-		PortPublic  int    `yaml:"PortPublic"`
-		PortPrivate int    `yaml:"PortPrivate"`
-	} `yaml:"Thing"`
-	Mother struct {
-		Host        string `yaml:"Host"`
-		User        string `yaml:"User"`
-		Key         string `yaml:"Key"`
-		PortPrivate int    `yaml:"PortPrivate"`
-	} `yaml:"Mother"`
+func must(err error) {
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func main() {
-	var cfg cfg
+	var cfg merle.ThingConfig
 
 	if os.Geteuid() != 0 {
 		log.Fatalln("Must run as root")
 	}
 
 	log.SetFlags(0)
+
+	cfgFile := flag.String("config", "/etc/merle/thing.yml", "Config File")
+	demo := flag.Bool("demo", false, "Run Thing in demo mode; will simulate I/O")
+
+	flag.Parse()
+
+	config := merle.NewYamlConfig(*cfgFile)
+	must(config.Parse(&cfg))
+
+	model, err := stork.NewModel(cfg.Thing.Model)
+	must(err)
+
+	thing, err := merle.NewThing(model, config, *demo)
+	must(err)
+
+	log.Printf("%+v", thing)
+
+	must(thing.Start())
+
+	/*
+	var cfg cfg
 
 	cfgFile := flag.String("config", "/etc/merle/thing.yml", "Config File")
 	demoMode := flag.Bool("demo", false, "Run Thing in demo mode; will simulate I/O")
@@ -63,4 +73,5 @@ func main() {
 	t.HttpConfig(cfg.Thing.User, cfg.Thing.PortPublic, cfg.Thing.PortPrivate)
 
 	t.Start()
+	*/
 }
