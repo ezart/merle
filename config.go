@@ -49,6 +49,6 @@ func (c *yamlConfig) Parse(cfg interface{}) error {
 		return fmt.Errorf("Config decode error: %s", err)
 	}
 
-	log.Printf("%+v", cfg)
+	log.Printf("Config parsed: %+v", cfg)
 	return nil
 }
