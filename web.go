@@ -14,9 +14,10 @@ import (
 	"strconv"
 )
 
-type IWeb interface {
+type Weber interface {
 	Start()
 	Stop()
+	HandleFunc(string, func(http.ResponseWriter, *http.Request))
 }
 
 var upgrader = websocket.Upgrader{}
@@ -171,10 +172,11 @@ func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFu
 type webPrivate struct {
 	sync.WaitGroup
 	port uint
+	mux *mux.Router
 	server *http.Server
 }
 
-func WebPrivate(t *Thing, port uint) IWeb {
+func WebPrivate(t *Thing, port uint) Weber {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 
 	mux := mux.NewRouter()
@@ -188,6 +190,7 @@ func WebPrivate(t *Thing, port uint) IWeb {
 
 	return &webPrivate{
 		port: port,
+		mux: mux,
 		server: server,
 	}
 }
@@ -218,6 +221,11 @@ func (w *webPrivate) Stop() {
 	w.Wait()
 }
 
+func (w *webPrivate) HandleFunc(pattern string,
+	handler func(http.ResponseWriter, *http.Request)) {
+	w.mux.HandleFunc(pattern, handler)
+}
+
 type webPublic struct {
 	sync.WaitGroup
 	user string
@@ -225,7 +233,7 @@ type webPublic struct {
 	server *http.Server
 }
 
-func WebPublic(t *Thing, user string, port uint) IWeb {
+func WebPublic(t *Thing, user string, port uint) Weber {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 
 	fs := http.FileServer(http.Dir("web"))
@@ -273,4 +281,8 @@ func (w *webPublic) Stop() {
 		w.server.Shutdown(context.Background())
 	}
 	w.Wait()
+}
+
+func (w *webPublic) HandleFunc(pattern string,
+	handler func(http.ResponseWriter, *http.Request)) {
 }

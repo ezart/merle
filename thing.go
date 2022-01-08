@@ -25,22 +25,21 @@ type Thing struct {
 	startupTime time.Time
 	config      Configurator
 	bus         *bus
-	bridger     Bridger
-	isBridge    bool
-	children    Children
-	bridgeBus   *bus
-	ports       *ports
 	tunnel      *tunnel
-	private     IWeb
-	public      IWeb
+	private     Weber
+	public      Weber
 	templ       *template.Template
 	templErr    error
+	isBridge    bool
+	bridge      *bridge
 }
 
 func NewThing(thinger Thinger, config Configurator) (*Thing, error) {
 	var cfg ThingConfig
+	var bridger Bridger
+	var err error
 
-	if err := must(config.Parse(&cfg)); err != nil {
+	if err = must(config.Parse(&cfg)); err != nil {
 		return nil, err
 	}
 
@@ -55,13 +54,6 @@ func NewThing(thinger Thinger, config Configurator) (*Thing, error) {
 		bus:         NewBus(10, thinger.Subscribe()),
 	}
 
-	t.bridger, t.isBridge = t.thinger.(Bridger)
-	if t.isBridge {
-		t.children = make(Children)
-		t.bridgeBus = NewBus(10, t.bridger.BridgeSubscribe())
-		t.ports = NewPorts(20, ".*")
-	}
-
 	t.tunnel = NewTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
 		cfg.Mother.Key, cfg.Mother.PortPrivate)
 
@@ -69,6 +61,15 @@ func NewThing(thinger Thinger, config Configurator) (*Thing, error) {
 	t.public = WebPublic(t, cfg.Thing.User, cfg.Thing.PortPublic)
 
 	t.templ, t.templErr = template.ParseFiles(thinger.Template())
+
+	bridger, t.isBridge = t.thinger.(Bridger)
+	if t.isBridge {
+		t.bridge, err = newBridge(bridger, config)
+		if must(err) != nil {
+			return nil, err
+		}
+		t.private.HandleFunc("/port/{id}", t.bridge.getPort)
+	}
 
 	t.bus.subscribe("GetIdentity", t.getIdentity)
 
@@ -101,7 +102,10 @@ func (t *Thing) Id() string {
 }
 
 func (t *Thing) getChild(id string) *Thing {
-	if child, ok := t.children[id]; ok {
+	if !t.isBridge {
+		return nil
+	}
+	if child, ok := t.bridge.children[id]; ok {
 		return child
 	}
 	return nil
@@ -109,26 +113,25 @@ func (t *Thing) getChild(id string) *Thing {
 
 func (t *Thing) Start() error {
 
-	if t.isBridge {
-		t.ports.Start()
-	}
-
 	t.private.Start()
 	t.public.Start()
 	t.tunnel.Start()
 
+	if t.isBridge {
+		t.bridge.Start()
+	}
+
 	t.thinger.Run(newPacket(t.bus, nil, nil))
+
+	if t.isBridge {
+		t.bridge.Stop()
+	}
 
 	t.tunnel.Stop()
 	t.public.Stop()
 	t.private.Stop()
 
-	if t.isBridge {
-		t.ports.Stop()
-	}
-
 	t.bus.close()
-	t.bridgeBus.close()
 
 	return fmt.Errorf("Run() didn't run forever")
 }
