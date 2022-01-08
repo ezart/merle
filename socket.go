@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type ISocket interface {
+type socketer interface {
 	Send(*Packet) error
 	Close()
 	Name() string

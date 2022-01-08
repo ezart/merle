@@ -12,11 +12,11 @@ import (
 // A Packet contains a JSON message and a source connection.
 type Packet struct {
 	bus *bus
-	src ISocket
+	src socketer
 	msg []byte
 }
 
-func newPacket(bus *bus, src ISocket, msg interface{}) *Packet {
+func newPacket(bus *bus, src socketer, msg interface{}) *Packet {
 	p := &Packet{bus: bus, src: src}
 	p.msg, _ = json.Marshal(msg)
 	return p

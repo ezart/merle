@@ -84,11 +84,11 @@ func (r *raspi_blink) toggle() {
 
 func (r *raspi_blink) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
-		"GetPaused": {r.sendPaused},
-		"ReplyPaused": {r.savePaused},
-		"CmdPause": {r.pause},
-		"CmdResume": {r.resume},
-		"CmdStart": {r.start},
+		"GetPaused":    {r.sendPaused},
+		"ReplyPaused":  {r.savePaused},
+		"CmdPause":     {r.pause},
+		"CmdResume":    {r.resume},
+		"CmdStart":     {r.start},
 		"SpamLedState": {r.ledState},
 	}
 }

@@ -2,11 +2,10 @@ package merle
 
 import (
 	"fmt"
-	"time"
 	"html/template"
+	"time"
 )
 
-type Children    map[string]*Thing
 type Subscribers map[string][]func(*Packet)
 
 type Thinger interface {
@@ -26,8 +25,8 @@ type Thing struct {
 	config      Configurator
 	bus         *bus
 	tunnel      *tunnel
-	private     Weber
-	public      Weber
+	private     weber
+	public      weber
 	templ       *template.Template
 	templErr    error
 	isBridge    bool
@@ -36,7 +35,7 @@ type Thing struct {
 
 func NewThing(thinger Thinger, config Configurator) (*Thing, error) {
 	var cfg ThingConfig
-	var bridger Bridger
+	var bridge bridger
 	var err error
 
 	if err = must(config.Parse(&cfg)); err != nil {
@@ -51,20 +50,20 @@ func NewThing(thinger Thinger, config Configurator) (*Thing, error) {
 		name:        cfg.Thing.Name,
 		startupTime: time.Now(),
 		config:      config,
-		bus:         NewBus(10, thinger.Subscribe()),
+		bus:         newBus(10, thinger.Subscribe()),
 	}
 
-	t.tunnel = NewTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
+	t.tunnel = newTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
 		cfg.Mother.Key, cfg.Mother.PortPrivate)
 
-	t.private = WebPrivate(t, cfg.Thing.PortPrivate)
-	t.public = WebPublic(t, cfg.Thing.User, cfg.Thing.PortPublic)
+	t.private = newWebPrivate(t, cfg.Thing.PortPrivate)
+	t.public = newWebPublic(t, cfg.Thing.User, cfg.Thing.PortPublic)
 
 	t.templ, t.templErr = template.ParseFiles(thinger.Template())
 
-	bridger, t.isBridge = t.thinger.(Bridger)
+	bridge, t.isBridge = t.thinger.(bridger)
 	if t.isBridge {
-		t.bridge, err = newBridge(bridger, config)
+		t.bridge, err = newBridge(bridge, config)
 		if must(err) != nil {
 			return nil, err
 		}

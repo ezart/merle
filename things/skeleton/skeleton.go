@@ -24,5 +24,6 @@ func (t *skeleton) Template() string {
 }
 
 func (t *skeleton) Run(p *merle.Packet) {
-	for {}
+	for {
+	}
 }

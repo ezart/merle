@@ -1,15 +1,15 @@
 package merle
 
 import (
+	"fmt"
+	"github.com/gorilla/websocket"
 	"io/ioutil"
+	"log"
+	"os/exec"
 	"strconv"
 	"strings"
-	"fmt"
-	"time"
 	"sync"
-	"github.com/gorilla/websocket"
-	"os/exec"
-	"log"
+	"time"
 )
 
 type port struct {
@@ -22,23 +22,23 @@ type port struct {
 }
 
 type ports struct {
-	max uint
-	begin uint
-	end uint
-	num uint
-	next uint
-	match string
-	ticker *time.Ticker
-	done chan bool
-	ports []port
+	max     uint
+	begin   uint
+	end     uint
+	num     uint
+	next    uint
+	match   string
+	ticker  *time.Ticker
+	done    chan bool
+	ports   []port
 	portMap map[string]*port
 }
 
-func NewPorts(max uint, match string) *ports {
+func newPorts(max uint, match string) *ports {
 	return &ports{
-		max: max,
-		match: match,
-		done: make(chan bool),
+		max:     max,
+		match:   match,
+		done:    make(chan bool),
 		portMap: make(map[string]*port),
 	}
 }

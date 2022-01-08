@@ -5,8 +5,8 @@
 package merle
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"math/rand"
 	"os/exec"
 	"strconv"
@@ -15,19 +15,19 @@ import (
 )
 
 type tunnel struct {
-	id string
-	host string
-	user string
-	key string
+	id         string
+	host       string
+	user       string
+	key        string
 	portRemote uint
 }
 
-func NewTunnel(id, host, user, key string, portRemote uint) *tunnel {
+func newTunnel(id, host, user, key string, portRemote uint) *tunnel {
 	return &tunnel{
-		id: id,
-		host: host,
-		user: user,
-		key: key,
+		id:         id,
+		host:       host,
+		user:       user,
+		key:        key,
 		portRemote: portRemote,
 	}
 }

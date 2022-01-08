@@ -7,9 +7,9 @@ package stork
 import (
 	"fmt"
 	"github.com/scottfeldman/merle"
-	"github.com/scottfeldman/merle/things/test"
-	"github.com/scottfeldman/merle/things/skeleton"
 	"github.com/scottfeldman/merle/things/raspi_blink"
+	"github.com/scottfeldman/merle/things/skeleton"
+	"github.com/scottfeldman/merle/things/test"
 	//	"github.com/scottfeldman/merle/things/chat"
 	//	"github.com/scottfeldman/merle/things/bridge"
 	"github.com/scottfeldman/merle/things/hub"
@@ -21,7 +21,7 @@ var thingers = map[string]func(demo bool) merle.Thinger{
 	"raspi_blink": raspi_blink.NewModel,
 	//	"chat":        chat.NewChat,
 	//	"bridge":      bridge.NewBridge,
-	"hub":         hub.NewModel,
+	"hub": hub.NewModel,
 }
 
 func NewThinger(model string, demo bool) (merle.Thinger, error) {

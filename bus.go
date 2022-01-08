@@ -7,30 +7,30 @@ import (
 	"sync"
 )
 
-type Sockets map[ISocket]bool
-type SocketQ chan bool
+type sockets map[socketer]bool
+type socketQ chan bool
 
 // Bus is a message bus.  Connect to the bus using Sockets.
 type bus struct {
 	// sockets
 	sockLock sync.RWMutex
-	sockets  Sockets
-	socketQ  SocketQ
+	sockets  sockets
+	socketQ  socketQ
 	// message subscribers
 	subLock sync.RWMutex
 	subs    Subscribers
 }
 
-func NewBus(socketsMax uint, subs Subscribers) *bus {
+func newBus(socketsMax uint, subs Subscribers) *bus {
 	return &bus{
-		sockets: make(Sockets),
-		socketQ: make(SocketQ, socketsMax),
+		sockets: make(sockets),
+		socketQ: make(socketQ, socketsMax),
 		subs:    subs,
 	}
 }
 
 // Plug conection into bus
-func (b *bus) plugin(s ISocket) {
+func (b *bus) plugin(s socketer) {
 	// Queue any plugin attemps beyond socketsMax
 	b.socketQ <- true
 
@@ -40,7 +40,7 @@ func (b *bus) plugin(s ISocket) {
 }
 
 // Unplug conection from bus
-func (b *bus) unplug(s ISocket) {
+func (b *bus) unplug(s socketer) {
 	b.sockLock.Lock()
 	delete(b.sockets, s)
 	b.sockLock.Unlock()

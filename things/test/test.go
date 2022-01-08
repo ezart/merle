@@ -41,5 +41,6 @@ func (t *test) Template() string {
 
 func (t *test) Run(p *merle.Packet) {
 	log.Println("run")
-	for {}
+	for {
+	}
 }

@@ -8,23 +8,25 @@ import (
 
 type bridgeConfig struct {
 	Bridge struct {
-		Max   uint `yaml:"Max"`
+		Max   uint   `yaml:"Max"`
 		Match string `yaml:"Match"`
 	} `yaml:"Bridge"`
 }
 
-type Bridger interface {
+type bridger interface {
 	BridgeSubscribe() Subscribers
 }
 
+type children map[string]*Thing
+
 type bridge struct {
-	bridger     Bridger
-	children    Children
-	bus         *bus
-	ports       *ports
+	bridger  bridger
+	children children
+	bus      *bus
+	ports    *ports
 }
 
-func newBridge(bridger Bridger, config Configurator) (*bridge, error) {
+func newBridge(bridger bridger, config Configurator) (*bridge, error) {
 	var cfg bridgeConfig
 
 	if err := must(config.Parse(&cfg)); err != nil {
@@ -32,10 +34,10 @@ func newBridge(bridger Bridger, config Configurator) (*bridge, error) {
 	}
 
 	return &bridge{
-		bridger: bridger,
-		children: make(Children),
-		bus: NewBus(10, bridger.BridgeSubscribe()),
-		ports: NewPorts(cfg.Bridge.Max, cfg.Bridge.Match),
+		bridger:  bridger,
+		children: make(children),
+		bus:      newBus(10, bridger.BridgeSubscribe()),
+		ports:    newPorts(cfg.Bridge.Max, cfg.Bridge.Match),
 	}, nil
 }
 

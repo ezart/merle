@@ -8,13 +8,13 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/msteinert/pam"
-	"net/http"
 	"log"
-	"sync"
+	"net/http"
 	"strconv"
+	"sync"
 )
 
-type Weber interface {
+type weber interface {
 	Start()
 	Stop()
 	HandleFunc(string, func(http.ResponseWriter, *http.Request))
@@ -171,26 +171,26 @@ func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFu
 
 type webPrivate struct {
 	sync.WaitGroup
-	port uint
-	mux *mux.Router
+	port   uint
+	mux    *mux.Router
 	server *http.Server
 }
 
-func WebPrivate(t *Thing, port uint) Weber {
+func newWebPrivate(t *Thing, port uint) weber {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 
 	mux := mux.NewRouter()
 	mux.HandleFunc("/ws", t.ws)
 
 	server := &http.Server{
-		Addr: addr,
+		Addr:    addr,
 		Handler: mux,
 		// TODO add timeouts
 	}
 
 	return &webPrivate{
-		port: port,
-		mux: mux,
+		port:   port,
+		mux:    mux,
 		server: server,
 	}
 }
@@ -228,12 +228,12 @@ func (w *webPrivate) HandleFunc(pattern string,
 
 type webPublic struct {
 	sync.WaitGroup
-	user string
-	port uint
+	user   string
+	port   uint
 	server *http.Server
 }
 
-func WebPublic(t *Thing, user string, port uint) Weber {
+func newWebPublic(t *Thing, user string, port uint) weber {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 
 	fs := http.FileServer(http.Dir("web"))
@@ -245,14 +245,14 @@ func WebPublic(t *Thing, user string, port uint) Weber {
 	mux.PathPrefix("/web/").Handler(http.StripPrefix("/web/", fs))
 
 	server := &http.Server{
-		Addr: addr,
+		Addr:    addr,
 		Handler: mux,
 		// TODO add timeouts
 	}
 
 	return &webPublic{
-		user: user,
-		port: port,
+		user:   user,
+		port:   port,
 		server: server,
 	}
 }
