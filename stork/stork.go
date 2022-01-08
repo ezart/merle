@@ -12,21 +12,21 @@ import (
 	"github.com/scottfeldman/merle/things/raspi_blink"
 	//	"github.com/scottfeldman/merle/things/chat"
 	//	"github.com/scottfeldman/merle/things/bridge"
-	//	"github.com/scottfeldman/merle/things/hub"
+	"github.com/scottfeldman/merle/things/hub"
 )
 
-var models = map[string]func(demo bool) merle.IThing{
+var thingers = map[string]func(demo bool) merle.Thinger{
 	"test":        test.NewModel,
 	"skeleton":    skeleton.NewModel,
 	"raspi_blink": raspi_blink.NewModel,
 	//	"chat":        chat.NewChat,
 	//	"bridge":      bridge.NewBridge,
-	//	"hub":         hub.NewHub,
+	"hub":         hub.NewModel,
 }
 
-func NewModel(model string, demo bool) (merle.IThing, error) {
+func NewThinger(model string, demo bool) (merle.Thinger, error) {
 
-	if f, ok := models[model]; ok {
+	if f, ok := thingers[model]; ok {
 		return f(demo), nil
 	}
 

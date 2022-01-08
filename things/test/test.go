@@ -8,7 +8,7 @@ import (
 type test struct {
 }
 
-func NewModel(demo bool) merle.IThing {
+func NewModel(demo bool) merle.Thinger {
 	return &test{}
 }
 

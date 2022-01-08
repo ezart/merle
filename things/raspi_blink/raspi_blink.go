@@ -15,7 +15,7 @@ type raspi_blink struct {
 	paused    bool
 }
 
-func NewModel(demo bool) merle.IThing {
+func NewModel(demo bool) merle.Thinger {
 	return &raspi_blink{demo: demo}
 }
 

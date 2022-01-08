@@ -36,10 +36,10 @@ func main() {
 	must(config.Parse(&cfg))
 	log.Printf("%+v", cfg)
 
-	model, err := stork.NewModel(cfg.Thing.Model, *demo)
+	thinger, err := stork.NewThinger(cfg.Thing.Model, *demo)
 	must(err)
 
-	thing, err := merle.NewThing(model, config)
+	thing, err := merle.NewThing(thinger, config)
 	must(err)
 
 	must(thing.Start())

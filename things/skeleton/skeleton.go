@@ -7,7 +7,7 @@ import (
 type skeleton struct {
 }
 
-func NewModel(demo bool) merle.IThing {
+func NewModel(demo bool) merle.Thinger {
 	return &skeleton{}
 }
 
