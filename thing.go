@@ -30,6 +30,7 @@ type Thing struct {
 	bus         *bus
 	private     IWeb
 	public      IWeb
+	tunnel      *tunnel
 	templ       *template.Template
 	templErr    error
 }
@@ -79,6 +80,8 @@ func NewThing(thing IThing, config Configurator) (*Thing, error) {
 
 	t.private = WebPrivate(t, cfg.Thing.PortPrivate)
 	t.public = WebPublic(t, cfg.Thing.User, cfg.Thing.PortPublic)
+	t.tunnel = NewTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
+		cfg.Mother.Key, cfg.Mother.PortPrivate)
 	t.templ, t.templErr = template.ParseFiles(thing.Template())
 
 	t.bus.subscribe("GetIdentity", t.getIdentity)
@@ -118,22 +121,17 @@ func (t *Thing) getChild(id string) *Thing {
 	return nil
 }
 
-func (t *Thing) startTunnel() {
-}
-
-func (t *Thing) stopTunnel() {
-}
-
 func (t *Thing) Start() error {
 	t.private.Start()
 	t.public.Start()
-	t.startTunnel()
+	t.tunnel.Start()
 
 	t.thing.Run(newPacket(t.bus, nil, nil))
 
-	t.private.Stop()
+	t.tunnel.Stop()
 	t.public.Stop()
-	t.stopTunnel()
+	t.private.Stop()
+
 	t.bus.close()
 
 	return fmt.Errorf("Run() didn't run forever")

@@ -5,6 +5,7 @@
 package merle
 
 import (
+	"log"
 	"fmt"
 	"math/rand"
 	"os/exec"
@@ -13,22 +14,42 @@ import (
 	"time"
 )
 
+type tunnel struct {
+	id string
+	host string
+	user string
+	key string
+	portRemote uint
+}
+
+func NewTunnel(id, host, user, key string, portRemote uint) *tunnel {
+	return &tunnel{
+		id: id,
+		host: host,
+		user: user,
+		key: key,
+		portRemote: portRemote,
+	}
+}
+
 // TODO Need to use golang.org/x/crypto/ssh instead of
 // TODO os/exec'ing these ssh calls.  Also, look into
 // TODO using golang.org/x/crypto/ssh on hub-side of
 // TODO merle for bespoke ssh server.
 
-func (t *Thing) getPortFromMother() string {
+func (t *tunnel) getPort() string {
 	args := []string{}
 
 	// ssh -i <key> <user>@<host> curl -s localhost:<privatePort>/port/<id>
 
-	args = append(args, "-i", t.motherKey)
-	args = append(args, t.motherUser+"@"+t.motherHost)
+	args = append(args, "-i", t.key)
+	args = append(args, t.user+"@"+t.host)
 	args = append(args, "curl", "-s")
-	args = append(args, "localhost:"+strconv.Itoa(t.motherPortPrivate)+"/port/"+t.id)
+	args = append(args, "localhost:"+
+		strconv.FormatUint(uint64(t.portRemote), 10)+
+		"/port/"+t.id)
 
-	t.log.Printf("Tunnel getting port [ssh %s]...", args)
+	log.Printf("Tunnel getting port [ssh %s]...", args)
 
 	cmd := exec.Command("ssh", args...)
 
@@ -39,7 +60,7 @@ func (t *Thing) getPortFromMother() string {
 
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		t.log.Printf("Tunnel get port failed: %s, err %v", stdoutStderr, err)
+		log.Printf("Tunnel get port failed: %s, err %v", stdoutStderr, err)
 		return ""
 	}
 
@@ -47,17 +68,17 @@ func (t *Thing) getPortFromMother() string {
 
 	switch port {
 	case "no ports available":
-		t.log.Println("Tunnel no ports available; trying again\n")
+		log.Println("Tunnel no ports available; trying again\n")
 		return ""
 	case "port busy":
-		t.log.Println("Tunnel port is busy; trying again\n")
+		log.Println("Tunnel port is busy; trying again\n")
 		return ""
 	}
 
 	return port
 }
 
-func (t *Thing) tunnelToMother(port string) error {
+func (t *tunnel) tunnel(port string) error {
 
 	args := []string{}
 
@@ -66,14 +87,14 @@ func (t *Thing) tunnelToMother(port string) error {
 	//  (The ExitOnForwardFailure=yes is to exit ssh if the remote port forwarding fails,
 	//   most likely from port already being in-use on the server side).
 
-	remote := fmt.Sprintf("%s:localhost:%d", port, t.portPrivate)
+	remote := fmt.Sprintf("%s:localhost:%d", port, t.portRemote)
 
 	args = append(args, "-CNT")
-	args = append(args, "-i", t.motherKey)
+	args = append(args, "-i", t.key)
 	args = append(args, "-o", "ExitOnForwardFailure=yes")
-	args = append(args, "-R", remote, t.motherUser+"@"+t.motherHost)
+	args = append(args, "-R", remote, t.user+"@"+t.host)
 
-	t.log.Printf("Creating tunnel [ssh %s]...", args)
+	log.Printf("Creating tunnel [ssh %s]...", args)
 
 	cmd := exec.Command("ssh", args...)
 
@@ -84,13 +105,13 @@ func (t *Thing) tunnelToMother(port string) error {
 
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		t.log.Printf("Create tunnel failed: %s, err %v", stdoutStderr, err)
+		log.Printf("Create tunnel failed: %s, err %v", stdoutStderr, err)
 	}
 
 	return err
 }
 
-func (t *Thing) _tunnelCreate() {
+func (t *tunnel) create() {
 	var err error
 	var port string
 
@@ -98,19 +119,19 @@ func (t *Thing) _tunnelCreate() {
 
 	for {
 
-		port = t.getPortFromMother()
+		port = t.getPort()
 		if port == "" {
 			goto again
 		}
 
-		t.log.Println("Tunnel create got port", port)
+		log.Println("Tunnel create got port", port)
 
-		err = t.tunnelToMother(port)
+		err = t.tunnel(port)
 		if err != nil {
 			goto again
 		}
 
-		t.log.Println("Tunnel disconnected")
+		log.Println("Tunnel disconnected")
 
 	again:
 		// TODO maybe try some exponential back-off aglo ala TCP
@@ -122,40 +143,34 @@ func (t *Thing) _tunnelCreate() {
 		// avoid port contention.
 
 		f := rand.Float32() * 10
-		t.log.Printf("Tunnel create sleeping for %f seconds", f)
+		log.Printf("Tunnel create sleeping for %f seconds", f)
 		time.Sleep(time.Duration(f*1000) * time.Millisecond)
 	}
 }
 
-func (t *Thing) tunnelCreate() {
-
-	if t.motherHost == "" {
-		t.log.Println("Skipping tunnel; missing Mother host")
+func (t *tunnel) Start() {
+	if t.host == "" {
+		log.Println("Skipping tunnel; missing host")
 		return
 	}
 
-	if t.motherUser == "" {
-		t.log.Println("Skipping tunnel; missing Mother user")
+	if t.user == "" {
+		log.Println("Skipping tunnel; missing user")
 		return
 	}
 
-	if t.motherKey == "" {
-		t.log.Println("Skipping tunnel; missing Mother key")
+	if t.key == "" {
+		log.Println("Skipping tunnel; missing key")
 		return
 	}
 
-	if t.motherPortPrivate == 0 {
-		t.log.Println("Skipping tunnel; missing Mother private port")
+	if t.portRemote == 0 {
+		log.Println("Skipping tunnel; missing remote port")
 		return
 	}
 
-	go t._tunnelCreate()
+	go t.create()
 }
 
-// Configure tunnel
-func (t *Thing) TunnelConfig(host, user, key string, portPrivate int) {
-	t.motherHost = host
-	t.motherUser = user
-	t.motherKey = key
-	t.motherPortPrivate = portPrivate
+func (t *tunnel) Stop() {
 }
