@@ -34,7 +34,6 @@ func main() {
 
 	config := merle.NewYamlConfig(*cfgFile)
 	must(config.Parse(&cfg))
-	log.Printf("%+v", cfg)
 
 	thinger, err := stork.NewThinger(cfg.Thing.Model, *demo)
 	must(err)

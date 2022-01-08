@@ -220,7 +220,7 @@ func (p *ports) scan() error {
 			}
 		} else {
 			if port.tunnelConnected {
-				log.Println("Closing tunnel on Port[%d]", port.port)
+				log.Printf("Closing tunnel on Port[%d]", port.port)
 				port.tunnelConnected = false
 			} else {
 				// no change

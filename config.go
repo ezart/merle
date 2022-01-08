@@ -2,6 +2,7 @@ package merle
 
 import (
 	"fmt"
+	"log"
 	"gopkg.in/yaml.v3"
 	"os"
 )
@@ -48,5 +49,6 @@ func (c *yamlConfig) Parse(cfg interface{}) error {
 		return fmt.Errorf("Config decode error: %s", err)
 	}
 
+	log.Printf("%+v", cfg)
 	return nil
 }
