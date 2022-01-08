@@ -6,16 +6,18 @@ package merle
 
 import (
 	"encoding/json"
+	"log"
 )
 
 // A Packet contains a JSON message and a source connection.
 type Packet struct {
+	bus *bus
 	src ISocket
 	msg []byte
 }
 
-func newPacket(src ISocket, msg interface{}) *Packet {
-	p := &Packet{src: src}
+func newPacket(bus *bus, src ISocket, msg interface{}) *Packet {
+	p := &Packet{bus: bus, src: src}
 	p.msg, _ = json.Marshal(msg)
 	return p
 }
@@ -31,4 +33,20 @@ func (p *Packet) Unmarshal(msg interface{}) {
 
 func (p *Packet) String() string {
 	return string(p.msg)
+}
+
+func (p *Packet) Reply() {
+	if err := p.bus.reply(p); err != nil {
+		log.Println(err)
+	} else {
+		log.Printf("Reply: %.80s", p.String())
+	}
+}
+
+func (p *Packet) Broadcast() {
+	if err := p.bus.broadcast(p); err != nil {
+		log.Println(err)
+	} else {
+		log.Printf("Broadcast: %.80s", p.String())
+	}
 }

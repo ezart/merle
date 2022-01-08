@@ -8,16 +8,16 @@ import (
 type test struct {
 }
 
-func NewTest() merle.IThing {
+func NewModel(demo bool) merle.IThing {
 	return &test{}
 }
 
-func (t *test) cb() {
+func (t *test) cb(p *merle.Packet) {
 }
 
 func (t *test) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
-		"msg": t.cb,
+		"msg": {t.cb},
 	}
 }
 
@@ -35,7 +35,11 @@ func (t *test) Config(config merle.Configurator) error {
 	return nil
 }
 
-func (t *test) Run() error {
+func (t *test) Template() string {
+	return "web/templates/test.html"
+}
+
+func (t *test) Run(p *merle.Packet) {
 	log.Println("run")
-	return nil
+	for {}
 }

@@ -34,44 +34,13 @@ func main() {
 
 	config := merle.NewYamlConfig(*cfgFile)
 	must(config.Parse(&cfg))
+	log.Printf("%+v", cfg)
 
-	model, err := stork.NewModel(cfg.Thing.Model)
+	model, err := stork.NewModel(cfg.Thing.Model, *demo)
 	must(err)
 
-	thing, err := merle.NewThing(model, config, *demo)
+	thing, err := merle.NewThing(model, config)
 	must(err)
-
-	log.Printf("%+v", thing)
 
 	must(thing.Start())
-
-	/*
-	var cfg cfg
-
-	cfgFile := flag.String("config", "/etc/merle/thing.yml", "Config File")
-	demoMode := flag.Bool("demo", false, "Run Thing in demo mode; will simulate I/O")
-
-	flag.Parse()
-
-	config.SetFile(*cfgFile)
-	if err := config.Parse(&cfg); err != nil {
-		log.Fatalln(err)
-	}
-
-	t, err := stork.NewThing(cfg.Thing.Id, cfg.Thing.Model, cfg.Thing.Name)
-	if err != nil {
-		log.Fatalln("Creating new Thing failed:", err)
-	}
-
-	t.SetDemoMode(*demoMode)
-	t.SetStork(stork.NewThing)
-
-	t.TunnelConfig(cfg.Mother.Host, cfg.Mother.User, cfg.Mother.Key,
-		cfg.Mother.PortPrivate)
-
-	log.Println(cfg.Thing.User, cfg.Thing.PortPublic, cfg.Thing.PortPrivate)
-	t.HttpConfig(cfg.Thing.User, cfg.Thing.PortPublic, cfg.Thing.PortPrivate)
-
-	t.Start()
-	*/
 }

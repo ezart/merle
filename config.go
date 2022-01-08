@@ -32,7 +32,7 @@ type yamlConfig struct {
 }
 
 func NewYamlConfig(file string) Configurator {
-	return &yamlConfig{ file: file }
+	return &yamlConfig{file: file}
 }
 
 func (c *yamlConfig) Parse(cfg interface{}) error {
