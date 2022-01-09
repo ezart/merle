@@ -72,9 +72,6 @@ func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
 		if must(err) != nil {
 			return nil, err
 		}
-		// TODO move these into newBridge
-		t.bus.subscribe("GetChildren", t.bridge.getChildren)
-		t.private.HandleFunc("/port/{id}", t.bridge.getPort)
 	}
 
 	t.bus.subscribe("GetIdentity", t.getIdentity)
