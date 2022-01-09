@@ -150,7 +150,7 @@ func (t *tunnel) create() {
 	}
 }
 
-func (t *tunnel) Start() {
+func (t *tunnel) start() {
 	if t.host == "" {
 		log.Println("Skipping tunnel; missing host")
 		return
@@ -174,5 +174,5 @@ func (t *tunnel) Start() {
 	go t.create()
 }
 
-func (t *tunnel) Stop() {
+func (t *tunnel) stop() {
 }

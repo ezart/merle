@@ -46,7 +46,7 @@ func newBridge(stork Storker, config Configurator, thing *Thing) (*bridge, error
 	b.ports = newPorts(thing.log, cfg.Bridge.Max, cfg.Bridge.Match, b.attachCb)
 
 	b.thing.bus.subscribe("GetChildren", b.getChildren)
-	b.thing.private.HandleFunc("/port/{id}", b.getPort)
+	b.thing.private.handleFunc("/port/{id}", b.getPort)
 
 	return b, nil
 }

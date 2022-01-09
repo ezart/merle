@@ -27,8 +27,8 @@ type Thing struct {
 	config      Configurator
 	bus         *bus
 	tunnel      *tunnel
-	private     weber
-	public      weber
+	private     *webPrivate
+	public      *webPublic
 	templ       *template.Template
 	templErr    error
 	isBridge    bool
@@ -120,9 +120,9 @@ func (t *Thing) getChild(id string) *Thing {
 
 func (t *Thing) Start() error {
 
-	t.private.Start()
-	t.public.Start()
-	t.tunnel.Start()
+	t.private.start()
+	t.public.start()
+	t.tunnel.start()
 
 	if t.isBridge {
 		t.bridge.Start()
@@ -134,9 +134,9 @@ func (t *Thing) Start() error {
 		t.bridge.Stop()
 	}
 
-	t.tunnel.Stop()
-	t.public.Stop()
-	t.private.Stop()
+	t.tunnel.stop()
+	t.public.stop()
+	t.private.stop()
 
 	t.bus.close()
 

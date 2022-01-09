@@ -14,12 +14,6 @@ import (
 	"sync"
 )
 
-type weber interface {
-	Start()
-	Stop()
-	HandleFunc(string, func(http.ResponseWriter, *http.Request))
-}
-
 var upgrader = websocket.Upgrader{}
 
 func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +170,7 @@ type webPrivate struct {
 	server *http.Server
 }
 
-func newWebPrivate(t *Thing, port uint) weber {
+func newWebPrivate(t *Thing, port uint) *webPrivate {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 
 	mux := mux.NewRouter()
@@ -195,7 +189,7 @@ func newWebPrivate(t *Thing, port uint) weber {
 	}
 }
 
-func (w *webPrivate) Start() {
+func (w *webPrivate) start() {
 	if w.port == 0 {
 		log.Println("Skipping private HTTP server")
 		return
@@ -214,14 +208,14 @@ func (w *webPrivate) Start() {
 	}()
 }
 
-func (w *webPrivate) Stop() {
+func (w *webPrivate) stop() {
 	if w.port != 0 {
 		w.server.Shutdown(context.Background())
 	}
 	w.Wait()
 }
 
-func (w *webPrivate) HandleFunc(pattern string,
+func (w *webPrivate) handleFunc(pattern string,
 	handler func(http.ResponseWriter, *http.Request)) {
 	w.mux.HandleFunc(pattern, handler)
 }
@@ -233,7 +227,7 @@ type webPublic struct {
 	server *http.Server
 }
 
-func newWebPublic(t *Thing, user string, port uint) weber {
+func newWebPublic(t *Thing, user string, port uint) *webPublic {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 
 	fs := http.FileServer(http.Dir("web"))
@@ -257,7 +251,7 @@ func newWebPublic(t *Thing, user string, port uint) weber {
 	}
 }
 
-func (w *webPublic) Start() {
+func (w *webPublic) start() {
 	if w.port == 0 {
 		log.Println("Skipping public HTTP server")
 		return
@@ -276,13 +270,13 @@ func (w *webPublic) Start() {
 	}()
 }
 
-func (w *webPublic) Stop() {
+func (w *webPublic) stop() {
 	if w.port != 0 {
 		w.server.Shutdown(context.Background())
 	}
 	w.Wait()
 }
 
-func (w *webPublic) HandleFunc(pattern string,
+func (w *webPublic) handleFunc(pattern string,
 	handler func(http.ResponseWriter, *http.Request)) {
 }
