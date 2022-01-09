@@ -60,7 +60,7 @@ func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
 		config:      config,
 	}
 
-	prefix := "[" + t.id + "," + t.model + "," + t.name + "] "
+	prefix := "[" + t.id + "] "
 	t.log = log.New(os.Stderr, prefix, 0)
 
 	t.bus = newBus(t.log, 10, thinger.Subscribe())

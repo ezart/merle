@@ -43,7 +43,7 @@ func newBridge(stork Storker, config Configurator, thing *Thing) (*bridge, error
 		bus:      newBus(thing.log, 10, bridger.BridgeSubscribe()),
 	}
 
-	b.ports = newPorts(cfg.Bridge.Max, cfg.Bridge.Match, b.attachCb)
+	b.ports = newPorts(thing.log, cfg.Bridge.Max, cfg.Bridge.Match, b.attachCb)
 
 	b.thing.bus.subscribe("GetChildren", b.getChildren)
 	b.thing.private.HandleFunc("/port/{id}", b.getPort)
@@ -58,16 +58,18 @@ func (b *bridge) getChild(id string) *Thing {
 	return nil
 }
 
+type SpamStatus struct {
+	Msg    string
+	Id     string
+	Model  string
+	Name   string
+	Status string
+}
+
 func (b *bridge) changeStatus(child *Thing, status string) {
 	child.status = status
 
-	spam := struct {
-		Msg    string
-		Id     string
-		Model  string
-		Name   string
-		Status string
-	}{
+	spam := SpamStatus{
 		Msg:    "SpamStatus",
 		Id:     child.id,
 		Model:  child.model,
@@ -75,7 +77,7 @@ func (b *bridge) changeStatus(child *Thing, status string) {
 		Status: child.status,
 	}
 	newPacket(b.thing.bus, nil, &spam).Broadcast()
-	newPacket(b.bus, nil, &spam).Broadcast()
+	b.bus.receive(newPacket(b.bus, nil, &spam))
 }
 
 func (b *bridge) attachCb(p *port, msg *msgIdentity) error {

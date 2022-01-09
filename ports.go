@@ -14,6 +14,7 @@ import (
 )
 
 type port struct {
+	log               *log.Logger
 	sync.Mutex
 	port              uint
 	tunnelTrying      bool
@@ -25,6 +26,7 @@ type port struct {
 type portAttachCb func(*port, *msgIdentity) error
 
 type ports struct {
+	log      *log.Logger
 	max      uint
 	begin    uint
 	end      uint
@@ -38,8 +40,9 @@ type ports struct {
 	attachCb portAttachCb
 }
 
-func newPorts(max uint, match string, attachCb portAttachCb) *ports {
+func newPorts(log *log.Logger, max uint, match string, attachCb portAttachCb) *ports {
 	return &ports{
+		log:      log,
 		max:      max,
 		match:    match,
 		done:     make(chan bool),
@@ -67,7 +70,7 @@ func (p *port) wsOpen() error {
 
 func (p *port) wsIdentity() error {
 	msg := struct{ Msg string }{Msg: "GetIdentity"}
-	log.Printf("Sending: %.80s", msg)
+	p.log.Printf("Sending: %.80s", msg)
 	return p.ws.WriteJSON(&msg)
 }
 
@@ -85,7 +88,7 @@ func (p *port) wsReplyIdentity() (resp *msgIdentity, err error) {
 	// Clear deadline
 	p.ws.SetReadDeadline(time.Time{})
 
-	log.Printf("Receive: %.80s", identity)
+	p.log.Printf("Receive: %.80s", identity)
 	return &identity, nil
 }
 
@@ -131,7 +134,7 @@ func (p *port) disconnect() {
 func (p *port) attach(match string, cb portAttachCb) {
 	resp, err := p.connect()
 	if err != nil {
-		log.Printf("Port[%s] connect failure: %s", p.port, err)
+		p.log.Printf("Port[%s] connect failure: %s", p.port, err)
 		goto disconnect
 	}
 
@@ -139,7 +142,7 @@ func (p *port) attach(match string, cb portAttachCb) {
 
 	err = cb(p, resp)
 	if err != nil {
-		log.Printf("Port[%d] attach failed: %s", p.port, err)
+		p.log.Printf("Port[%d] attach failed: %s", p.port, err)
 	}
 
 disconnect:
@@ -161,7 +164,7 @@ func (p *ports) nextPort() (port *port) {
 		}
 		if port.tunnelTrying && port.tunnelTryingUntil.After(time.Now()) {
 			port.Unlock()
-			log.Printf("Port[%d] still tunnelTrying", port.port)
+			p.log.Printf("Port[%d] still tunnelTrying", port.port)
 			continue
 		}
 		port.tunnelTrying = true
@@ -278,6 +281,7 @@ func (p *ports) init() error {
 
 	for i := uint(0); i < p.num; i++ {
 		p.ports[i].port = p.begin + i
+		p.ports[i].log = p.log
 	}
 
 	return nil
@@ -316,14 +320,14 @@ func (p *ports) scan() error {
 			if port.tunnelConnected {
 				// no change
 			} else {
-				log.Printf("Tunnel connected on Port[%d]", port.port)
+				p.log.Printf("Tunnel connected on Port[%d]", port.port)
 				port.tunnelConnected = true
 				port.tunnelTrying = false
 				go port.attach(p.match, p.attachCb)
 			}
 		} else {
 			if port.tunnelConnected {
-				log.Printf("Closing tunnel on Port[%d]", port.port)
+				p.log.Printf("Closing tunnel on Port[%d]", port.port)
 				port.tunnelConnected = false
 			} else {
 				// no change
@@ -349,7 +353,7 @@ func (p *ports) Start() error {
 				return
 			case <-p.ticker.C:
 				if err := p.scan(); err != nil {
-					log.Println("Scanning ports error:", err)
+					p.log.Println("Scanning ports error:", err)
 					return
 				}
 			}
