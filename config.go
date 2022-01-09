@@ -73,7 +73,7 @@ func (c *childConfig) Parse(cfg interface{}) error {
 		thingCfg.Thing.Id = c.id
 		thingCfg.Thing.Model= c.model
 		thingCfg.Thing.Name = c.name
+		log.Printf("Config parsed: %+v", cfg)
 	}
-	log.Printf("Config parsed: %+v", cfg)
 	return nil
 }
