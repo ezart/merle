@@ -15,20 +15,22 @@ import (
 )
 
 type tunnel struct {
-	id         string
-	host       string
-	user       string
-	key        string
-	portRemote uint
+	id          string
+	host        string
+	user        string
+	key         string
+	portPrivate uint
+	portRemote  uint
 }
 
-func newTunnel(id, host, user, key string, portRemote uint) *tunnel {
+func newTunnel(id, host, user, key string, portPrivate, portRemote uint) *tunnel {
 	return &tunnel{
-		id:         id,
-		host:       host,
-		user:       user,
-		key:        key,
-		portRemote: portRemote,
+		id:          id,
+		host:        host,
+		user:        user,
+		key:         key,
+		portPrivate: portPrivate,
+		portRemote:  portRemote,
 	}
 }
 
@@ -87,7 +89,7 @@ func (t *tunnel) tunnel(port string) error {
 	//  (The ExitOnForwardFailure=yes is to exit ssh if the remote port forwarding fails,
 	//   most likely from port already being in-use on the server side).
 
-	remote := fmt.Sprintf("%s:localhost:%d", port, t.portRemote)
+	remote := fmt.Sprintf("%s:localhost:%d", port, t.portPrivate)
 
 	args = append(args, "-CNT")
 	args = append(args, "-i", t.key)

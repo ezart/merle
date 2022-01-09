@@ -33,12 +33,17 @@ type Thing struct {
 	bridge      *bridge
 }
 
-func NewThing(thinger Thinger, config Configurator) (*Thing, error) {
-	var cfg ThingConfig
-	var bridge bridger
+func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
+	var cfg thingConfig
+	var thinger Thinger
 	var err error
 
 	if err = must(config.Parse(&cfg)); err != nil {
+		return nil, err
+	}
+
+	thinger, err = stork.NewThinger(cfg.Thing.Model, demo)
+	if must(err) != nil {
 		return nil, err
 	}
 
@@ -54,19 +59,21 @@ func NewThing(thinger Thinger, config Configurator) (*Thing, error) {
 	}
 
 	t.tunnel = newTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
-		cfg.Mother.Key, cfg.Mother.PortPrivate)
+		cfg.Mother.Key, cfg.Thing.PortPrivate, cfg.Mother.PortPrivate)
 
 	t.private = newWebPrivate(t, cfg.Thing.PortPrivate)
 	t.public = newWebPublic(t, cfg.Thing.User, cfg.Thing.PortPublic)
 
 	t.templ, t.templErr = template.ParseFiles(thinger.Template())
 
-	bridge, t.isBridge = t.thinger.(bridger)
+	_, t.isBridge = t.thinger.(bridger)
 	if t.isBridge {
-		t.bridge, err = newBridge(bridge, config)
+		t.bridge, err = newBridge(stork, config, t)
 		if must(err) != nil {
 			return nil, err
 		}
+		// TODO move these into newBridge
+		t.bus.subscribe("GetChildren", t.bridge.getChildren)
 		t.private.HandleFunc("/port/{id}", t.bridge.getPort)
 	}
 
@@ -104,10 +111,7 @@ func (t *Thing) getChild(id string) *Thing {
 	if !t.isBridge {
 		return nil
 	}
-	if child, ok := t.bridge.children[id]; ok {
-		return child
-	}
-	return nil
+	return t.bridge.getChild(id)
 }
 
 func (t *Thing) Start() error {
@@ -133,4 +137,29 @@ func (t *Thing) Start() error {
 	t.bus.close()
 
 	return fmt.Errorf("Run() didn't run forever")
+}
+
+func (t *Thing) runInBridge(p *port) {
+	var name = fmt.Sprintf("port:%d", p.port)
+	var sock = newWebSocket(name, p.ws)
+	var pkt = newPacket(t.bus, sock, nil)
+	var err error
+
+	t.bus.plugin(sock)
+
+	msg := struct{ Msg string }{Msg: "CmdStart"}
+	t.bus.receive(pkt.Marshal(&msg))
+
+	for {
+		// new pkt for each rcv
+		var pkt = newPacket(t.bus, sock, nil)
+
+		pkt.msg, err = p.readMessage()
+		if err != nil {
+			break
+		}
+		t.bus.receive(pkt)
+	}
+
+	t.bus.unplug(sock)
 }

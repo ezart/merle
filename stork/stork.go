@@ -15,16 +15,23 @@ import (
 	"github.com/scottfeldman/merle/things/hub"
 )
 
-var thingers = map[string]func(demo bool) merle.Thinger{
-	"test":        test.NewModel,
-	"skeleton":    skeleton.NewModel,
-	"raspi_blink": raspi_blink.NewModel,
-	//	"chat":        chat.NewChat,
-	//	"bridge":      bridge.NewBridge,
-	"hub": hub.NewModel,
+type stork struct {
 }
 
-func NewThinger(model string, demo bool) (merle.Thinger, error) {
+func NewStork() merle.Storker {
+	return &stork{}
+}
+
+func (s *stork) NewThinger(model string, demo bool) (merle.Thinger, error) {
+
+	var thingers = map[string]func(demo bool) merle.Thinger{
+		"test":        test.NewModel,
+		"skeleton":    skeleton.NewModel,
+		"raspi_blink": raspi_blink.NewModel,
+		//	"chat":        chat.NewChat,
+		//	"bridge":      bridge.NewBridge,
+		"hub":         hub.NewModel,
+	}
 
 	if f, ok := thingers[model]; ok {
 		return f(demo), nil

@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-type ThingConfig struct {
+type thingConfig struct {
 	Thing struct {
 		Id          string `yaml:"Id"`
 		Model       string `yaml:"Model"`
@@ -49,6 +49,31 @@ func (c *yamlConfig) Parse(cfg interface{}) error {
 		return fmt.Errorf("Config decode error: %s", err)
 	}
 
+	log.Printf("Config parsed: %+v", cfg)
+	return nil
+}
+
+type childConfig struct {
+	id string
+	model string
+	name string
+}
+
+func newChildConfig(id, model, name string) Configurator {
+	return &childConfig{
+		id: id,
+		model: model,
+		name: name,
+	}
+}
+
+func (c *childConfig) Parse(cfg interface{}) error {
+	thingCfg, ok := cfg.(*thingConfig)
+	if ok {
+		thingCfg.Thing.Id = c.id
+		thingCfg.Thing.Model= c.model
+		thingCfg.Thing.Name = c.name
+	}
 	log.Printf("Config parsed: %+v", cfg)
 	return nil
 }

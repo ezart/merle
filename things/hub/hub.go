@@ -2,7 +2,6 @@ package hub
 
 import (
 	"github.com/scottfeldman/merle"
-	"log"
 )
 
 type hub struct {
@@ -29,7 +28,5 @@ func (h *hub) Template() string {
 }
 
 func (h *hub) Run(p *merle.Packet) {
-	log.Println("run")
-	for {
-	}
+	for {}
 }

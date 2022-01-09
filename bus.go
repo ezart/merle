@@ -2,6 +2,7 @@ package merle
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"regexp"
 	"sync"
@@ -85,6 +86,7 @@ func (b *bus) unsubscribe(msg string, f func(*Packet)) error {
 }
 
 func (b *bus) receive(p *Packet) error {
+	log.Printf("Receive: %.80s", p.String())
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
 

@@ -20,25 +20,116 @@ type bridger interface {
 type children map[string]*Thing
 
 type bridge struct {
-	bridger  bridger
+	stork    Storker
+	thing    *Thing
 	children children
 	bus      *bus
 	ports    *ports
 }
 
-func newBridge(bridger bridger, config Configurator) (*bridge, error) {
+func newBridge(stork Storker, config Configurator, thing *Thing) (*bridge, error) {
 	var cfg bridgeConfig
 
 	if err := must(config.Parse(&cfg)); err != nil {
 		return nil, err
 	}
 
-	return &bridge{
-		bridger:  bridger,
+	bridger := thing.thinger.(bridger)
+
+	b := &bridge{
+		stork:    stork,
+		thing:    thing,
 		children: make(children),
 		bus:      newBus(10, bridger.BridgeSubscribe()),
-		ports:    newPorts(cfg.Bridge.Max, cfg.Bridge.Match),
-	}, nil
+	}
+
+	b.ports = newPorts(cfg.Bridge.Max, cfg.Bridge.Match, b.attachCb)
+
+	return b, nil
+}
+
+func (b *bridge) getChild(id string) *Thing {
+	if child, ok := b.children[id]; ok {
+		return child
+	}
+	return nil
+}
+
+func (b *bridge) changeStatus(child *Thing, status string) {
+	child.status = status
+
+	spam := struct {
+		Msg    string
+		Id     string
+		Model  string
+		Name   string
+		Status string
+	}{
+		Msg:    "SpamStatus",
+		Id:     child.id,
+		Model:  child.model,
+		Name:   child.name,
+		Status: child.status,
+	}
+	newPacket(b.thing.bus, nil, &spam).Broadcast()
+	newPacket(b.bus, nil, &spam).Broadcast()
+}
+
+func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
+	var err error
+
+	// TODO think about if it makes sense to allow you to be your own Mother?
+
+	if b.thing.Id() == msg.Id {
+		return fmt.Errorf("Sorry, you can't be your own Mother")
+	}
+
+	child := b.getChild(msg.Id)
+
+	if child == nil {
+		config := newChildConfig(msg.Id, msg.Model, msg.Name)
+		child, err = NewThing(b.stork, config, false)
+		if err != nil {
+			return fmt.Errorf("Creating new Thing failed: %s", err)
+		}
+		b.children[msg.Id] = child
+	} else {
+		if child.model != msg.Model {
+			return fmt.Errorf("Model mismatch")
+		}
+		if child.name != msg.Name {
+			return fmt.Errorf("Name mismatch")
+		}
+	}
+
+	child.startupTime = msg.StartupTime
+
+	b.changeStatus(child, "online")
+	child.runInBridge(p)
+	b.changeStatus(child, "offline")
+
+	return nil
+}
+
+type msgChild struct {
+	Id     string
+	Model  string
+	Name   string
+	Status string
+}
+
+type msgChildren struct {
+	Msg      string
+	Children []msgChild
+}
+
+func (b *bridge) getChildren(p *Packet) {
+	resp := msgChildren{ Msg: "ReplyChildren" }
+	for _, child := range b.children {
+		resp.Children = append(resp.Children, msgChild{child.id,
+			child.model, child.name, child.status})
+	}
+	p.Marshal(&resp).Reply()
 }
 
 func (b *bridge) getPort(w http.ResponseWriter, r *http.Request) {

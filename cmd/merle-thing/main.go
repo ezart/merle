@@ -19,8 +19,6 @@ func must(err error) {
 }
 
 func main() {
-	var cfg merle.ThingConfig
-
 	if os.Geteuid() != 0 {
 		log.Fatalln("Must run as root")
 	}
@@ -33,12 +31,9 @@ func main() {
 	flag.Parse()
 
 	config := merle.NewYamlConfig(*cfgFile)
-	must(config.Parse(&cfg))
+	stork := stork.NewStork()
 
-	thinger, err := stork.NewThinger(cfg.Thing.Model, *demo)
-	must(err)
-
-	thing, err := merle.NewThing(thinger, config)
+	thing, err := merle.NewThing(stork, config, *demo)
 	must(err)
 
 	must(thing.Start())

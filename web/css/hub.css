@@ -12,16 +12,16 @@ body, html {
 	flex-direction: column;
 }
 
-.things {
+.children {
 	display: flex;
 	flex-wrap: nowrap;
 	flex-direction: row;
 	align-content: space-between;
-	height: 0px;
+	height: 100px;
 	background-color: black;
 }
 
-.things > div {
+.children > div {
 	margin: 10px;
 	display: flex;
 	flex-direction: column;
@@ -30,12 +30,12 @@ body, html {
 	justify-content: center;
 }
 
-.things > div > pre {
+.children > div > pre {
 	color: white;
 	font: 14px Arial, sans-serif;
 }
 
-.thing {
+.child {
 	flex-grow: 1;
 	border: none;
 	margin: 0;

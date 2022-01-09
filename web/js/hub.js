@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
-let shadowMode
-
 function sendForChildren() {
 	conn.send(JSON.stringify({Msg: "GetChildren"}))
 }
@@ -35,9 +33,8 @@ function showIcon(msg) {
 function addChild(msg) {
 	var iframe = document.getElementById("child")
 
-	if (!shadowMode) {
-		showIcon(msg)
-	}
+	showIcon(msg)
+
 	if (iframe.src == "") {
 		show(msg.Id)
 	}
@@ -52,11 +49,6 @@ function saveChildren(msg) {
 }
 
 function updateStatus(msg) {
-	if (shadowMode) {
-		show(msg.Id)
-		return
-	}
-
 	var img = document.getElementById(msg.Id)
 	var pre = document.getElementById("pre-" + msg.Id)
 
@@ -69,13 +61,7 @@ function updateStatus(msg) {
 	}
 }
 
-function Run(scheme, host, id, max) {
-
-	shadowMode = (max == 1)
-
-	if (!shadowMode) {
-		document.getElementById("children").style.height = "100px"
-	}
+function Run(scheme, host, id) {
 
 	conn = new WebSocket(scheme + host + "/ws/" + id)
 

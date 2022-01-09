@@ -1,6 +1,7 @@
 package merle
 
 import (
+	"net/url"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"io/ioutil"
@@ -21,26 +22,128 @@ type port struct {
 	ws                *websocket.Conn
 }
 
+type portAttachCb func(*port, *msgIdentity) error
+
 type ports struct {
-	max     uint
-	begin   uint
-	end     uint
-	num     uint
-	next    uint
-	match   string
-	ticker  *time.Ticker
-	done    chan bool
-	ports   []port
-	portMap map[string]*port
+	max      uint
+	begin    uint
+	end      uint
+	num      uint
+	next     uint
+	match    string
+	ticker   *time.Ticker
+	done     chan bool
+	ports    []port
+	portMap  map[string]*port
+	attachCb portAttachCb
 }
 
-func newPorts(max uint, match string) *ports {
+func newPorts(max uint, match string, attachCb portAttachCb) *ports {
 	return &ports{
-		max:     max,
-		match:   match,
-		done:    make(chan bool),
-		portMap: make(map[string]*port),
+		max:      max,
+		match:    match,
+		done:     make(chan bool),
+		portMap:  make(map[string]*port),
+		attachCb: attachCb,
 	}
+}
+
+func (p *port) readMessage() (msg []byte, err error) {
+	_, msg, err = p.ws.ReadMessage()
+	return msg, err
+}
+
+func (p *port) wsOpen() error {
+	var err error
+
+	u := url.URL{Scheme: "ws",
+		Host: "localhost:" + strconv.FormatUint(uint64(p.port), 10),
+		Path: "/ws"}
+
+	p.ws, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
+
+	return err
+}
+
+func (p *port) wsIdentity() error {
+	msg := struct{ Msg string }{Msg: "GetIdentity"}
+	log.Printf("Sending: %.80s", msg)
+	return p.ws.WriteJSON(&msg)
+}
+
+func (p *port) wsReplyIdentity() (resp *msgIdentity, err error) {
+	var identity msgIdentity
+
+	// Wait for response no longer than a second
+	p.ws.SetReadDeadline(time.Now().Add(time.Second))
+
+	err = p.ws.ReadJSON(&identity)
+	if err != nil {
+		return nil, err
+	}
+
+	// Clear deadline
+	p.ws.SetReadDeadline(time.Time{})
+
+	log.Printf("Receive: %.80s", identity)
+	return &identity, nil
+}
+
+func (p *port) wsClose() {
+	if p.ws == nil {
+		return
+	}
+	p.ws.WriteMessage(websocket.CloseMessage,
+		websocket.FormatCloseMessage(
+			websocket.CloseNormalClosure, ""))
+	p.ws.Close()
+	p.ws = nil
+}
+
+func (p *port) connect() (resp *msgIdentity, err error) {
+	err = p.wsOpen()
+	if err != nil {
+		return nil, fmt.Errorf("Websocket open error: %s", err)
+	}
+
+	err = p.wsIdentity()
+	if err != nil {
+		return nil, fmt.Errorf("Send request for Identity failed: %s", err)
+	}
+
+	resp, err = p.wsReplyIdentity()
+	if err != nil {
+		return nil,
+			fmt.Errorf("Didn't reply with Identity in a reasonable time: %s",
+			err)
+	}
+
+	return resp, nil
+}
+
+func (p *port) disconnect() {
+	p.wsClose()
+	p.Lock()
+	p.tunnelConnected = false
+	p.Unlock()
+}
+
+func (p *port) attach(match string, cb portAttachCb) {
+	resp, err := p.connect()
+	if err != nil {
+		log.Printf("Port[%s] connect failure: %s", p.port, err)
+		goto disconnect
+	}
+
+	// TODO disconnect if resp doesn't match filter
+
+	err = cb(p, resp)
+	if err != nil {
+		log.Printf("Port[%d] attach failed: %s", p.port, err)
+	}
+
+disconnect:
+	p.disconnect()
 }
 
 func (p *ports) nextPort() (port *port) {
@@ -216,7 +319,7 @@ func (p *ports) scan() error {
 				log.Printf("Tunnel connected on Port[%d]", port.port)
 				port.tunnelConnected = true
 				port.tunnelTrying = false
-				//go port.attach(match, cb)
+				go port.attach(p.match, p.attachCb)
 			}
 		} else {
 			if port.tunnelConnected {
