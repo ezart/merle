@@ -31,25 +31,3 @@ func (ws *webSocket) Close() {
 func (ws *webSocket) Name() string {
 	return ws.name
 }
-
-type chanSocket struct {
-	conn chan *Packet
-	name string
-}
-
-func newChanSocket(name string, conn chan *Packet) *chanSocket {
-	return &chanSocket{name: name, conn: conn}
-}
-
-func (c *chanSocket) Send(p *Packet) error {
-	c.conn <- p
-	return nil
-}
-
-func (c *chanSocket) Close() {
-	close(c.conn)
-}
-
-func (c *chanSocket) Name() string {
-	return c.name
-}

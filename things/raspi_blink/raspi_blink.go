@@ -5,6 +5,7 @@ import (
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
 	"time"
+	"log"
 )
 
 type raspi_blink struct {
@@ -15,7 +16,7 @@ type raspi_blink struct {
 	paused    bool
 }
 
-func NewModel(demo bool) merle.Thinger {
+func NewModel(l *log.Logger, demo bool) merle.Thinger {
 	return &raspi_blink{demo: demo}
 }
 

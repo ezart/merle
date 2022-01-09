@@ -2,12 +2,13 @@ package skeleton
 
 import (
 	"github.com/scottfeldman/merle"
+	"log"
 )
 
 type skeleton struct {
 }
 
-func NewModel(demo bool) merle.Thinger {
+func NewModel(l *log.Logger, demo bool) merle.Thinger {
 	return &skeleton{}
 }
 

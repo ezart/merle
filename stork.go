@@ -1,5 +1,9 @@
 package merle
 
+import (
+	"log"
+)
+
 type Storker interface {
-	NewThinger(model string, demo bool) (Thinger, error)
+	NewThinger(*log.Logger, string, bool) (Thinger, error)
 }

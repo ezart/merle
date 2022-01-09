@@ -6,21 +6,20 @@ import (
 )
 
 type hub struct {
+	log *log.Logger
 }
 
-func NewModel(demo bool) merle.Thinger {
-	return &hub{}
+func NewModel(l *log.Logger, demo bool) merle.Thinger {
+	return &hub{log: l}
 }
 
-func (h *hub) spamStatus(p *merle.Packet) {
-	var spam merle.SpamStatus
-	p.Unmarshal(&spam)
-	log.Println("SPAM", spam)
+func (h *hub) all(p *merle.Packet) {
+	h.log.Println("HUB Receive:", p.String())
 }
 
 func (h *hub) BridgeSubscribe() merle.Subscribers {
 	return merle.Subscribers{
-		"SpamStatus":    {h.spamStatus},
+		".*": {h.all},
 	}
 }
 

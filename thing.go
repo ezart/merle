@@ -39,13 +39,19 @@ type Thing struct {
 func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
 	var cfg thingConfig
 	var thinger Thinger
+	var l *log.Logger
 	var err error
 
 	if err = must(config.Parse(&cfg)); err != nil {
 		return nil, err
 	}
 
-	thinger, err = stork.NewThinger(cfg.Thing.Model, demo)
+	id := defaultId(cfg.Thing.Id)
+
+	prefix := "[" + id + "] "
+	l = log.New(os.Stderr, prefix, 0)
+
+	thinger, err = stork.NewThinger(l, cfg.Thing.Model, demo)
 	if must(err) != nil {
 		return nil, err
 	}
@@ -53,17 +59,14 @@ func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
 	t := &Thing{
 		thinger:     thinger,
 		status:      "online",
-		id:          defaultId(cfg.Thing.Id),
+		id:          id,
 		model:       cfg.Thing.Model,
 		name:        cfg.Thing.Name,
 		startupTime: time.Now(),
 		config:      config,
+		bus:         newBus(l, false, 10, thinger.Subscribe()),
+		log:         l,
 	}
-
-	prefix := "[" + t.id + "] "
-	t.log = log.New(os.Stderr, prefix, 0)
-
-	t.bus = newBus(t.log, 10, thinger.Subscribe())
 
 	t.tunnel = newTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
 		cfg.Mother.Key, cfg.Thing.PortPrivate, cfg.Mother.PortPrivate)

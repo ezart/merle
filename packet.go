@@ -21,6 +21,10 @@ func newPacket(bus *bus, src socketer, msg interface{}) *Packet {
 	return p
 }
 
+func (p *Packet) clone(bus *bus, src socketer) *Packet {
+	return &Packet{bus: bus, src: src, msg: p.msg}
+}
+
 func (p *Packet) Marshal(msg interface{}) *Packet {
 	p.msg, _ = json.Marshal(msg)
 	return p
@@ -32,6 +36,23 @@ func (p *Packet) Unmarshal(msg interface{}) {
 
 func (p *Packet) String() string {
 	return string(p.msg)
+}
+
+func (p *Packet) Source() interface{} {
+	return p.src
+}
+
+func (p *Packet) Send(dst interface{}) {
+	dstSock, ok := dst.(socketer)
+	if ok {
+		if err := p.bus.send(p, dstSock); err != nil {
+			p.bus.log.Println(err)
+		} else {
+			p.bus.log.Printf("Send: %.80s", p.String())
+		}
+	} else {
+		p.bus.log.Println("Send: can't send to non-socket")
+	}
 }
 
 func (p *Packet) Reply() {

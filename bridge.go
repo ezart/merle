@@ -40,7 +40,7 @@ func newBridge(stork Storker, config Configurator, thing *Thing) (*bridge, error
 		stork:    stork,
 		thing:    thing,
 		children: make(children),
-		bus:      newBus(thing.log, 10, bridger.BridgeSubscribe()),
+		bus:      newBus(thing.log, true, 10, bridger.BridgeSubscribe()),
 	}
 
 	b.ports = newPorts(thing.log, cfg.Bridge.Max, cfg.Bridge.Match, b.attachCb)
@@ -80,6 +80,18 @@ func (b *bridge) changeStatus(child *Thing, status string) {
 	b.bus.receive(newPacket(b.bus, nil, &spam))
 }
 
+func (b *bridge) connect(child *Thing) *wire {
+	wire := newWire("wire", b.bus, child.bus)
+	b.bus.plugin(wire.bSock)
+	child.bus.plugin(wire.aSock)
+	return wire
+}
+
+func (b *bridge) disconnect(wire *wire, child *Thing) {
+	child.bus.unplug(wire.aSock)
+	b.bus.unplug(wire.bSock)
+}
+
 func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
 	var err error
 
@@ -109,9 +121,11 @@ func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
 
 	child.startupTime = msg.StartupTime
 
+	wire := b.connect(child)
 	b.changeStatus(child, "online")
 	child.runInBridge(p)
 	b.changeStatus(child, "offline")
+	b.disconnect(wire, child)
 
 	return nil
 }

@@ -6,10 +6,11 @@ import (
 )
 
 type test struct {
+	log *log.Logger
 }
 
-func NewModel(demo bool) merle.Thinger {
-	return &test{}
+func NewModel(tlog *log.Logger, demo bool) merle.Thinger {
+	return &test{log: tlog}
 }
 
 func (t *test) cb(p *merle.Packet) {
@@ -40,7 +41,7 @@ func (t *test) Template() string {
 }
 
 func (t *test) Run(p *merle.Packet) {
-	log.Println("run")
+	t.log.Println("run")
 	for {
 	}
 }
