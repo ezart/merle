@@ -35,13 +35,13 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if id != "" && id != t.id {
-		log.Println("Mismatch on Ids")
+		t.log.Println("Mismatch on Ids")
 		return
 	}
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Websocket upgrader error:", err)
+		t.log.Println("Websocket upgrader error:", err)
 		return
 	}
 	defer ws.Close()
@@ -49,7 +49,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	name := "ws:" + r.RemoteAddr + r.RequestURI
 	var sock = newWebSocket(name, ws)
 
-	log.Printf("Websocket opened [%s]", name)
+	t.log.Printf("Websocket opened [%s]", name)
 
 	t.bus.plugin(sock)
 
@@ -59,7 +59,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 		_, pkt.msg, err = ws.ReadMessage()
 		if err != nil {
-			log.Printf("Websocket closed [%s:%s]",
+			t.log.Printf("Websocket closed [%s:%s]",
 				r.RemoteAddr, r.RequestURI)
 			break
 		}
@@ -130,12 +130,12 @@ func (t *Thing) pamValidate(user, passwd string) (bool, error) {
 			return "", errors.New("Unrecognized message style")
 		})
 	if err != nil {
-		log.Println("PAM Start:", err)
+		t.log.Println("PAM Start:", err)
 		return false, err
 	}
 	err = trans.Authenticate(0)
 	if err != nil {
-		log.Printf("Authenticate [%s,%s]: %s", user, passwd, err)
+		t.log.Printf("Authenticate [%s,%s]: %s", user, passwd, err)
 		return false, err
 	}
 

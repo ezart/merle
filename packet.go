@@ -6,7 +6,6 @@ package merle
 
 import (
 	"encoding/json"
-	"log"
 )
 
 // A Packet contains a JSON message and a source connection.
@@ -37,16 +36,16 @@ func (p *Packet) String() string {
 
 func (p *Packet) Reply() {
 	if err := p.bus.reply(p); err != nil {
-		log.Println(err)
+		p.bus.log.Println(err)
 	} else {
-		log.Printf("Reply: %.80s", p.String())
+		p.bus.log.Printf("Reply: %.80s", p.String())
 	}
 }
 
 func (p *Packet) Broadcast() {
 	if err := p.bus.broadcast(p); err != nil {
-		log.Println(err)
+		p.bus.log.Println(err)
 	} else {
-		log.Printf("Broadcast: %.80s", p.String())
+		p.bus.log.Printf("Broadcast: %.80s", p.String())
 	}
 }

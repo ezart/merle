@@ -1,6 +1,8 @@
 package merle
 
 import (
+	"os"
+	"log"
 	"fmt"
 	"html/template"
 	"time"
@@ -31,6 +33,7 @@ type Thing struct {
 	templErr    error
 	isBridge    bool
 	bridge      *bridge
+	log         *log.Logger
 }
 
 func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
@@ -55,8 +58,12 @@ func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
 		name:        cfg.Thing.Name,
 		startupTime: time.Now(),
 		config:      config,
-		bus:         newBus(10, thinger.Subscribe()),
 	}
+
+	prefix := "[" + t.id + "," + t.model + "," + t.name + "] "
+	t.log = log.New(os.Stderr, prefix, 0)
+
+	t.bus = newBus(t.log, 10, thinger.Subscribe())
 
 	t.tunnel = newTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
 		cfg.Mother.Key, cfg.Thing.PortPrivate, cfg.Mother.PortPrivate)

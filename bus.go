@@ -13,6 +13,7 @@ type socketQ chan bool
 
 // Bus is a message bus.  Connect to the bus using Sockets.
 type bus struct {
+	log      *log.Logger
 	// sockets
 	sockLock sync.RWMutex
 	sockets  sockets
@@ -22,8 +23,9 @@ type bus struct {
 	subs    Subscribers
 }
 
-func newBus(socketsMax uint, subs Subscribers) *bus {
+func newBus(log *log.Logger, socketsMax uint, subs Subscribers) *bus {
 	return &bus{
+		log:     log,
 		sockets: make(sockets),
 		socketQ: make(socketQ, socketsMax),
 		subs:    subs,
@@ -86,7 +88,8 @@ func (b *bus) unsubscribe(msg string, f func(*Packet)) error {
 }
 
 func (b *bus) receive(p *Packet) error {
-	log.Printf("Receive: %.80s", p.String())
+	b.log.Printf("Receive: %.80s", p.String())
+
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
 
