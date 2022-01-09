@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type Subscribers map[string][]func(*Packet)
+type Subscribers map[string]func(*Packet)
 
 type Thinger interface {
 	Subscribe() Subscribers
@@ -64,7 +64,7 @@ func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
 		name:        cfg.Thing.Name,
 		startupTime: time.Now(),
 		config:      config,
-		bus:         newBus(l, false, 10, thinger.Subscribe()),
+		bus:         newBus(l, 10, thinger.Subscribe()),
 		log:         l,
 	}
 

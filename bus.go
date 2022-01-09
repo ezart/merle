@@ -3,38 +3,38 @@ package merle
 import (
 	"fmt"
 	"log"
-	"reflect"
 	"regexp"
 	"sync"
 )
 
+type subscribers map[string][]func(*Packet)
 type sockets map[socketer]bool
 type socketQ chan bool
 
-// Bus is a message bus.  Connect to the bus using Sockets.
 type bus struct {
-	log      *log.Logger
-	quiet    bool
+	log        *log.Logger
 	// sockets
-	sockLock sync.RWMutex
-	sockets  sockets
-	socketQ  socketQ
+	sockLock   sync.RWMutex
+	sockets    sockets
+	socketQ    socketQ
 	// message subscribers
-	subLock sync.RWMutex
-	subs    Subscribers
+	subLock    sync.RWMutex
+	blocked    subscribers
+	allowed    subscribers
 }
 
-func newBus(log *log.Logger, quiet bool, socketsMax uint, subs Subscribers) *bus {
-	return &bus{
+func newBus(log *log.Logger, socketsMax uint, subs Subscribers) *bus {
+	b := &bus{
 		log:     log,
-		quiet:   quiet,
 		sockets: make(sockets),
 		socketQ: make(socketQ, socketsMax),
-		subs:    subs,
+		blocked: make(subscribers),
+		allowed: make(subscribers),
 	}
+
+	return b.sort(subs)
 }
 
-// Plug conection into bus
 func (b *bus) plugin(s socketer) {
 	// Queue any plugin attemps beyond socketsMax
 	b.socketQ <- true
@@ -44,7 +44,6 @@ func (b *bus) plugin(s socketer) {
 	b.sockLock.Unlock()
 }
 
-// Unplug conection from bus
 func (b *bus) unplug(s socketer) {
 	b.sockLock.Lock()
 	delete(b.sockets, s)
@@ -53,54 +52,54 @@ func (b *bus) unplug(s socketer) {
 	<-b.socketQ
 }
 
-// Subscribe to message
-func (b *bus) subscribe(msg string, f func(*Packet)) {
-	b.subLock.Lock()
-	defer b.subLock.Unlock()
-	b.subs[msg] = append(b.subs[msg], f)
+func (b *bus) sort(subs Subscribers) *bus {
+	for msg, f := range subs {
+		b.subscribe(msg, f)
+	}
+	return b
 }
 
-// Unsubscribe to message
-func (b *bus) unsubscribe(msg string, f func(*Packet)) error {
+// Subscribe to message
+func (b *bus) subscribe(msg string, f func(*Packet)) {
+	if msg == "" {
+		return
+	}
+
+	block := false
+	if msg[0:1] == "-" {
+		block = true
+		msg = msg[1:]
+	}
+
 	b.subLock.Lock()
 	defer b.subLock.Unlock()
-
-	if _, ok := b.subs[msg]; !ok {
-		return fmt.Errorf("Not subscribed to \"%s\"", msg)
+	if block {
+		b.blocked[msg] = append(b.blocked[msg], nil)
+	} else {
+		b.allowed[msg] = append(b.allowed[msg], f)
 	}
-
-	found := false
-	for i, g := range b.subs[msg] {
-		if reflect.ValueOf(g).Pointer() == reflect.ValueOf(f).Pointer() {
-			found = true
-			b.subs[msg] = append(b.subs[msg][:i], b.subs[msg][i+1:]...)
-			break
-		}
-	}
-
-	if !found {
-		return fmt.Errorf("Not subscribed to \"%s\" for function", msg)
-	}
-
-	if len(b.subs[msg]) == 0 {
-		delete(b.subs, msg)
-	}
-
-	return nil
 }
 
 func (b *bus) receive(p *Packet) error {
-	if !b.quiet {
-		b.log.Printf("Receive: %.80s", p.String())
-	}
-
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
 
 	b.subLock.RLock()
 	defer b.subLock.RUnlock()
 
-	for key, funcs := range b.subs {
+	for key, _ := range b.blocked {
+		matched, err := regexp.MatchString(key, msg.Msg)
+		if err != nil {
+			return fmt.Errorf("Error compiling regexp \"%s\": %s", key, err)
+		}
+		if matched {
+			return nil
+		}
+	}
+
+	b.log.Printf("Receive: %.80s", p.String())
+
+	for key, funcs := range b.allowed {
 		matched, err := regexp.MatchString(key, msg.Msg)
 		if err != nil {
 			return fmt.Errorf("Error compiling regexp \"%s\": %s", key, err)

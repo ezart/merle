@@ -40,7 +40,7 @@ func newBridge(stork Storker, config Configurator, thing *Thing) (*bridge, error
 		stork:    stork,
 		thing:    thing,
 		children: make(children),
-		bus:      newBus(thing.log, true, 10, bridger.BridgeSubscribe()),
+		bus:      newBus(thing.log, 10, bridger.BridgeSubscribe()),
 	}
 
 	b.ports = newPorts(thing.log, cfg.Bridge.Max, cfg.Bridge.Match, b.attachCb)

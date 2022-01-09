@@ -19,7 +19,8 @@ func (h *hub) all(p *merle.Packet) {
 
 func (h *hub) BridgeSubscribe() merle.Subscribers {
 	return merle.Subscribers{
-		".*": {h.all},
+		".*": h.all,
+		"-CmdPause": nil,
 	}
 }
 
