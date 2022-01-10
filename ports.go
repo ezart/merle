@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/url"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -133,20 +134,30 @@ func (p *port) disconnect() {
 
 func (p *port) attach(match string, cb portAttachCb) {
 	resp, err := p.connect()
+	defer p.disconnect()
 	if err != nil {
-		p.log.Printf("Port[%s] connect failure: %s", p.port, err)
-		goto disconnect
+		p.log.Printf("Port[%d] connect failure: %s", p.port, err)
+		return
 	}
 
-	// TODO disconnect if resp doesn't match filter
+	spec := resp.Id + ":" + resp.Model + ":" + resp.Name
+	matched, err := regexp.MatchString(match, spec)
+	if err != nil {
+		p.log.Printf("Port[%d] error compiling regexp \"%s\": %s",
+			p.port, match, err)
+		return
+	}
+
+	if !matched {
+		p.log.Printf("Port[%d] Thing %s didn't match filter %s; not attaching",
+			p.port, spec, match)
+		return
+	}
 
 	err = cb(p, resp)
 	if err != nil {
 		p.log.Printf("Port[%d] attach failed: %s", p.port, err)
 	}
-
-disconnect:
-	p.disconnect()
 }
 
 func (p *ports) nextPort() (port *port) {

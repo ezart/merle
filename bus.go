@@ -80,9 +80,8 @@ func (b *bus) receive(p *Packet) error {
 			if sub.Cb != nil {
 				b.log.Printf("Received: %.80s", p.String())
 				sub.Cb(p)
-				return nil
 			}
-			break
+			return nil
 		}
 	}
 
