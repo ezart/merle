@@ -31,3 +31,25 @@ func (ws *webSocket) Close() {
 func (ws *webSocket) Name() string {
 	return ws.name
 }
+
+type wireSocket struct {
+	name string
+	bus  *bus
+	opposite *wireSocket
+}
+
+func newWireSocket(name string, bus *bus, opposite *wireSocket) *wireSocket {
+	return &wireSocket{name: name, bus: bus, opposite: opposite}
+}
+
+func (s *wireSocket) Send(p *Packet) error {
+	s.bus.receive(p.clone(s.bus, s.opposite))
+	return nil
+}
+
+func (s *wireSocket) Close() {
+}
+
+func (s *wireSocket) Name() string {
+	return s.name
+}

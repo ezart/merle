@@ -1,11 +1,11 @@
 package merle
 
 import (
-	"net/url"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -14,7 +14,7 @@ import (
 )
 
 type port struct {
-	log               *log.Logger
+	log *log.Logger
 	sync.Mutex
 	port              uint
 	tunnelTrying      bool
@@ -88,7 +88,7 @@ func (p *port) wsReplyIdentity() (resp *msgIdentity, err error) {
 	// Clear deadline
 	p.ws.SetReadDeadline(time.Time{})
 
-	p.log.Printf("Receive: %.80s", identity)
+	p.log.Printf("Received: %.80s", identity)
 	return &identity, nil
 }
 
@@ -118,7 +118,7 @@ func (p *port) connect() (resp *msgIdentity, err error) {
 	if err != nil {
 		return nil,
 			fmt.Errorf("Didn't reply with Identity in a reasonable time: %s",
-			err)
+				err)
 	}
 
 	return resp, nil

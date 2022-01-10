@@ -43,12 +43,11 @@ func (p *Packet) Source() interface{} {
 }
 
 func (p *Packet) Send(dst interface{}) {
+	p.bus.log.Printf("Send: %.80s", p.String())
 	dstSock, ok := dst.(socketer)
 	if ok {
 		if err := p.bus.send(p, dstSock); err != nil {
 			p.bus.log.Println(err)
-		} else {
-			p.bus.log.Printf("Send: %.80s", p.String())
 		}
 	} else {
 		p.bus.log.Println("Send: can't send to non-socket")
@@ -56,17 +55,19 @@ func (p *Packet) Send(dst interface{}) {
 }
 
 func (p *Packet) Reply() {
+	p.bus.log.Printf("Reply: %.80s", p.String())
 	if err := p.bus.reply(p); err != nil {
 		p.bus.log.Println(err)
-	} else {
-		p.bus.log.Printf("Reply: %.80s", p.String())
 	}
 }
 
+func Broadcast(p *Packet) {
+	p.Broadcast()
+}
+
 func (p *Packet) Broadcast() {
+	p.bus.log.Printf("Broadcast: %.80s", p.String())
 	if err := p.bus.broadcast(p); err != nil {
 		p.bus.log.Println(err)
-	} else {
-		p.bus.log.Printf("Broadcast: %.80s", p.String())
 	}
 }

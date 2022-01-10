@@ -9,7 +9,7 @@ import (
 
 type Subscriber struct {
 	Msg string
-	Cb func(*Packet)
+	Cb  func(*Packet)
 }
 
 type Subscribers []Subscriber
@@ -18,14 +18,14 @@ type sockets map[socketer]bool
 type socketQ chan bool
 
 type bus struct {
-	log        *log.Logger
+	log *log.Logger
 	// sockets
-	sockLock   sync.RWMutex
-	sockets    sockets
-	socketQ    socketQ
+	sockLock sync.RWMutex
+	sockets  sockets
+	socketQ  socketQ
 	// message subscribers
-	subLock    sync.RWMutex
-	subs       Subscribers
+	subLock sync.RWMutex
+	subs    Subscribers
 }
 
 func newBus(log *log.Logger, socketsMax uint, subs Subscribers) *bus {
@@ -80,8 +80,9 @@ func (b *bus) receive(p *Packet) error {
 			if sub.Cb != nil {
 				b.log.Printf("Received: %.80s", p.String())
 				sub.Cb(p)
+				return nil
 			}
-			return nil
+			break
 		}
 	}
 

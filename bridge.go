@@ -66,7 +66,7 @@ type SpamStatus struct {
 	Status string
 }
 
-func (b *bridge) changeStatus(child *Thing, status string) {
+func (b *bridge) changeStatus(child *Thing, sock *wireSocket, status string) {
 	child.status = status
 
 	spam := SpamStatus{
@@ -77,19 +77,23 @@ func (b *bridge) changeStatus(child *Thing, status string) {
 		Status: child.status,
 	}
 	newPacket(b.thing.bus, nil, &spam).Broadcast()
-	b.bus.receive(newPacket(b.bus, nil, &spam))
+	b.bus.receive(newPacket(b.bus, sock, &spam))
 }
 
-func (b *bridge) connect(child *Thing) *wire {
-	wire := newWire("wire", b.bus, child.bus)
-	b.bus.plugin(wire.bSock)
-	child.bus.plugin(wire.aSock)
-	return wire
-}
+func (b *bridge) runChild(p *port, child *Thing) {
+	bridgeSock := newWireSocket("bridge sock", b.bus, nil)
+	childSock := newWireSocket("child sock", child.bus, bridgeSock)
+	bridgeSock.opposite = childSock
 
-func (b *bridge) disconnect(wire *wire, child *Thing) {
-	child.bus.unplug(wire.aSock)
-	b.bus.unplug(wire.bSock)
+	b.bus.plugin(childSock)
+	child.bus.plugin(bridgeSock)
+
+	b.changeStatus(child, childSock, "online")
+	child.runInBridge(p)
+	b.changeStatus(child, childSock, "offline")
+
+	child.bus.unplug(bridgeSock)
+	b.bus.unplug(childSock)
 }
 
 func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
@@ -121,11 +125,7 @@ func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
 
 	child.startupTime = msg.StartupTime
 
-	wire := b.connect(child)
-	b.changeStatus(child, "online")
-	child.runInBridge(p)
-	b.changeStatus(child, "offline")
-	b.disconnect(wire, child)
+	b.runChild(p, child)
 
 	return nil
 }
@@ -143,7 +143,7 @@ type msgChildren struct {
 }
 
 func (b *bridge) getChildren(p *Packet) {
-	resp := msgChildren{ Msg: "ReplyChildren" }
+	resp := msgChildren{Msg: "ReplyChildren"}
 	for _, child := range b.children {
 		resp.Children = append(resp.Children, msgChild{child.id,
 			child.model, child.name, child.status})

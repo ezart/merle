@@ -7,12 +7,11 @@ package stork
 import (
 	"fmt"
 	"github.com/scottfeldman/merle"
+	"github.com/scottfeldman/merle/things/chat"
+	"github.com/scottfeldman/merle/things/hub"
 	"github.com/scottfeldman/merle/things/raspi_blink"
 	"github.com/scottfeldman/merle/things/skeleton"
 	"github.com/scottfeldman/merle/things/test"
-	//	"github.com/scottfeldman/merle/things/chat"
-	//	"github.com/scottfeldman/merle/things/bridge"
-	"github.com/scottfeldman/merle/things/hub"
 	"log"
 )
 
@@ -29,9 +28,8 @@ func (s *stork) NewThinger(l *log.Logger, model string, demo bool) (merle.Thinge
 		"test":        test.NewModel,
 		"skeleton":    skeleton.NewModel,
 		"raspi_blink": raspi_blink.NewModel,
-		//	"chat":        chat.NewChat,
-		//	"bridge":      bridge.NewBridge,
 		"hub":         hub.NewModel,
+		"chat":        chat.NewModel,
 	}
 
 	if thinger, ok := thingers[model]; ok {

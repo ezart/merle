@@ -1,10 +1,10 @@
 package merle
 
 import (
-	"os"
-	"log"
 	"fmt"
 	"html/template"
+	"log"
+	"os"
 	"time"
 )
 
