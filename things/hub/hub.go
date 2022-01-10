@@ -13,14 +13,9 @@ func NewModel(l *log.Logger, demo bool) merle.Thinger {
 	return &hub{log: l}
 }
 
-func (h *hub) all(p *merle.Packet) {
-	h.log.Println("HUB Receive:", p.String())
-}
-
 func (h *hub) BridgeSubscribe() merle.Subscribers {
 	return merle.Subscribers{
-		".*": h.all,
-		"-CmdPause": nil,
+		{ ".*", nil }, // drop everything
 	}
 }
 

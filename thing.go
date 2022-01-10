@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-type Subscribers map[string]func(*Packet)
-
 type Thinger interface {
 	Subscribe() Subscribers
 	Config(Configurator) error

@@ -18,7 +18,7 @@ func (t *test) cb(p *merle.Packet) {
 
 func (t *test) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
-		"msg": t.cb,
+		{"msg", t.cb},
 	}
 }
 

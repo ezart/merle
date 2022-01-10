@@ -7,7 +7,13 @@ import (
 	"sync"
 )
 
-type subscribers map[string][]func(*Packet)
+type Subscriber struct {
+	Msg string
+	Cb func(*Packet)
+}
+
+type Subscribers []Subscriber
+
 type sockets map[socketer]bool
 type socketQ chan bool
 
@@ -19,20 +25,16 @@ type bus struct {
 	socketQ    socketQ
 	// message subscribers
 	subLock    sync.RWMutex
-	blocked    subscribers
-	allowed    subscribers
+	subs       Subscribers
 }
 
 func newBus(log *log.Logger, socketsMax uint, subs Subscribers) *bus {
-	b := &bus{
+	return &bus{
 		log:     log,
 		sockets: make(sockets),
 		socketQ: make(socketQ, socketsMax),
-		blocked: make(subscribers),
-		allowed: make(subscribers),
+		subs:    subs,
 	}
-
-	return b.sort(subs)
 }
 
 func (b *bus) plugin(s socketer) {
@@ -52,32 +54,12 @@ func (b *bus) unplug(s socketer) {
 	<-b.socketQ
 }
 
-func (b *bus) sort(subs Subscribers) *bus {
-	for msg, f := range subs {
-		b.subscribe(msg, f)
-	}
-	return b
-}
-
 // Subscribe to message
 func (b *bus) subscribe(msg string, f func(*Packet)) {
-	if msg == "" {
-		return
-	}
-
-	block := false
-	if msg[0:1] == "-" {
-		block = true
-		msg = msg[1:]
-	}
-
 	b.subLock.Lock()
-	defer b.subLock.Unlock()
-	if block {
-		b.blocked[msg] = append(b.blocked[msg], nil)
-	} else {
-		b.allowed[msg] = append(b.allowed[msg], f)
-	}
+	// add to front of array for highest priority
+	b.subs = append([]Subscriber{{msg, f}}, b.subs...)
+	b.subLock.Unlock()
 }
 
 func (b *bus) receive(p *Packet) error {
@@ -87,29 +69,23 @@ func (b *bus) receive(p *Packet) error {
 	b.subLock.RLock()
 	defer b.subLock.RUnlock()
 
-	for key, _ := range b.blocked {
-		matched, err := regexp.MatchString(key, msg.Msg)
+	// TODO optimization: compile regexps
+
+	for _, sub := range b.subs {
+		matched, err := regexp.MatchString(sub.Msg, msg.Msg)
 		if err != nil {
-			return fmt.Errorf("Error compiling regexp \"%s\": %s", key, err)
+			return fmt.Errorf("Error compiling regexp \"%s\": %s", sub.Msg, err)
 		}
 		if matched {
+			if sub.Cb != nil {
+				b.log.Printf("Received: %.80s", p.String())
+				sub.Cb(p)
+			}
 			return nil
 		}
 	}
 
-	b.log.Printf("Receive: %.80s", p.String())
-
-	for key, funcs := range b.allowed {
-		matched, err := regexp.MatchString(key, msg.Msg)
-		if err != nil {
-			return fmt.Errorf("Error compiling regexp \"%s\": %s", key, err)
-		}
-		if matched {
-			for _, f := range funcs {
-				f(p)
-			}
-		}
-	}
+	b.log.Printf("Not handled: %.80s", p.String())
 
 	return nil
 }
