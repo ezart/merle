@@ -4,7 +4,6 @@
 
 Merle is a framework for building web-apps for your IoT project.  Put your Thing on the Internet using Merle.
 
-
 Merle uses the Go programming language and javascript.
 
 ## Architecture
@@ -25,7 +24,7 @@ Merle includes a library of [Things](things/) already built and tested.  Let's p
 
 Hardware needed: Rapsberry Pi (any model except Pico), a LED, a 120ohm resistor and some wire.  Wire the LED and resistor to gpio pin 17 and ground as shown.
 
-**Don't worry if you don't have the hardware on hand; we can run the Thing in demo-mode to similate the hardare.  All that's need for demo-mode is a system with Go installed.**
+**Don't worry if you don't have the hardware on hand; we can run the Thing in demo-mode to similate the hardare.  All that's need for demo-mode is a system with [Go](https://go.dev/) installed.**
 
 Install Merle, if you haven't already:
 
@@ -74,6 +73,18 @@ The hardware LED should blink on/off every second.
 Open a web browser to localhost and see your Thing running!  Click the button to pause and resume the LED blinking.  Notice the LED state is always synced between the real hardware LED and the LED shown in the browser.  This is a feature of Merle: the state of hardware is maintained across all views.
 
 ![raspi_blink](web/images/raspi_blink/led-gpio17-animation.gif?raw=true)
+
+## Explore more
+
+- Code for Raspberry Pi LED blinker
+  - [Thing code](things/raspi_blink/raspi_blink.go)
+  - Front-end*: [HTML](web/templates/raspi_blink.html), [Javascript](web/js/raspi_blink.js), and [CSS](web/css/raspi_blink.css)
+- Tutorials
+  - Hello World
+  - GPS locator
+  - Controller
+- Security
+- Networking
 
 ## Documentation
 
