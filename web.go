@@ -149,6 +149,12 @@ func (t *Thing) pamValidate(user, passwd string) (bool, error) {
 func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+		// skip basic authentication if no user
+		if authUser == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		user, passwd, ok := r.BasicAuth()
 
 		if ok {
