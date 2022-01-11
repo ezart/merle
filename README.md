@@ -19,13 +19,13 @@ go get github.com/scottfeldman/merle
 
 ## Quick Start
 
-Merle includes a library of Things already built and tested.  Let's pick a quintessential one for the Quickstart: a Raspberry Pi LED blinker.  Here's the hardware setup:
+Merle includes a library of [Things](things/) already built and tested.  Let's pick a quintessential one for the Quickstart: a Raspberry Pi LED blinker.  Here's the hardware setup:
 
-![foo](web/images/raspi_blink/led-gpio17-off-small.png?raw=true)
+![raspi_blink](web/images/raspi_blink/led-gpio17-off-small.png?raw=true)
 
 Hardware needed: Rapsberry Pi (any model except Pico), a LED, a 120ohm resistor and some wire.  Wire the LED and resistor to gpio pin 17 and ground as shown.
 
-**Don't worry if you don't have the hardware on hand; we can run the Thing in demo-mode to similate the hardare.  All that's need for demo-mode is a system running Linux.**
+**Don't worry if you don't have the hardware on hand; we can run the Thing in demo-mode to similate the hardare.  All that's need for demo-mode is a system with Go installed.**
 
 Install Merle, if you haven't already:
 
@@ -33,7 +33,7 @@ Install Merle, if you haven't already:
 go get github.com/scottfeldman/merle
 ```
 
-Build and install Merle:
+Build Merle:
 
 ```sh
 go install ./...
@@ -46,15 +46,34 @@ sudo mkdir /etc/merle
 sudo vi /etc/merle/thing.yml
 ```
 
-Copy this to thing.yml and save:
+Add this to /etc/merle/thing.yml:
 
-```
+```yaml
 # Thing configuration
 Thing:
   Model: raspi_blink
   Name: quickstart
   PortPublic: 80
 ```
+
+Now start Merle on your Thing:
+
+````sh
+sudo ../go/bin/merle-thing
+````
+
+Or, for demo mode, add --demo:
+
+
+````sh
+sudo ../go/bin/merle-thing --demo
+````
+
+The hardware LED should blink on/off every second.
+
+Open a web browser to localhost and see your Thing running!  Click the button to pause and resume the LED blinking.  Notice the LED state is always synced between the real hardware LED and the LED shown in the browser.  This is a feature of Merle: the state of hardware is maintained across all views.
+
+![raspi_blink](web/images/raspi_blink/led-gpio17-animation.gif?raw=true)
 
 ## Documentation
 
