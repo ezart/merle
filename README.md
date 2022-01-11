@@ -4,6 +4,8 @@
 
 ## Architecture
 
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vSkx75Ta5MePFXAM_O1C5voMNJ8aguUg8ahdgCNCw9MTpOkI3wgeFrcEUpYfoN0-_OFyQe37uAmVnRk/pub?w=419&amp;h=424">
+
 ## Quick Start
 
 ## Need help?
