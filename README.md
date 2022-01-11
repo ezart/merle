@@ -21,7 +21,7 @@ go get github.com/scottfeldman/merle
 
 Merle includes a library of Things already built and tested.  Let's pick a quintessential one for the Quickstart: a Raspberry Pi LED blinker.  Here's the hardware setup:
 
-![foo](web/images/raspi_blink/led-gpio17-on.png?raw=true)
+![foo](web/images/raspi_blink/led-gpio17-off-small.png?raw=true)
 
 Don't worry if you don't have the hardware setup on hand; we'll run the Thing in demo-mode first to similate the hardare.  You can turn off demo mode and run on the real hardware setup if you have that ready. 
 
