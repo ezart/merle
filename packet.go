@@ -8,10 +8,13 @@ import (
 	"encoding/json"
 )
 
-// A Packet contains a JSON message and a source connection.
+// A packet contains a message and a source.
 type Packet struct {
+	// Bus the packet lives on
 	bus *bus
+	// Source socket on bus; the packet source
 	src socketer
+	// Message
 	msg []byte
 }
 
@@ -25,15 +28,18 @@ func (p *Packet) clone(bus *bus, src socketer) *Packet {
 	return &Packet{bus: bus, src: src, msg: p.msg}
 }
 
+// JSON marshal into packet message
 func (p *Packet) Marshal(msg interface{}) *Packet {
 	p.msg, _ = json.Marshal(msg)
 	return p
 }
 
+// JSON unmarshal from packet message
 func (p *Packet) Unmarshal(msg interface{}) {
 	json.Unmarshal(p.msg, msg)
 }
 
+// String representation of packet message
 func (p *Packet) String() string {
 	return string(p.msg)
 }

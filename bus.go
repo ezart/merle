@@ -7,11 +7,21 @@ import (
 	"sync"
 )
 
+// Subcriber calls a callback when a packet received on the bus matches the
+// matching criteria.  The subscriber uses regular expression matching to test
+// each packet message.  See https://github.com/google/re2/wiki/Syntax for
+// regular expression syntax.
 type Subscriber struct {
+	// Regular expression (re) for packet matching.  The re could be
+	// an exact match ("CmdStart"), or something more exotic ("Cmd.*").
 	Msg string
+	// The callback to call when a packet message matches.  To drop a
+	// packet, specify nil for the callback.
 	Cb  func(*Packet)
 }
 
+// Subscibers is a list of subscribers.  On packet receipt, the subscribers are
+// processed in-order, and the first matching subscriber stops the processing.
 type Subscribers []Subscriber
 
 type sockets map[socketer]bool
@@ -37,6 +47,7 @@ func newBus(log *log.Logger, socketsMax uint, subs Subscribers) *bus {
 	}
 }
 
+// Plug a socket into the bus
 func (b *bus) plugin(s socketer) {
 	// Queue any plugin attemps beyond socketsMax
 	b.socketQ <- true
@@ -46,6 +57,7 @@ func (b *bus) plugin(s socketer) {
 	b.sockLock.Unlock()
 }
 
+// Unplug a socket from the bus
 func (b *bus) unplug(s socketer) {
 	b.sockLock.Lock()
 	delete(b.sockets, s)
@@ -62,6 +74,9 @@ func (b *bus) subscribe(msg string, f func(*Packet)) {
 	b.subLock.Unlock()
 }
 
+// Receive matches the packet against subscriber.  The first matching
+// subscriber get the packet.  If no subscribers match, the packet is
+// dropped.
 func (b *bus) receive(p *Packet) error {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
@@ -81,6 +96,7 @@ func (b *bus) receive(p *Packet) error {
 				b.log.Printf("Received: %.80s", p.String())
 				sub.Cb(p)
 			}
+			// first match wins
 			return nil
 		}
 	}
@@ -90,6 +106,7 @@ func (b *bus) receive(p *Packet) error {
 	return nil
 }
 
+// Reply sends the packet back to the source socket
 func (b *bus) reply(p *Packet) error {
 	if p.src == nil {
 		return fmt.Errorf("Reply aborted; source is missing")
@@ -100,6 +117,8 @@ func (b *bus) reply(p *Packet) error {
 	return nil
 }
 
+// Broadcast sends the packet to each socket on the bus, expect to thexi
+// originating socket
 func (b *bus) broadcast(p *Packet) error {
 	src := p.src
 
@@ -130,6 +149,7 @@ func (b *bus) broadcast(p *Packet) error {
 	return nil
 }
 
+// Send the packet to the destination socket
 func (b *bus) send(p *Packet, dst socketer) error {
 	dst.Send(p)
 	return nil

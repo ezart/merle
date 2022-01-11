@@ -14,6 +14,7 @@ import (
 	"time"
 )
 
+// Tunnel (remote SSH port forwarding) to connect a child thing to it's mother thing
 type tunnel struct {
 	id          string
 	host        string

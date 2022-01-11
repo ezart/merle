@@ -16,12 +16,15 @@ import (
 
 var upgrader = websocket.Upgrader{}
 
+// Open a websocket on the thing
 func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	vars := mux.Vars(r)
 	id := vars["id"]
 
+	// If this thing is a bridge, and the ID matches a child ID, then hand
+	// the websocket request to the child.
 	child := t.getChild(id)
 	if child != nil {
 		child.ws(w, r)
@@ -45,10 +48,11 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 	t.log.Printf("Websocket opened [%s]", name)
 
+	// Plug the websocket into the thing's bus
 	t.bus.plugin(sock)
 
 	for {
-		// new pkt for each rcv
+		// New pkt for each rcv
 		var pkt = newPacket(t.bus, sock, nil)
 
 		_, pkt.msg, err = ws.ReadMessage()
@@ -58,13 +62,16 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
+		// Put the packet on the bus
 		t.bus.receive(pkt)
 	}
 
+	// Unplug the websocket from the thing's bus
 	t.bus.unplug(sock)
 }
 
-func (t *Thing) HomeParams(r *http.Request) interface{} {
+// Some things to pass into the thing's HTML template
+func (t *Thing) homeParams(r *http.Request) interface{} {
 	scheme := "wss://"
 	if r.TLS == nil {
 		scheme = "ws://"
@@ -87,6 +94,7 @@ func (t *Thing) HomeParams(r *http.Request) interface{} {
 	}
 }
 
+// Open the thing's home page
 func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -96,6 +104,8 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If this thing is a bridge, and the ID matches a child ID, then open
+	// the child's home page
 	child := t.getChild(id)
 	if child != nil {
 		child.home(w, r)
@@ -108,7 +118,7 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if t.templErr == nil {
-		t.templ.Execute(w, t.HomeParams(r))
+		t.templ.Execute(w, t.homeParams(r))
 	} else {
 		http.Error(w, t.templErr.Error(), http.StatusNotFound)
 	}
@@ -163,6 +173,7 @@ func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFu
 	})
 }
 
+// The thing's private HTTP server
 type webPrivate struct {
 	sync.WaitGroup
 	port   uint
@@ -220,6 +231,7 @@ func (w *webPrivate) handleFunc(pattern string,
 	w.mux.HandleFunc(pattern, handler)
 }
 
+// The thing's public HTTP server
 type webPublic struct {
 	sync.WaitGroup
 	user   string
@@ -275,8 +287,4 @@ func (w *webPublic) stop() {
 		w.server.Shutdown(context.Background())
 	}
 	w.Wait()
-}
-
-func (w *webPublic) handleFunc(pattern string,
-	handler func(http.ResponseWriter, *http.Request)) {
 }

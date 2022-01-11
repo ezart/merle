@@ -5,12 +5,17 @@ import (
 	"time"
 )
 
+// Socketer is an interface to a socket.  A socket plugs into a bus.
 type socketer interface {
+	// Send the packet on bus the socket is connected to
 	Send(*Packet) error
+	// Close the socket
 	Close()
+	// Name of the socket
 	Name() string
 }
 
+// Websocket socket
 type webSocket struct {
 	conn *websocket.Conn
 	name string
@@ -32,6 +37,7 @@ func (ws *webSocket) Name() string {
 	return ws.name
 }
 
+// Wire socket
 type wireSocket struct {
 	name string
 	bus  *bus

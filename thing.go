@@ -8,13 +8,22 @@ import (
 	"time"
 )
 
+// All things implement this interface
 type Thinger interface {
+	// List of subscribers on thing bus.  On packet receipt, the
+	// subscribers are process in-order, and the first matching subscriber
+	// stops the processing.
 	Subscribe() Subscribers
+	// Thing configurator
 	Config(Configurator) error
+	// Path to thing's home page template
 	Template() string
+	// Thing run loop.  This loop should run forever.  The supplied packet
+	// can be used to broadcast messages on the bus.
 	Run(p *Packet)
 }
 
+// Thing's backing structure
 type Thing struct {
 	thinger     Thinger
 	status      string
@@ -144,6 +153,7 @@ func (t *Thing) Start() error {
 	return fmt.Errorf("Run() didn't run forever")
 }
 
+// Run a copy of the thing (shadow thing) in the bridge.
 func (t *Thing) runInBridge(p *port) {
 	var name = fmt.Sprintf("port:%d", p.port)
 	var sock = newWebSocket(name, p.ws)
@@ -152,6 +162,8 @@ func (t *Thing) runInBridge(p *port) {
 
 	t.bus.plugin(sock)
 
+	// Send a CmdStart message on startup of shadow thing so shadow thing
+	// can get the current state from the real thing
 	msg := struct{ Msg string }{Msg: "CmdStart"}
 	t.bus.receive(pkt.Marshal(&msg))
 

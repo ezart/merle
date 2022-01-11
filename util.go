@@ -5,9 +5,9 @@ import (
 	"net"
 )
 
+// If no id, make up an id using the MAC address of the first non-lo interface
 func defaultId(id string) string {
 	if id == "" {
-		// Use the MAC address of the first non-lo interface
 		ifaces, err := net.Interfaces()
 		if err == nil {
 			for _, iface := range ifaces {

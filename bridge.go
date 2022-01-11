@@ -6,17 +6,37 @@ import (
 	"net/http"
 )
 
+// Bridge configuration
 type bridgeConfig struct {
 	Bridge struct {
+		// Maximum number of things (children) that can connect to the
+		// bridge
 		Max   uint   `yaml:"Max"`
+		// Match is a regular expresion (re) to specifiy which things
+		// can connect to the bridge.  The re matches against three
+		// fields of the thing, ID, Model, and Name.  The re is
+		// composed with these three fields seperated by ":" character:
+		// "ID:Model:Name".  See
+		// https://github.com/google/re2/wiki/Syntax for regular
+		// expression syntax.  Examples:
+		//
+		//	".*:.*:.*"		Match any thing.
+		//	"123456:.*:.*"		Match only a thing with ID=123456
+		//	".*:chat:.*"		Match only chat things
 		Match string `yaml:"Match"`
 	} `yaml:"Bridge"`
 }
 
+// A thing implementing the bridger interface is a bridge
 type bridger interface {
+	// List of subscribers on bridge bus.  All packets from all connected
+	// things (children) are forwarded to the bridge bus and tested against
+	// these subscribers.  To ignore all packets on the bridge bus, install
+	// the subscriber {".*", nil}.  This will drop all packets.
 	BridgeSubscribe() Subscribers
 }
 
+// Children are the things connected to the bridge
 type children map[string]*Thing
 
 type bridge struct {
