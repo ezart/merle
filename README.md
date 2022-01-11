@@ -23,7 +23,38 @@ Merle includes a library of Things already built and tested.  Let's pick a quint
 
 ![foo](web/images/raspi_blink/led-gpio17-off-small.png?raw=true)
 
-Don't worry if you don't have the hardware setup on hand; we'll run the Thing in demo-mode first to similate the hardare.  You can turn off demo mode and run on the real hardware setup if you have that ready. 
+Hardware needed: Rapsberry Pi (any model except Pico), a LED, a 120ohm resistor and some wire.  Wire the LED and resistor to gpio pin 17 and ground as shown.
+
+**Don't worry if you don't have the hardware on hand; we can run the Thing in demo-mode to similate the hardare.  All that's need for demo-mode is a system running Linux.**
+
+Install Merle, if you haven't already:
+
+```sh
+go get github.com/scottfeldman/merle
+```
+
+Build and install Merle:
+
+```sh
+go install ./...
+```
+
+Before we run Merle on your Thing, we need to configure Merle for your Thing.  Merle gets the Thing configuration from /etc/merle/thing.yml.  As sudo, let's create and edit the /etc/merle/thing.yml file.
+
+```sh
+sudo mkdir /etc/merle
+sudo vi /etc/merle/thing.yml
+```
+
+Copy this to thing.yml and save:
+
+```
+# Thing configuration
+Thing:
+  Model: raspi_blink
+  Name: quickstart
+  PortPublic: 80
+```
 
 ## Documentation
 
