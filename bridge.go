@@ -3,6 +3,7 @@ package merle
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 )
 
@@ -40,6 +41,7 @@ type bridger interface {
 type children map[string]*Thing
 
 type bridge struct {
+	log      *log.Logger
 	stork    Storker
 	thing    *Thing
 	children children
@@ -47,16 +49,18 @@ type bridge struct {
 	ports    *ports
 }
 
-func newBridge(stork Storker, config Configurator, thing *Thing) (*bridge, error) {
+func newBridge(log *log.Logger, stork Storker, config Configurator, thing *Thing) (*bridge, error) {
 	var cfg bridgeConfig
 
-	if err := must(config.Parse(&cfg)); err != nil {
+	if err := config.Parse(&cfg); err != nil {
+		log.Println("Configure bridge error:", err)
 		return nil, err
 	}
 
 	bridger := thing.thinger.(bridger)
 
 	b := &bridge{
+		log:      log,
 		stork:    stork,
 		thing:    thing,
 		children: make(children),
@@ -188,7 +192,9 @@ func (b *bridge) getPort(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *bridge) Start() {
-	must(b.ports.Start())
+	if err := b.ports.Start(); err != nil {
+		b.log.Println("Starting bridge error:", err)
+	}
 }
 
 func (b *bridge) Stop() {

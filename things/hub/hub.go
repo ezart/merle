@@ -9,8 +9,8 @@ type hub struct {
 	log *log.Logger
 }
 
-func NewModel(l *log.Logger, demo bool) merle.Thinger {
-	return &hub{log: l}
+func NewModel(log *log.Logger, demo bool) merle.Thinger {
+	return &hub{log: log}
 }
 
 func (h *hub) BridgeSubscribe() merle.Subscribers {

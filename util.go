@@ -21,10 +21,3 @@ func defaultId(id string) string {
 	}
 	return id
 }
-
-func must(err error) error {
-	if err != nil {
-		log.Println(err)
-	}
-	return err
-}

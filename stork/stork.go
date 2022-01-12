@@ -10,9 +10,9 @@ import (
 	"github.com/scottfeldman/merle/things/chat"
 	"github.com/scottfeldman/merle/things/hub"
 	"github.com/scottfeldman/merle/things/raspi_blink"
-	"github.com/scottfeldman/merle/things/skeleton"
+	"github.com/scottfeldman/merle/things/hello_world"
 	"github.com/scottfeldman/merle/things/test"
-	"log"
+	glog "log"
 )
 
 type stork struct {
@@ -22,18 +22,18 @@ func NewStork() merle.Storker {
 	return &stork{}
 }
 
-func (s *stork) NewThinger(l *log.Logger, model string, demo bool) (merle.Thinger, error) {
+func (s *stork) NewThinger(log *glog.Logger, model string, demo bool) (merle.Thinger, error) {
 
-	var thingers = map[string]func(*log.Logger, bool) merle.Thinger{
+	var thingers = map[string]func(*glog.Logger, bool) merle.Thinger{
 		"test":        test.NewModel,
-		"skeleton":    skeleton.NewModel,
+		"hello_world": hello_world.NewModel,
 		"raspi_blink": raspi_blink.NewModel,
 		"hub":         hub.NewModel,
 		"chat":        chat.NewModel,
 	}
 
 	if thinger, ok := thingers[model]; ok {
-		return thinger(l, demo), nil
+		return thinger(log, demo), nil
 	}
 
 	return nil, fmt.Errorf("Model '%s' unknown", model)

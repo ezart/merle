@@ -8,7 +8,7 @@ import (
 type chat struct {
 }
 
-func NewModel(l *log.Logger, demo bool) merle.Thinger {
+func NewModel(log *log.Logger, demo bool) merle.Thinger {
 	return &chat{}
 }
 

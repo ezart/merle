@@ -16,7 +16,7 @@ type raspi_blink struct {
 	paused    bool
 }
 
-func NewModel(l *log.Logger, demo bool) merle.Thinger {
+func NewModel(log *log.Logger, demo bool) merle.Thinger {
 	return &raspi_blink{demo: demo}
 }
 

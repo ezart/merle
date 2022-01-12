@@ -3,7 +3,7 @@ package merle
 import (
 	"fmt"
 	"html/template"
-	"log"
+	glog "log"
 	"os"
 	"time"
 )
@@ -40,26 +40,26 @@ type Thing struct {
 	templErr    error
 	isBridge    bool
 	bridge      *bridge
-	log         *log.Logger
+	log         *glog.Logger
 }
 
 func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
 	var cfg thingConfig
 	var thinger Thinger
-	var l *log.Logger
+	var log *glog.Logger
 	var err error
 
-	if err = must(config.Parse(&cfg)); err != nil {
+	if err = config.Parse(&cfg); err != nil {
 		return nil, err
 	}
 
 	id := defaultId(cfg.Thing.Id)
 
 	prefix := "[" + id + "] "
-	l = log.New(os.Stderr, prefix, 0)
+	log = glog.New(os.Stderr, prefix, 0)
 
-	thinger, err = stork.NewThinger(l, cfg.Thing.Model, demo)
-	if must(err) != nil {
+	thinger, err = stork.NewThinger(log, cfg.Thing.Model, demo)
+	if err != nil {
 		return nil, err
 	}
 
@@ -71,8 +71,8 @@ func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
 		name:        cfg.Thing.Name,
 		startupTime: time.Now(),
 		config:      config,
-		bus:         newBus(l, 10, thinger.Subscribe()),
-		log:         l,
+		bus:         newBus(log, 10, thinger.Subscribe()),
+		log:         log,
 	}
 
 	t.tunnel = newTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
@@ -85,8 +85,8 @@ func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
 
 	_, t.isBridge = t.thinger.(bridger)
 	if t.isBridge {
-		t.bridge, err = newBridge(stork, config, t)
-		if must(err) != nil {
+		t.bridge, err = newBridge(log, stork, config, t)
+		if err != nil {
 			return nil, err
 		}
 	}
