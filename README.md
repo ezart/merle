@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/pkg.dev.go/github.com/scottfeldman/merle.svg)](https://pkg.go.dev/github.com/scottfeldman/merle)
 
-Merle is a framework for building web-apps for your IoT project.
+Merle is a framework for building secure web-apps for your IoT project.
 
 Put your **Thing** on the **Internet** with Merle.
 
@@ -20,7 +20,7 @@ go get github.com/scottfeldman/merle
 
 ## Quick Start
 
-Merle includes a library of [Things](things/) already built and tested.  Let's pick a quintessential one for the Quickstart: a Raspberry Pi LED blinker.  Here's the hardware setup:
+Merle includes a library of [Things](things/) already built and tested.  Let's pick a quintessential one for the Quickstart: a Raspberry Pi LED blinker[^1].  Here's the hardware setup:
 
 ![raspi_blink](web/images/raspi_blink/led-gpio17-off-small.png)
 
@@ -77,6 +77,8 @@ Open a web browser to localhost and see your Thing running!  Click the button to
 ![raspi_blink](web/images/raspi_blink/led-gpio17-animation.gif?raw=true)
 
 Notice the LED state is always synced between the real hardware LED and the LED shown in the browser.  This is a feature of Merle: the state of hardware is maintained across all views.  To prove it, open another browser window on localhost.  Both views into localhost and the hardware are synced.
+
+[^1]: This Thing was built using the excellent robotics library [GoBot](https://gobot.io) for hardware access.
 
 ## Explore more
 
