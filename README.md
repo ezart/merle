@@ -90,7 +90,7 @@ Code for this Raspberry Pi LED blinker is in two parts:
   - Back-end: [Thing code](things/raspi_blink/raspi_blink.go)
   - Front-end: [HTML](web/templates/raspi_blink.html), [Javascript](web/js/raspi_blink.js), and [CSS](web/css/raspi_blink.css)
 
-Wait, localhost is not the internet!  
+Wait, localhost is not the Internet!  How do I get my Thing on the Internet?
 
 Continue on to [Quick Start, Part II](README-QS2.md) to learn how put your device on the Internet.
 
