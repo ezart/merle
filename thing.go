@@ -24,7 +24,7 @@ type Thinger interface {
 }
 
 // Thing's backing structure
-type Thing struct {
+type thing struct {
 	thinger     Thinger
 	status      string
 	id          string
@@ -43,7 +43,7 @@ type Thing struct {
 	log         *glog.Logger
 }
 
-func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
+func newThing(stork Storker, config Configurator, demo bool) (*thing, error) {
 	var cfg thingConfig
 	var thinger Thinger
 	var log *glog.Logger
@@ -63,7 +63,7 @@ func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
 		return nil, err
 	}
 
-	t := &Thing{
+	t := &thing{
 		thinger:     thinger,
 		status:      "online",
 		id:          id,
@@ -93,7 +93,17 @@ func NewThing(stork Storker, config Configurator, demo bool) (*Thing, error) {
 
 	t.bus.subscribe("GetIdentity", t.getIdentity)
 
-	return t, nil
+	return t, err
+}
+
+func RunThing(stork Storker, config Configurator, demo bool) error {
+
+	thing, err := newThing(stork, config, demo)
+	if err != nil {
+		return err
+	}
+
+	return thing.run()
 }
 
 type msgIdentity struct {
@@ -105,7 +115,7 @@ type msgIdentity struct {
 	StartupTime time.Time
 }
 
-func (t *Thing) getIdentity(p *Packet) {
+func (t *thing) getIdentity(p *Packet) {
 	resp := msgIdentity{
 		Msg:         "ReplyIdentity",
 		Status:      t.status,
@@ -117,18 +127,14 @@ func (t *Thing) getIdentity(p *Packet) {
 	p.Marshal(&resp).Reply()
 }
 
-func (t *Thing) Id() string {
-	return t.id
-}
-
-func (t *Thing) getChild(id string) *Thing {
+func (t *thing) getChild(id string) *thing {
 	if !t.isBridge {
 		return nil
 	}
 	return t.bridge.getChild(id)
 }
 
-func (t *Thing) Start() error {
+func (t *thing) run() error {
 
 	t.private.start()
 	t.public.start()
@@ -154,7 +160,7 @@ func (t *Thing) Start() error {
 }
 
 // Run a copy of the thing (shadow thing) in the bridge.
-func (t *Thing) runInBridge(p *port) {
+func (t *thing) runInBridge(p *port) {
 	var name = fmt.Sprintf("port:%d", p.port)
 	var sock = newWebSocket(name, p.ws)
 	var pkt = newPacket(t.bus, sock, nil)

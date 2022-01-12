@@ -17,7 +17,7 @@ import (
 var upgrader = websocket.Upgrader{}
 
 // Open a websocket on the thing
-func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
+func (t *thing) ws(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	vars := mux.Vars(r)
@@ -71,7 +71,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 }
 
 // Some things to pass into the thing's HTML template
-func (t *Thing) homeParams(r *http.Request) interface{} {
+func (t *thing) homeParams(r *http.Request) interface{} {
 	scheme := "wss://"
 	if r.TLS == nil {
 		scheme = "ws://"
@@ -95,7 +95,7 @@ func (t *Thing) homeParams(r *http.Request) interface{} {
 }
 
 // Open the thing's home page
-func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
+func (t *thing) home(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -112,7 +112,7 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if id != "" && id != t.Id() {
+	if id != "" && id != t.id {
 		http.Error(w, "Mismatch on Ids", http.StatusNotFound)
 		return
 	}
@@ -124,7 +124,7 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (t *Thing) pamValidate(user, passwd string) (bool, error) {
+func (t *thing) pamValidate(user, passwd string) (bool, error) {
 	trans, err := pam.StartFunc("", user,
 		func(s pam.Style, msg string) (string, error) {
 			switch s {
@@ -146,7 +146,7 @@ func (t *Thing) pamValidate(user, passwd string) (bool, error) {
 	return true, nil
 }
 
-func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
+func (t *thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// skip basic authentication if no user
@@ -187,7 +187,7 @@ type webPrivate struct {
 	server *http.Server
 }
 
-func newWebPrivate(t *Thing, port uint) *webPrivate {
+func newWebPrivate(t *thing, port uint) *webPrivate {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 
 	mux := mux.NewRouter()
@@ -245,7 +245,7 @@ type webPublic struct {
 	server *http.Server
 }
 
-func newWebPublic(t *Thing, user string, port uint) *webPublic {
+func newWebPublic(t *thing, user string, port uint) *webPublic {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 
 	fs := http.FileServer(http.Dir("web"))

@@ -38,18 +38,18 @@ type bridger interface {
 }
 
 // Children are the things connected to the bridge
-type children map[string]*Thing
+type children map[string]*thing
 
 type bridge struct {
 	log      *log.Logger
 	stork    Storker
-	thing    *Thing
+	thing    *thing
 	children children
 	bus      *bus
 	ports    *ports
 }
 
-func newBridge(log *log.Logger, stork Storker, config Configurator, thing *Thing) (*bridge, error) {
+func newBridge(log *log.Logger, stork Storker, config Configurator, thing *thing) (*bridge, error) {
 	var cfg bridgeConfig
 
 	if err := config.Parse(&cfg); err != nil {
@@ -75,7 +75,7 @@ func newBridge(log *log.Logger, stork Storker, config Configurator, thing *Thing
 	return b, nil
 }
 
-func (b *bridge) getChild(id string) *Thing {
+func (b *bridge) getChild(id string) *thing {
 	if child, ok := b.children[id]; ok {
 		return child
 	}
@@ -90,7 +90,7 @@ type SpamStatus struct {
 	Status string
 }
 
-func (b *bridge) changeStatus(child *Thing, sock *wireSocket, status string) {
+func (b *bridge) changeStatus(child *thing, sock *wireSocket, status string) {
 	child.status = status
 
 	spam := SpamStatus{
@@ -104,7 +104,7 @@ func (b *bridge) changeStatus(child *Thing, sock *wireSocket, status string) {
 	b.bus.receive(newPacket(b.bus, sock, &spam))
 }
 
-func (b *bridge) runChild(p *port, child *Thing) {
+func (b *bridge) runChild(p *port, child *thing) {
 	bridgeSock := newWireSocket("bridge sock", b.bus, nil)
 	childSock := newWireSocket("child sock", child.bus, bridgeSock)
 	bridgeSock.opposite = childSock
@@ -125,7 +125,7 @@ func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
 
 	// TODO think about if it makes sense to allow you to be your own Mother?
 
-	if b.thing.Id() == msg.Id {
+	if b.thing.id == msg.Id {
 		return fmt.Errorf("Sorry, you can't be your own Mother")
 	}
 
@@ -133,7 +133,7 @@ func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
 
 	if child == nil {
 		config := newChildConfig(msg.Id, msg.Model, msg.Name)
-		child, err = NewThing(b.stork, config, false)
+		child, err = newThing(b.stork, config, false)
 		if err != nil {
 			return fmt.Errorf("Creating new Thing failed: %s", err)
 		}

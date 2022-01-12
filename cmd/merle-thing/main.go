@@ -12,12 +12,6 @@ import (
 	"os"
 )
 
-func must(err error) {
-	if err != nil {
-		log.Fatalln(err)
-	}
-}
-
 func main() {
 	if os.Geteuid() != 0 {
 		log.Fatalln("Must run as root")
@@ -33,8 +27,5 @@ func main() {
 	config := merle.NewYamlConfig(*cfgFile)
 	stork := stork.NewStork()
 
-	thing, err := merle.NewThing(stork, config, *demo)
-	must(err)
-
-	must(thing.Start())
+	log.Fatalln(merle.RunThing(stork, config, *demo))
 }
