@@ -20,7 +20,7 @@ go get github.com/scottfeldman/merle
 
 Merle includes a library of [Things](things/) already built and tested.  Let's pick a quintessential one for the Quickstart: a Raspberry Pi LED blinker.  Here's the hardware setup:
 
-![raspi_blink](web/images/raspi_blink/led-gpio17-off-small.png?raw=true)
+![raspi_blink](web/images/raspi_blink/led-gpio17-off-small.png)
 
 Hardware needed: Rapsberry Pi (any model except Pico), a LED, a 120ohm resistor and some wire.  Wire the LED and resistor to gpio pin 17 and ground as shown.
 
