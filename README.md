@@ -80,17 +80,19 @@ Notice the LED state is always synced between the real hardware LED and the LED 
 
 [^1]: This Thing was built using the excellent robotics library [GoBot](https://gobot.io) for hardware access.
 
+Code for this Raspberry Pi LED blinker is in two parts:
+  - Back-end: [Thing code](things/raspi_blink/raspi_blink.go)
+  - Front-end*: [HTML](web/templates/raspi_blink.html), [Javascript](web/js/raspi_blink.js), and [CSS](web/css/raspi_blink.css)
+
 ## Explore more
 
-- Code for Raspberry Pi LED blinker
-  - [Thing code](things/raspi_blink/raspi_blink.go)
-  - Front-end*: [HTML](web/templates/raspi_blink.html), [Javascript](web/js/raspi_blink.js), and [CSS](web/css/raspi_blink.css)
+- Getting started
 - Tutorials
   - Hello World
   - GPS locator
   - Controller
 - Security
-- Networking
+- Networking  (Networking?  Yes, Merle is also a network for your Things)
 
 ## Documentation
 
