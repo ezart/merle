@@ -2,7 +2,9 @@
 
 [![Go Reference](https://pkg.go.dev/badge/pkg.dev.go/github.com/scottfeldman/merle.svg)](https://pkg.go.dev/github.com/scottfeldman/merle)
 
-Merle is a framework for building web-apps for your IoT project.  Put your Thing on the Internet using Merle.
+Merle is a framework for building web-apps for your IoT project.
+
+Put your **Thing** on the **Internet** using Merle.
 
 Merle uses the Go programming language and javascript.
 
