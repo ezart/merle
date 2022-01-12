@@ -82,15 +82,17 @@ Open a web browser to localhost and see your Thing running!  Click the button to
 
 ![raspi_blink](web/images/raspi_blink/led-gpio17-animation.gif?raw=true)
 
-Notice the LED state is always synced between the real hardware LED and the LED shown in the browser.  This is a feature of Merle: the state of hardware is maintained across all views.  To prove it, open another browser window on localhost.  Both views into localhost and the hardware are synced.
+Notice the LED state is always synced between the hardware LED and the LED shown in the browser.  Open another browser window to localhost.  Now both browsers and the hardware LEDs are synced.  This is the first principle of Merle:
 
-[^1]: This Thing was built using the excellent robotics library [GoBot](https://gobot.io) for hardware access.
+### Principle #1: The Thing is the truth and all views of the Thing hold this truth.
 
 Code for this Raspberry Pi LED blinker is in two parts:
   - Back-end: [Thing code](things/raspi_blink/raspi_blink.go)
   - Front-end: [HTML](web/templates/raspi_blink.html), [Javascript](web/js/raspi_blink.js), and [CSS](web/css/raspi_blink.css)
 
-Wait, localhost is not the internet!  How do I get my Thing on the Internet?  Continue on to [Quick Start, Part II](README-QS2.md) to learn how.
+Wait, localhost is not the internet!  
+
+Continue on to [Quick Start, Part II](README-QS2.md) to learn how put your device on the Internet.
 
 ## Explore more
 
@@ -115,3 +117,5 @@ For contribution guidelines, please go to [here](https://github.com/scottfeldman
 
 ## License
 Copyright (c) 2021-2022 Scott Feldman (sfeldma@gmail.com).  Licensed under the [BSD 3-Clause License](https://github.com/scottfeldman/merle/blob/main/LICENSE)
+
+[^1]: This Thing was built using the excellent robotics library [GoBot](https://gobot.io) for hardware access.
