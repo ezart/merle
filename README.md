@@ -18,7 +18,7 @@ go get github.com/scottfeldman/merle
 
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vSkx75Ta5MePFXAM_O1C5voMNJ8aguUg8ahdgCNCw9MTpOkI3wgeFrcEUpYfoN0-_OFyQe37uAmVnRk/pub?w=419&amp;h=424">
 
-## Quick Start
+## Quick Start (Part I)
 
 Merle includes a library of [Things](things/README.md) already built and tested.  Let's pick a quintessential one for the Quickstart: a Raspberry Pi LED blinker[^1].  Here's the hardware setup:
 
@@ -89,6 +89,8 @@ Notice the LED state is always synced between the real hardware LED and the LED 
 Code for this Raspberry Pi LED blinker is in two parts:
   - Back-end: [Thing code](things/raspi_blink/raspi_blink.go)
   - Front-end: [HTML](web/templates/raspi_blink.html), [Javascript](web/js/raspi_blink.js), and [CSS](web/css/raspi_blink.css)
+
+Wait, localhost is not the internet!  How do I get my Thing on the Internet?  Continue on to [Quick Start, Part II](README-QS2.md) to learn how.
 
 ## Explore more
 
