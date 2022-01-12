@@ -70,9 +70,11 @@ sudo ../go/bin/merle-thing --demo
 
 The hardware LED should blink on/off every second.
 
-Open a web browser to localhost and see your Thing running!  Click the button to pause and resume the LED blinking.  Notice the LED state is always synced between the real hardware LED and the LED shown in the browser.  This is a feature of Merle: the state of hardware is maintained across all views.
+Open a web browser to localhost and see your Thing running!  Click the button to pause and resume the LED blinking.  
 
 ![raspi_blink](web/images/raspi_blink/led-gpio17-animation.gif?raw=true)
+
+Notice the LED state is always synced between the real hardware LED and the LED shown in the browser.  This is a feature of Merle: the state of hardware is maintained across all views.  To prove it, open another browser window on localhost.  Both views into localhost and the hardware are synced.
 
 ## Explore more
 
