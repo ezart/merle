@@ -16,7 +16,9 @@ go get github.com/scottfeldman/merle
 
 ## Architecture
 
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vSkx75Ta5MePFXAM_O1C5voMNJ8aguUg8ahdgCNCw9MTpOkI3wgeFrcEUpYfoN0-_OFyQe37uAmVnRk/pub?w=419&amp;h=424">
+2000 words
+
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vSkx75Ta5MePFXAM_O1C5voMNJ8aguUg8ahdgCNCw9MTpOkI3wgeFrcEUpYfoN0-_OFyQe37uAmVnRk/pub?w=1400&amp;h=580">
 
 ## Quick Start, Part I
 
@@ -93,16 +95,6 @@ Code for this Raspberry Pi LED blinker is in two parts:
 Wait, localhost is not the Internet!  How do I get my Thing on the Internet?
 
 Continue on to [Quick Start, Part II](README-QS2.md) to learn how put your device on the Internet.
-
-## Explore more
-
-- Getting started
-- Tutorials
-  - Hello World
-  - GPS locator
-  - Controller
-- Security
-- Networking  (Networking?  Yes, Merle is also a network for your Things)
 
 ## Documentation
 
