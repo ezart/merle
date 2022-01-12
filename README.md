@@ -8,15 +8,15 @@ Put your **Thing** on the **Internet** with Merle.
 
 Merle uses the Go programming language and javascript.
 
-## Architecture
-
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vSkx75Ta5MePFXAM_O1C5voMNJ8aguUg8ahdgCNCw9MTpOkI3wgeFrcEUpYfoN0-_OFyQe37uAmVnRk/pub?w=419&amp;h=424">
-
 ## Installation
 
 ```sh
 go get github.com/scottfeldman/merle
 ```
+
+## Architecture
+
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vSkx75Ta5MePFXAM_O1C5voMNJ8aguUg8ahdgCNCw9MTpOkI3wgeFrcEUpYfoN0-_OFyQe37uAmVnRk/pub?w=419&amp;h=424">
 
 ## Quick Start
 
@@ -24,7 +24,13 @@ Merle includes a library of [Things](things/README.md) already built and tested.
 
 ![raspi_blink](web/images/raspi_blink/led-gpio17-off-small.png)
 
-Hardware needed: Rapsberry Pi (any model except Pico), a LED, a 120ohm resistor and some wire.  Wire the LED and resistor to gpio pin 17 and ground as shown.
+Hardware list:
+- Rapsberry Pi (any model except Pico)
+- An LED
+- A 120ohm resistor
+- some wire.
+
+Wire the LED and resistor to GPIO pin 17 and ground as shown.
 
 **Don't worry if you don't have the hardware on hand; we can run the Thing in demo-mode to similate the hardare.  All that's need for demo-mode is a system with [Go](https://go.dev/) installed.**
 
@@ -82,7 +88,7 @@ Notice the LED state is always synced between the real hardware LED and the LED 
 
 Code for this Raspberry Pi LED blinker is in two parts:
   - Back-end: [Thing code](things/raspi_blink/raspi_blink.go)
-  - Front-end*: [HTML](web/templates/raspi_blink.html), [Javascript](web/js/raspi_blink.js), and [CSS](web/css/raspi_blink.css)
+  - Front-end: [HTML](web/templates/raspi_blink.html), [Javascript](web/js/raspi_blink.js), and [CSS](web/css/raspi_blink.css)
 
 ## Explore more
 
