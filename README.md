@@ -18,7 +18,7 @@ go get github.com/scottfeldman/merle
 
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vSkx75Ta5MePFXAM_O1C5voMNJ8aguUg8ahdgCNCw9MTpOkI3wgeFrcEUpYfoN0-_OFyQe37uAmVnRk/pub?w=419&amp;h=424">
 
-## Quick Start (Part I)
+## Quick Start, Part I
 
 Merle includes a library of [Things](things/README.md) already built and tested.  Let's pick a quintessential one for the Quickstart: a Raspberry Pi LED blinker[^1].  Here's the hardware setup:
 
