@@ -12,6 +12,7 @@ import (
 	"github.com/scottfeldman/merle/things/raspi_blink"
 	"github.com/scottfeldman/merle/things/hello_world"
 	"github.com/scottfeldman/merle/things/test"
+	"github.com/scottfeldman/merle/things/prime"
 	glog "log"
 )
 
@@ -30,6 +31,7 @@ func (s *stork) NewThinger(log *glog.Logger, model string, demo bool) (merle.Thi
 		"raspi_blink": raspi_blink.NewModel,
 		"hub":         hub.NewModel,
 		"chat":        chat.NewModel,
+		"prime":       prime.NewModel,
 	}
 
 	if thinger, ok := thingers[model]; ok {

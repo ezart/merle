@@ -69,7 +69,9 @@ func newBridge(log *log.Logger, stork Storker, config Configurator, thing *thing
 
 	b.ports = newPorts(thing.log, cfg.Bridge.Max, cfg.Bridge.Match, b.attachCb)
 
+	b.thing.bus.subscribe("GetOnlyChild", b.getOnlyChild)
 	b.thing.bus.subscribe("GetChildren", b.getChildren)
+
 	b.thing.private.handleFunc("/port/{id}", b.getPort)
 
 	return b, nil
@@ -155,6 +157,7 @@ func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
 }
 
 type msgChild struct {
+	Msg    string
 	Id     string
 	Model  string
 	Name   string
@@ -166,10 +169,24 @@ type msgChildren struct {
 	Children []msgChild
 }
 
+func (b *bridge) getOnlyChild(p *Packet) {
+	for _, child := range b.children {
+		resp := msgChild{
+			Msg: "ReplyOnlyChild",
+			Id: child.id,
+			Model: child.model,
+			Name: child.name,
+			Status: child.status,
+		}
+		p.Marshal(&resp).Reply()
+		break
+	}
+}
+
 func (b *bridge) getChildren(p *Packet) {
 	resp := msgChildren{Msg: "ReplyChildren"}
 	for _, child := range b.children {
-		resp.Children = append(resp.Children, msgChild{child.id,
+		resp.Children = append(resp.Children, msgChild{"", child.id,
 			child.model, child.name, child.status})
 	}
 	p.Marshal(&resp).Reply()
