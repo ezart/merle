@@ -9,7 +9,7 @@ function sendForOnlyChild() {
 function showOnlyChild(msg) {
 	var iframe = document.getElementById("child")
 	// force refresh of child by using getTime() trick
-	iframe.src = "/" + encodeURIComponent(Msg.id) + "?t=" + new Date().getTime()
+	iframe.src = "/" + encodeURIComponent(msg.Id) + "?t=" + new Date().getTime()
 }
 
 function Run(scheme, host, id) {

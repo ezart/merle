@@ -149,7 +149,7 @@ func (p *port) attach(match string, cb portAttachCb) {
 	}
 
 	if !matched {
-		p.log.Printf("Port[%d] Thing %s didn't match filter %s; not attaching",
+		p.log.Printf("Port[%d] Thing [%s] didn't match filter [%s]; not attaching",
 			p.port, spec, match)
 		return
 	}
