@@ -27,6 +27,5 @@ func (t *hello_world) Template() string {
 
 func (t *hello_world) Run(p *merle.Packet) {
 	t.log.Println("Hello World!")
-	for {
-	}
+	select{}
 }

@@ -39,8 +39,8 @@ func (ws *webSocket) Name() string {
 
 // Wire socket
 type wireSocket struct {
-	name string
-	bus  *bus
+	name     string
+	bus      *bus
 	opposite *wireSocket
 }
 

@@ -12,7 +12,7 @@ type bridgeConfig struct {
 	Bridge struct {
 		// Maximum number of things (children) that can connect to the
 		// bridge
-		Max   uint   `yaml:"Max"`
+		Max uint `yaml:"Max"`
 		// Match is a regular expresion (re) to specifiy which things
 		// can connect to the bridge.  The re matches against three
 		// fields of the thing, ID, Model, and Name.  The re is
@@ -172,10 +172,10 @@ type msgChildren struct {
 func (b *bridge) getOnlyChild(p *Packet) {
 	for _, child := range b.children {
 		resp := msgChild{
-			Msg: "ReplyOnlyChild",
-			Id: child.id,
-			Model: child.model,
-			Name: child.name,
+			Msg:    "ReplyOnlyChild",
+			Id:     child.id,
+			Model:  child.model,
+			Name:   child.name,
 			Status: child.status,
 		}
 		p.Marshal(&resp).Reply()

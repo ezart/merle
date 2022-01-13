@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"github.com/scottfeldman/merle"
 	"github.com/scottfeldman/merle/things/chat"
-	"github.com/scottfeldman/merle/things/hub"
-	"github.com/scottfeldman/merle/things/raspi_blink"
 	"github.com/scottfeldman/merle/things/hello_world"
-	"github.com/scottfeldman/merle/things/test"
+	"github.com/scottfeldman/merle/things/hub"
 	"github.com/scottfeldman/merle/things/prime"
+	"github.com/scottfeldman/merle/things/raspi_blink"
+	"github.com/scottfeldman/merle/things/test"
 	glog "log"
 )
 

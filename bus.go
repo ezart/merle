@@ -17,7 +17,7 @@ type Subscriber struct {
 	Msg string
 	// The callback to call when a packet message matches.  To drop a
 	// packet, specify nil for the callback.
-	Cb  func(*Packet)
+	Cb func(*Packet)
 }
 
 // Subscibers is a list of subscribers.  On packet receipt, the subscribers are

@@ -15,7 +15,7 @@ func NewModel(log *log.Logger, demo bool) merle.Thinger {
 
 func (h *hub) BridgeSubscribe() merle.Subscribers {
 	return merle.Subscribers{
-		{ ".*", nil }, // drop everything
+		{".*", nil}, // drop everything
 	}
 }
 
@@ -32,6 +32,5 @@ func (h *hub) Template() string {
 }
 
 func (h *hub) Run(p *merle.Packet) {
-	for {
-	}
+	select {}
 }

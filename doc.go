@@ -3,5 +3,5 @@
 // in the LICENSE file.
 
 /*
-*/
+ */
 package merle
