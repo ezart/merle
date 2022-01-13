@@ -11,6 +11,7 @@ let status
 let startupTime
 let ledState = false
 let paused = false
+let timerRunning = false
 let refreshTimer
 
 function sendForIdentity() {
@@ -100,9 +101,15 @@ function refreshAll() {
 	refreshLed()
 	refreshButton()
 	refreshUptime()
-	if (typeof refreshTimer == 'undefined') {
-		refreshTimer = setInterval(refreshUptime, 1000 * 60)  // once a sec
+	if (timerRunning) {
+		clearInterval(refreshTimer)
 	}
+	var date = new Date();
+	setTimeout(function() {
+		refreshTimer = setInterval(refreshUptime, 60000);
+		timerRunning = true
+		refreshUptime()
+	}, (60 - date.getSeconds()) * 1000); // every minute, on the minute
 }
 
 function updateStatus(msg) {
@@ -129,7 +136,9 @@ function Run(scheme, host, id) {
 	}
 
 	conn.onclose = function(evt) {
-		clearInterval(refreshTimer)
+		if (timerRunning) {
+			clearInterval(refreshTimer)
+		}
 		location.reload(true)
 	}
 
