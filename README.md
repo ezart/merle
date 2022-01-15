@@ -48,34 +48,28 @@ Build Merle:
 go install ./...
 ```
 
-Before we run Merle on your Thing, we need to configure Merle for your Thing.  Merle gets the Thing configuration from /etc/merle/thing.yml.  As sudo, let's create and edit the /etc/merle/thing.yml file.
-
-```sh
-sudo mkdir /etc/merle
-sudo vi /etc/merle/thing.yml
-```
-
-Add this to /etc/merle/thing.yml:
+Next, we need to configure your Thing.  Edit a new configuration file "thing.yml" and copy in this content:
 
 ```yaml
-# Thing configuration
 Thing:
   Model: raspi_blink
   Name: quickstart
   PortPublic: 80
 ```
 
-Now start Merle on your Thing:
+"raspi_blink" is the Thing model.  "quickstart" is the Thing name.  Merle creates an HTTP server listening on port PortPublic.
+
+Now start Merle on your Thing using the configuration file:
 
 ````sh
-sudo ../go/bin/merle-thing
+sudo ../go/bin/merle-thing --config thing.yml
 ````
 
 Or, for demo mode, add --demo:
 
 
 ````sh
-sudo ../go/bin/merle-thing --demo
+sudo ../go/bin/merle-thing --config thing.yml --demo
 ````
 
 The hardware LED should blink on/off every second.
