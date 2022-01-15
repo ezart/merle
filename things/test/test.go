@@ -13,12 +13,13 @@ func NewModel(tlog *log.Logger, demo bool) merle.Thinger {
 	return &test{log: tlog}
 }
 
-func (t *test) cb(p *merle.Packet) {
+func (t *test) run(p *merle.Packet) {
+	select{}
 }
 
 func (t *test) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
-		{"msg", t.cb},
+		{"CmdRun", t.run},
 	}
 }
 
@@ -38,9 +39,4 @@ func (t *test) Config(config merle.Configurator) error {
 
 func (t *test) Template() string {
 	return "web/templates/test.html"
-}
-
-func (t *test) Run(p *merle.Packet) {
-	t.log.Println("run")
-	select{}
 }

@@ -34,7 +34,6 @@ type bus struct {
 	sockets  sockets
 	socketQ  socketQ
 	// message subscribers
-	subLock sync.RWMutex
 	subs    Subscribers
 }
 
@@ -68,10 +67,8 @@ func (b *bus) unplug(s socketer) {
 
 // Subscribe to message
 func (b *bus) subscribe(msg string, f func(*Packet)) {
-	b.subLock.Lock()
 	// add to front of array for highest priority
 	b.subs = append([]Subscriber{{msg, f}}, b.subs...)
-	b.subLock.Unlock()
 }
 
 // Receive matches the packet against subscriber.  The first matching
@@ -80,9 +77,6 @@ func (b *bus) subscribe(msg string, f func(*Packet)) {
 func (b *bus) receive(p *Packet) error {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
-
-	b.subLock.RLock()
-	defer b.subLock.RUnlock()
 
 	// TODO optimization: compile regexps
 

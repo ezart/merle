@@ -19,8 +19,14 @@ func (t *prime) BridgeSubscribe() merle.Subscribers {
 	}
 }
 
+func (t *prime) run(p *merle.Packet) {
+	select {}
+}
+
 func (t *prime) Subscribe() merle.Subscribers {
-	return merle.Subscribers{}
+	return merle.Subscribers{
+		{"CmdRun", t.run},
+	}
 }
 
 func (t *prime) Config(config merle.Configurator) error {
@@ -29,8 +35,4 @@ func (t *prime) Config(config merle.Configurator) error {
 
 func (t *prime) Template() string {
 	return "web/templates/prime.html"
-}
-
-func (t *prime) Run(p *merle.Packet) {
-	select {}
 }

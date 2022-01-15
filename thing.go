@@ -18,9 +18,6 @@ type Thinger interface {
 	Config(Configurator) error
 	// Path to thing's home page template
 	Template() string
-	// Thing run loop.  This loop should run forever.  The supplied packet
-	// can be used to broadcast messages on the bus.
-	Run(p *Packet)
 }
 
 // Thing's backing structure
@@ -144,7 +141,8 @@ func (t *thing) run() error {
 		t.bridge.Start()
 	}
 
-	t.thinger.Run(newPacket(t.bus, nil, nil))
+	msg := struct{ Msg string }{Msg: "CmdRun"}
+	t.bus.receive(newPacket(t.bus, nil, &msg))
 
 	if t.isBridge {
 		t.bridge.Stop()
@@ -156,7 +154,7 @@ func (t *thing) run() error {
 
 	t.bus.close()
 
-	return fmt.Errorf("Run() didn't run forever")
+	return fmt.Errorf("CmdRun didn't run forever")
 }
 
 // Run a copy of the thing (shadow thing) in the bridge.

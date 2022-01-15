@@ -19,8 +19,14 @@ func (h *hub) BridgeSubscribe() merle.Subscribers {
 	}
 }
 
+func (h *hub) run(p *merle.Packet) {
+	select {}
+}
+
 func (h *hub) Subscribe() merle.Subscribers {
-	return merle.Subscribers{}
+	return merle.Subscribers{
+		{"CmdRun", h.run},
+	}
 }
 
 func (h *hub) Config(config merle.Configurator) error {
@@ -29,8 +35,4 @@ func (h *hub) Config(config merle.Configurator) error {
 
 func (h *hub) Template() string {
 	return "web/templates/hub.html"
-}
-
-func (h *hub) Run(p *merle.Packet) {
-	select {}
 }

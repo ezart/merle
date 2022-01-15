@@ -83,25 +83,6 @@ func (r *raspi_blink) toggle() {
 	}
 }
 
-func (r *raspi_blink) Subscribe() merle.Subscribers {
-	return merle.Subscribers{
-		{"GetPaused", r.sendPaused},
-		{"ReplyPaused", r.savePaused},
-		{"CmdPause", r.pause},
-		{"CmdResume", r.resume},
-		{"CmdStart", r.start},
-		{"SpamLedState", r.ledState},
-	}
-}
-
-func (r *raspi_blink) Config(config merle.Configurator) error {
-	return nil
-}
-
-func (r *raspi_blink) Template() string {
-	return "web/templates/raspi_blink.html"
-}
-
 func (r *raspi_blink) sendLedState(p *merle.Packet) {
 	spam := spamLedState{
 		Msg:   "SpamLedState",
@@ -110,7 +91,7 @@ func (r *raspi_blink) sendLedState(p *merle.Packet) {
 	p.Marshal(&spam).Broadcast()
 }
 
-func (r *raspi_blink) Run(p *merle.Packet) {
+func (r *raspi_blink) run(p *merle.Packet) {
 	r.adaptor = raspi.NewAdaptor()
 	r.adaptor.Connect()
 
@@ -131,4 +112,24 @@ func (r *raspi_blink) Run(p *merle.Packet) {
 			}
 		}
 	}
+}
+
+func (r *raspi_blink) Subscribe() merle.Subscribers {
+	return merle.Subscribers{
+		{"CmdRun", r.run},
+		{"GetPaused", r.sendPaused},
+		{"ReplyPaused", r.savePaused},
+		{"CmdPause", r.pause},
+		{"CmdResume", r.resume},
+		{"CmdStart", r.start},
+		{"SpamLedState", r.ledState},
+	}
+}
+
+func (r *raspi_blink) Config(config merle.Configurator) error {
+	return nil
+}
+
+func (r *raspi_blink) Template() string {
+	return "web/templates/raspi_blink.html"
 }
