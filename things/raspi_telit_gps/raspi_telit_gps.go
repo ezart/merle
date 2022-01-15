@@ -85,11 +85,24 @@ func (t *thing) getLocation(p *merle.Packet) {
 	p.Marshal(&msg).Reply()
 }
 
+func (t *thing) saveLocation(p *merle.Packet) {
+	var msg msgLocation
+	p.Unmarshal(&msg)
+	t.location = msg.Location
+	p.Broadcast()
+}
+
+func (t *thing) start(p *merle.Packet) {
+	msg := struct{ Msg string }{Msg: "GetLocation"}
+	p.Marshal(&msg).Reply()
+}
+
 func (t *thing) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
 		{"CmdRun", t.run},
+		{"CmdStart", t.start},
 		{"GetLocation", t.getLocation},
-		{"Location", merle.Broadcast},
+		{"Location", t.saveLocation},
 	}
 }
 
