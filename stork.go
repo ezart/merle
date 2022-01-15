@@ -11,4 +11,6 @@ type Storker interface {
 	// simulated or synthetized data, not relying on an external source for
 	// the data.
 	NewThinger(log *log.Logger, model string, demo bool) (Thinger, error)
+	// Return a list of models support by stork
+	Models() ([]string)
 }

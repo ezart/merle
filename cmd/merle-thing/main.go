@@ -6,6 +6,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/scottfeldman/merle"
 	"github.com/scottfeldman/merle/stork"
 	"log"
@@ -21,11 +22,20 @@ func main() {
 
 	cfgFile := flag.String("config", "/etc/merle/thing.yml", "Config File")
 	demo := flag.Bool("demo", false, "Run Thing in demo mode; will simulate I/O")
+	models := flag.Bool("models", false, "Print a list models")
 
 	flag.Parse()
 
-	config := merle.NewYamlConfig(*cfgFile)
 	stork := stork.NewStork()
+
+	if *models {
+		for _, model := range stork.Models() {
+			fmt.Println(model)
+		}
+		return
+	}
+
+	config := merle.NewYamlConfig(*cfgFile)
 
 	log.Fatalln(merle.RunThing(stork, config, *demo))
 }

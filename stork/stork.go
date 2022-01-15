@@ -15,6 +15,7 @@ import (
 	"github.com/scottfeldman/merle/things/raspi_telit_gps"
 	"github.com/scottfeldman/merle/things/test"
 	glog "log"
+	"sort"
 )
 
 type stork struct {
@@ -24,21 +25,29 @@ func NewStork() merle.Storker {
 	return &stork{}
 }
 
-func (s *stork) NewThinger(log *glog.Logger, model string, demo bool) (merle.Thinger, error) {
+var thingers = map[string]func(*glog.Logger, bool) merle.Thinger{
+	"test":            test.NewModel,
+	"hello_world":     hello_world.NewModel,
+	"raspi_blink":     raspi_blink.NewModel,
+	"raspi_telit_gps": raspi_telit_gps.NewModel,
+	"hub":             hub.NewModel,
+	"chat":            chat.NewModel,
+	"prime":           prime.NewModel,
+}
 
-	var thingers = map[string]func(*glog.Logger, bool) merle.Thinger{
-		"test":            test.NewModel,
-		"hello_world":     hello_world.NewModel,
-		"raspi_blink":     raspi_blink.NewModel,
-		"raspi_telit_gps": raspi_telit_gps.NewModel,
-		"hub":             hub.NewModel,
-		"chat":            chat.NewModel,
-		"prime":           prime.NewModel,
-	}
+func (s *stork) NewThinger(log *glog.Logger, model string, demo bool) (merle.Thinger, error) {
 
 	if thinger, ok := thingers[model]; ok {
 		return thinger(log, demo), nil
 	}
 
 	return nil, fmt.Errorf("Model '%s' unknown", model)
+}
+
+func (s *stork) Models() (models []string) {
+	for model, _ := range thingers {
+		models = append(models, model)
+	}
+	sort.Strings(models)
+	return
 }
