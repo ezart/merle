@@ -22,7 +22,9 @@ go get github.com/scottfeldman/merle
 
 ## Quick Start, Part I
 
-Merle includes a library of [Things](things/README.md) already built and tested.  For this quick start, let's pick a quintessential one: a Raspberry Pi LED blinker[^1].  Here's the hardware setup:
+In Part I of the Quick Start, we're going to run an example Thing in Merle on localhost.  The Thing will have access to hardware and present a web-app view on http://localhost:80.  In Part II, we'll see how to run and view the Thing on the Internet.
+
+Merle includes a library of [Things](things/README.md) already built and tested.  For this Quick Start, let's pick a quintessential one: a Raspberry Pi LED blinker[^1].  Here's the hardware setup:
 
 ![raspi_blink](web/images/raspi_blink/led-gpio17-off-small.png)
 
@@ -76,7 +78,7 @@ sudo ../go/bin/merle-thing --config thing.yml --demo
 
 The hardware LED should blink on/off every second.
 
-Open a web browser to localhost and see your Thing running!  Click the button to pause and resume the LED blinking.  
+Open a web browser to http://localhost and see your Thing running!  Click the button to pause and resume the LED blinking.  
 
 ![raspi_blink](web/images/raspi_blink/led-gpio17-animation.gif?raw=true)
 
@@ -88,9 +90,9 @@ Code for this Raspberry Pi LED blinker is in two parts:
   - Back-end: [Thing code](things/raspi_blink/raspi_blink.go)
   - Front-end: [HTML](web/templates/raspi_blink.html), [Javascript](web/js/raspi_blink.js), and [CSS](web/css/raspi_blink.css)
 
-Wait, localhost is not the Internet!  How do I get my Thing on the Internet?
+How do I get my Thing on the Internet?
 
-Continue on to [Quick Start, Part II](README-QS2.md) to learn how put your device on the Internet.
+Continue on to [Quick Start, Part II](README-QS2.md) to learn how put your Thing on the Internet.
 
 ## Documentation
 
