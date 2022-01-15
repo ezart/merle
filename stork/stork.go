@@ -12,6 +12,7 @@ import (
 	"github.com/scottfeldman/merle/things/hub"
 	"github.com/scottfeldman/merle/things/prime"
 	"github.com/scottfeldman/merle/things/raspi_blink"
+	"github.com/scottfeldman/merle/things/raspi_telit_gps"
 	"github.com/scottfeldman/merle/things/test"
 	glog "log"
 )
@@ -26,12 +27,13 @@ func NewStork() merle.Storker {
 func (s *stork) NewThinger(log *glog.Logger, model string, demo bool) (merle.Thinger, error) {
 
 	var thingers = map[string]func(*glog.Logger, bool) merle.Thinger{
-		"test":        test.NewModel,
-		"hello_world": hello_world.NewModel,
-		"raspi_blink": raspi_blink.NewModel,
-		"hub":         hub.NewModel,
-		"chat":        chat.NewModel,
-		"prime":       prime.NewModel,
+		"test":            test.NewModel,
+		"hello_world":     hello_world.NewModel,
+		"raspi_blink":     raspi_blink.NewModel,
+		"raspi_telit_gps": raspi_telit_gps.NewModel,
+		"hub":             hub.NewModel,
+		"chat":            chat.NewModel,
+		"prime":           prime.NewModel,
 	}
 
 	if thinger, ok := thingers[model]; ok {
