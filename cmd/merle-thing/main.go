@@ -14,10 +14,6 @@ import (
 )
 
 func main() {
-	if os.Geteuid() != 0 {
-		log.Fatalln("Must run as root")
-	}
-
 	log.SetFlags(0)
 
 	cfgFile := flag.String("config", "/etc/merle/thing.yml", "Config File")
@@ -33,6 +29,10 @@ func main() {
 			fmt.Println(model)
 		}
 		return
+	}
+
+	if os.Geteuid() != 0 {
+		log.Fatalln("Must run as root")
 	}
 
 	config := merle.NewYamlConfig(*cfgFile)
