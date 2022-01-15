@@ -10,12 +10,28 @@ import (
 // Bridge configuration
 type bridgeConfig struct {
 	Bridge struct {
-		// Maximum number of things (children) that can connect to the
-		// bridge
-		Max uint `yaml:"Max"`
+		// Beginning port number.  The bridge will listen for Thing
+		// (child) connections on the port range [BeginPort-EndPort].
+		//
+		// The bridge port range must be within the system's
+		// ip_local_reserved_ports.
+		//
+		// Set a range using:
+		//
+		//   sudo sysctl -w net.ipv4.ip_local_reserved_ports="8000-8040"
+		//
+		// Or, to persist setting on next boot, add to /etc/sysctl.conf:
+		//
+		//   net.ipv4.ip_local_reserved_ports = 8000-8040
+		//
+		// And then run sudo sysctl -p
+		//
+		BeginPort uint `yaml:"BeginPort"`
+		// Ending port number.
+		EndPort uint `yaml:"EndPort"`
 		// Match is a regular expresion (re) to specifiy which things
 		// can connect to the bridge.  The re matches against three
-		// fields of the thing, ID, Model, and Name.  The re is
+		// fields of the thing: ID, Model, and Name.  The re is
 		// composed with these three fields seperated by ":" character:
 		// "ID:Model:Name".  See
 		// https://github.com/google/re2/wiki/Syntax for regular
@@ -49,7 +65,8 @@ type bridge struct {
 	ports    *ports
 }
 
-func newBridge(log *log.Logger, stork Storker, config Configurator, thing *thing) (*bridge, error) {
+func newBridge(log *log.Logger, stork Storker, config Configurator,
+	thing *thing) (*bridge, error) {
 	var cfg bridgeConfig
 
 	if err := config.Parse(&cfg); err != nil {
@@ -67,7 +84,8 @@ func newBridge(log *log.Logger, stork Storker, config Configurator, thing *thing
 		bus:      newBus(thing.log, 10, bridger.BridgeSubscribe()),
 	}
 
-	b.ports = newPorts(thing.log, cfg.Bridge.Max, cfg.Bridge.Match, b.attachCb)
+	b.ports = newPorts(thing.log, cfg.Bridge.BeginPort, cfg.Bridge.EndPort,
+		cfg.Bridge.Match, b.attachCb)
 
 	b.thing.bus.subscribe("GetOnlyChild", b.getOnlyChild)
 	b.thing.bus.subscribe("GetChildren", b.getChildren)

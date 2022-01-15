@@ -3,7 +3,6 @@ package merle
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"io/ioutil"
 	"log"
 	"net/url"
 	"os/exec"
@@ -28,7 +27,6 @@ type portAttachCb func(*port, *msgIdentity) error
 
 type ports struct {
 	log      *log.Logger
-	max      uint
 	begin    uint
 	end      uint
 	num      uint
@@ -41,10 +39,11 @@ type ports struct {
 	attachCb portAttachCb
 }
 
-func newPorts(log *log.Logger, max uint, match string, attachCb portAttachCb) *ports {
+func newPorts(log *log.Logger, begin, end uint, match string, attachCb portAttachCb) *ports {
 	return &ports{
 		log:      log,
-		max:      max,
+		begin:    begin,
+		end:      end,
 		match:    match,
 		done:     make(chan bool),
 		portMap:  make(map[string]*port),
@@ -210,81 +209,15 @@ func (p *ports) getPort(id string) int {
 	return int(port.port)
 }
 
-func getPortRange() (begin uint, end uint, err error) {
-
-	// Merle uses ip_local_reserved_ports for incoming Thing
-	// connections.
-	//
-	// Set a range using:
-	//
-	//   sudo sysctl -w net.ipv4.ip_local_reserved_ports="8000-8040"
-	//
-	// Or, to persist setting on next boot, add to /etc/sysctl.conf:
-	//
-	//   net.ipv4.ip_local_reserved_ports = 8000-8040
-	//
-	// And then run sudo sysctl -p
-	//
-	// Notes:
-	//
-	//    1) ip_local_reserved_ports range needs to be included in
-	//       ip_local_port_range
-	//
-	//    2) Be careful that Thing.portPrivate is outside
-	//       ip_local_reserved_ports range
-	//
-	//    3) The number of ports defined by ip_local_reserved_ports
-	//       range is the max number of incoming connections.  In
-	//       the example above, max = (8040 - 8000) + 1
-
-	bytes, err := ioutil.ReadFile("/proc/sys/net/ipv4/ip_local_reserved_ports")
-	if err != nil {
-		return 0, 0, err
-	}
-
-	// strip whitespace
-	fields := strings.Fields(string(bytes))
-	if len(fields) == 0 {
-		return 0, 0, fmt.Errorf("Missing /proc/sys/net/ipv4/ip_local_reserved_ports?")
-	}
-
-	// TODO better parsing of reserved ports is needed.  This parser
-	// TODO assumes reserved_ports is a single range: [begin-end]
-
-	reservedPorts := fields[0]
-
-	b, err := strconv.Atoi(strings.Split(reservedPorts, "-")[0])
-	if err != nil {
-		return 0, 0, err
-	}
-	begin = uint(b)
-
-	e, err := strconv.Atoi(strings.Split(reservedPorts, "-")[1])
-	if err != nil {
-		return 0, 0, err
-	}
-	end = uint(e)
-
-	return begin, end, nil
-}
-
 func (p *ports) init() error {
-	var err error
-
-	if p.max == 0 {
-		return fmt.Errorf("Max ports equal zero; nothing to scan")
+	if p.begin == 0 {
+		return fmt.Errorf("Begin port is zero")
 	}
-
-	p.begin, p.end, err = getPortRange()
-	if err != nil {
-		return err
+	if p.begin > p.end {
+		return fmt.Errorf("Begin port %d greater than End port %d", p.begin, p.end)
 	}
 
 	p.num = p.end - p.begin + 1
-	if p.num > p.max {
-		p.num = p.max
-		p.end = p.begin + p.num - 1
-	}
 
 	p.next = 0
 
@@ -294,6 +227,8 @@ func (p *ports) init() error {
 		p.ports[i].port = p.begin + i
 		p.ports[i].log = p.log
 	}
+
+	p.log.Printf("Bridge ports[%d-%d]", p.begin, p.end)
 
 	return nil
 }
