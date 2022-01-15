@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type raspi_blink struct {
+type thing struct {
 	demo      bool
 	adaptor   *raspi.Adaptor
 	led       *gpio.LedDriver
@@ -17,7 +17,7 @@ type raspi_blink struct {
 }
 
 func NewModel(log *log.Logger, demo bool) merle.Thinger {
-	return &raspi_blink{demo: demo}
+	return &thing{demo: demo}
 }
 
 type msgReplyPaused struct {
@@ -26,33 +26,33 @@ type msgReplyPaused struct {
 	State  bool
 }
 
-func (r *raspi_blink) sendPaused(p *merle.Packet) {
+func (t *thing) sendPaused(p *merle.Packet) {
 	msg := msgReplyPaused{
 		Msg:    "ReplyPaused",
-		Paused: r.paused,
-		State:  r.lastState,
+		Paused: t.paused,
+		State:  t.lastState,
 	}
 	p.Marshal(&msg).Reply()
 }
 
-func (r *raspi_blink) savePaused(p *merle.Packet) {
+func (t *thing) savePaused(p *merle.Packet) {
 	var msg msgReplyPaused
 	p.Unmarshal(&msg)
-	r.paused = msg.Paused
-	r.lastState = msg.State
+	t.paused = msg.Paused
+	t.lastState = msg.State
 }
 
-func (r *raspi_blink) pause(p *merle.Packet) {
-	r.paused = true
+func (t *thing) pause(p *merle.Packet) {
+	t.paused = true
 	p.Broadcast()
 }
 
-func (r *raspi_blink) resume(p *merle.Packet) {
-	r.paused = false
+func (t *thing) resume(p *merle.Packet) {
+	t.paused = false
 	p.Broadcast()
 }
 
-func (r *raspi_blink) start(p *merle.Packet) {
+func (t *thing) start(p *merle.Packet) {
 	msg := struct{ Msg string }{Msg: "GetPaused"}
 	p.Marshal(&msg).Reply()
 }
@@ -62,74 +62,74 @@ type spamLedState struct {
 	State bool
 }
 
-func (r *raspi_blink) ledState(p *merle.Packet) {
+func (t *thing) ledState(p *merle.Packet) {
 	var spam spamLedState
 	p.Unmarshal(&spam)
-	r.lastState = spam.State
+	t.lastState = spam.State
 	p.Broadcast()
 }
 
-func (r *raspi_blink) state() bool {
-	if r.demo {
-		return r.lastState
+func (t *thing) state() bool {
+	if t.demo {
+		return t.lastState
 	}
-	return r.led.State()
+	return t.led.State()
 }
 
-func (r *raspi_blink) toggle() {
-	r.lastState = !r.lastState
-	if !r.demo {
-		r.led.Toggle()
+func (t *thing) toggle() {
+	t.lastState = !t.lastState
+	if !t.demo {
+		t.led.Toggle()
 	}
 }
 
-func (r *raspi_blink) sendLedState(p *merle.Packet) {
+func (t *thing) sendLedState(p *merle.Packet) {
 	spam := spamLedState{
 		Msg:   "SpamLedState",
-		State: r.state(),
+		State: t.state(),
 	}
 	p.Marshal(&spam).Broadcast()
 }
 
-func (r *raspi_blink) run(p *merle.Packet) {
-	r.adaptor = raspi.NewAdaptor()
-	r.adaptor.Connect()
+func (t *thing) run(p *merle.Packet) {
+	t.adaptor = raspi.NewAdaptor()
+	t.adaptor.Connect()
 
-	r.led = gpio.NewLedDriver(r.adaptor, "11")
-	r.led.Start()
-	r.lastState = r.led.State()
+	t.led = gpio.NewLedDriver(t.adaptor, "11")
+	t.led.Start()
+	t.lastState = t.led.State()
 
 	ticker := time.NewTicker(time.Second)
 
-	r.sendLedState(p)
+	t.sendLedState(p)
 
 	for {
 		select {
 		case <-ticker.C:
-			if !r.paused {
-				r.toggle()
-				r.sendLedState(p)
+			if !t.paused {
+				t.toggle()
+				t.sendLedState(p)
 			}
 		}
 	}
 }
 
-func (r *raspi_blink) Subscribe() merle.Subscribers {
+func (t *thing) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
-		{"CmdRun", r.run},
-		{"GetPaused", r.sendPaused},
-		{"ReplyPaused", r.savePaused},
-		{"CmdPause", r.pause},
-		{"CmdResume", r.resume},
-		{"CmdStart", r.start},
-		{"SpamLedState", r.ledState},
+		{"CmdRun", t.run},
+		{"GetPaused", t.sendPaused},
+		{"ReplyPaused", t.savePaused},
+		{"CmdPause", t.pause},
+		{"CmdResume", t.resume},
+		{"CmdStart", t.start},
+		{"SpamLedState", t.ledState},
 	}
 }
 
-func (r *raspi_blink) Config(config merle.Configurator) error {
+func (t *thing) Config(config merle.Configurator) error {
 	return nil
 }
 
-func (r *raspi_blink) Template() string {
+func (t *thing) Template() string {
 	return "web/templates/raspi_blink.html"
 }

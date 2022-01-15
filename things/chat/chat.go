@@ -5,30 +5,30 @@ import (
 	"log"
 )
 
-type chat struct {
+type thing struct {
 }
 
 func NewModel(log *log.Logger, demo bool) merle.Thinger {
-	return &chat{}
+	return &thing{}
 }
 
-func (c *chat) run(p *merle.Packet) {
+func (t *thing) run(p *merle.Packet) {
 	select{}
 }
 
-func (c *chat) Subscribe() merle.Subscribers {
+func (t *thing) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
-		{"CmdRun", c.run},
+		{"CmdRun", t.run},
 		{"CmdNewUser", merle.Broadcast},
 		{"CmdText", merle.Broadcast},
 		{"CmdStart", nil},
 	}
 }
 
-func (c *chat) Config(config merle.Configurator) error {
+func (t *thing) Config(config merle.Configurator) error {
 	return nil
 }
 
-func (c *chat) Template() string {
+func (t *thing) Template() string {
 	return "web/templates/chat.html"
 }

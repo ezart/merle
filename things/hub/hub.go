@@ -5,34 +5,34 @@ import (
 	"log"
 )
 
-type hub struct {
+type thing struct {
 	log *log.Logger
 }
 
 func NewModel(log *log.Logger, demo bool) merle.Thinger {
-	return &hub{log: log}
+	return &thing{log: log}
 }
 
-func (h *hub) BridgeSubscribe() merle.Subscribers {
+func (t *thing) BridgeSubscribe() merle.Subscribers {
 	return merle.Subscribers{
 		{".*", nil}, // drop everything
 	}
 }
 
-func (h *hub) run(p *merle.Packet) {
+func (t *thing) run(p *merle.Packet) {
 	select {}
 }
 
-func (h *hub) Subscribe() merle.Subscribers {
+func (t *thing) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
-		{"CmdRun", h.run},
+		{"CmdRun", t.run},
 	}
 }
 
-func (h *hub) Config(config merle.Configurator) error {
+func (t *thing) Config(config merle.Configurator) error {
 	return nil
 }
 
-func (h *hub) Template() string {
+func (t *thing) Template() string {
 	return "web/templates/hub.html"
 }

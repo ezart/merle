@@ -5,19 +5,19 @@ import (
 	"log"
 )
 
-type test struct {
+type thing struct {
 	log *log.Logger
 }
 
 func NewModel(tlog *log.Logger, demo bool) merle.Thinger {
-	return &test{log: tlog}
+	return &thing{log: tlog}
 }
 
-func (t *test) run(p *merle.Packet) {
+func (t *thing) run(p *merle.Packet) {
 	select{}
 }
 
-func (t *test) Subscribe() merle.Subscribers {
+func (t *thing) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
 		{"CmdRun", t.run},
 	}
@@ -29,7 +29,7 @@ type cfg struct {
 	} `yaml:"Test"`
 }
 
-func (t *test) Config(config merle.Configurator) error {
+func (t *thing) Config(config merle.Configurator) error {
 	var cfg cfg
 	if err := config.Parse(&cfg); err != nil {
 		return err
@@ -37,6 +37,6 @@ func (t *test) Config(config merle.Configurator) error {
 	return nil
 }
 
-func (t *test) Template() string {
+func (t *thing) Template() string {
 	return "web/templates/test.html"
 }

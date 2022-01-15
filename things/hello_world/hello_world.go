@@ -5,29 +5,29 @@ import (
 	"log"
 )
 
-type hello_world struct {
+type thing struct {
 	log *log.Logger
 }
 
 func NewModel(log *log.Logger, demo bool) merle.Thinger {
-	return &hello_world{log: log}
+	return &thing{log: log}
 }
 
-func (t *hello_world) run(p *merle.Packet) {
+func (t *thing) run(p *merle.Packet) {
 	t.log.Println("Hello World!")
 	select{}
 }
 
-func (t *hello_world) Subscribe() merle.Subscribers {
+func (t *thing) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
 		{"CmdRun", t.run},
 	}
 }
 
-func (t *hello_world) Config(config merle.Configurator) error {
+func (t *thing) Config(config merle.Configurator) error {
 	return nil
 }
 
-func (t *hello_world) Template() string {
+func (t *thing) Template() string {
 	return "web/templates/hello_world.html"
 }

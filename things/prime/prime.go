@@ -5,34 +5,34 @@ import (
 	"log"
 )
 
-type prime struct {
+type thing struct {
 	log *log.Logger
 }
 
 func NewModel(log *log.Logger, demo bool) merle.Thinger {
-	return &prime{log: log}
+	return &thing{log: log}
 }
 
-func (t *prime) BridgeSubscribe() merle.Subscribers {
+func (t *thing) BridgeSubscribe() merle.Subscribers {
 	return merle.Subscribers{
 		{".*", nil}, // drop everything
 	}
 }
 
-func (t *prime) run(p *merle.Packet) {
+func (t *thing) run(p *merle.Packet) {
 	select {}
 }
 
-func (t *prime) Subscribe() merle.Subscribers {
+func (t *thing) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
 		{"CmdRun", t.run},
 	}
 }
 
-func (t *prime) Config(config merle.Configurator) error {
+func (t *thing) Config(config merle.Configurator) error {
 	return nil
 }
 
-func (t *prime) Template() string {
+func (t *thing) Template() string {
 	return "web/templates/prime.html"
 }
