@@ -86,6 +86,8 @@ Notice the LED state is always synced between the hardware LED and the LED shown
 
 ### Principle #1: The Thing is the truth and all views of the Thing hold this truth.
 
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vSFA_YrT_qzAuwEeaWBx979uzXB_IQU0mDUEhc0ogqgAONlSirhV_NDgLUzrYCP484qR5QdZqqPhO-M/pub?w=1226&amp;h=938">
+
 Code for this Raspberry Pi LED blinker is in two parts:
   - Back-end: [Thing code](things/raspi_blink/raspi_blink.go)
   - Front-end: [HTML](web/templates/raspi_blink.html), [Javascript](web/js/raspi_blink.js), and [CSS](web/css/raspi_blink.css)
