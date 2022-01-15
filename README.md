@@ -57,7 +57,9 @@ Thing:
   PortPublic: 80
 ```
 
-"raspi_blink" is the Thing model.  "quickstart" is the Thing name.  Merle creates an HTTP server listening on port PortPublic.
+"raspi_blink" is the Thing model.  (To see list of supported models, use: ../go/bin/merle-thing --models).
+
+"quickstart" is the Thing name.  Merle creates an HTTP server listening on port PortPublic.
 
 Now start Merle on your Thing using the configuration file:
 
