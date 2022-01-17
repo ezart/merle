@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/scottfeldman/merle"
 	"github.com/scottfeldman/merle/things/chat"
+	"github.com/scottfeldman/merle/things/chat_bridge"
 	"github.com/scottfeldman/merle/things/hello_world"
 	"github.com/scottfeldman/merle/things/hub"
 	"github.com/scottfeldman/merle/things/prime"
@@ -32,6 +33,7 @@ var thingers = map[string]func(*glog.Logger, bool) merle.Thinger{
 	"raspi_telit_gps": raspi_telit_gps.NewModel,
 	"hub":             hub.NewModel,
 	"chat":            chat.NewModel,
+	"chat_bridge":     chat_bridge.NewModel,
 	"prime":           prime.NewModel,
 }
 
