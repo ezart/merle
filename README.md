@@ -66,14 +66,14 @@ Thing:
 Now start Merle on your Thing using the configuration file:
 
 ````sh
-sudo ../go/bin/merle-thing --config thing.yml
+sudo ../go/bin/merle --config thing.yml
 ````
 
 Or, for demo mode, add --demo:
 
 
 ````sh
-sudo ../go/bin/merle-thing --config thing.yml --demo
+sudo ../go/bin/merle --config thing.yml --demo
 ````
 
 The hardware LED should blink on/off every second.
