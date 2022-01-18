@@ -26,9 +26,9 @@ type bridgeConfig struct {
 		//
 		// And then run sudo sysctl -p
 		//
-		BeginPort uint `yaml:"BeginPort"`
+		PortBegin uint `yaml:"PortBegin"`
 		// Ending port number.
-		EndPort uint `yaml:"EndPort"`
+		PortEnd uint `yaml:"PortEnd"`
 		// Match is a regular expresion (re) to specifiy which things
 		// can connect to the bridge.  The re matches against three
 		// fields of the thing: ID, Model, and Name.  The re is
@@ -84,7 +84,7 @@ func newBridge(log *log.Logger, stork Storker, config Configurator,
 		bus:      newBus(thing.log, 10, bridger.BridgeSubscribe()),
 	}
 
-	b.ports = newPorts(thing.log, cfg.Bridge.BeginPort, cfg.Bridge.EndPort,
+	b.ports = newPorts(thing.log, cfg.Bridge.PortBegin, cfg.Bridge.PortEnd,
 		cfg.Bridge.Match, b.attachCb)
 
 	b.thing.bus.subscribe("GetOnlyChild", b.getOnlyChild)

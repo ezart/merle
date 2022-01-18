@@ -335,5 +335,8 @@ func (w *webPublic) stop() {
 	if w.port != 0 {
 		w.server.Shutdown(context.Background())
 	}
+	if w.portTLS != 0 {
+		w.serverTLS.Shutdown(context.Background())
+	}
 	w.Wait()
 }
