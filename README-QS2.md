@@ -6,7 +6,7 @@ In Part I, we ran Merle locally on a Raspberry Pi and used a web browser to view
 
 Thing and Thing' are connected to each other over a secure SSH tunnel.  To create the tunnel, we'll need to generate and install an SSH key.  On the raspberry Pi system, generate a new key:
 
-```sh
+```
 admin@pi $ ssh-keygen
 Generating public/private rsa key pair.
 Enter file in which to save the key (/home/admin/.ssh/id_rsa): /home/admin/.ssh/mykey
@@ -38,7 +38,7 @@ Next, we install the public key on the second system, the system on the internet
 admin@pi $ ssh-copy-id -i [identity file] username@remote_host
 ```
 
-Where identiy file in our example is /home/admin/.ssh/mykey.pub.  For this Quick Start, we can use the same Raspberry Pi system to run Thing and Thing' using localhost as the remote_host address.   Substitute your internet host address for remote_host rather than using localhost.  We're using localhost here to quickly get Thing' running.  Let's install the key:
+Where identity file in our example is /home/admin/.ssh/mykey.pub.  For this Quick Start, we can use the same Raspberry Pi system to run Thing and Thing' using localhost as the remote_host address.   Substitute your internet host address for remote_host rather than using localhost.  We're using localhost here to quickly get Thing' running.  Let's install the key:
 
 ```
 admin@pi $ ssh-copy-id -i /home/admin/.ssh/mykey.pub admin@localhost
