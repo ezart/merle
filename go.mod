@@ -8,7 +8,9 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/msteinert/pam v0.0.0-20201130170657-e61372126161
+	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	gobot.io/x/gobot v1.15.0
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )
 
@@ -25,6 +27,7 @@ require (
 
 require (
 	github.com/bgentry/speakeasy v0.1.0 // indirect
-	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07 // indirect
+	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
 	golang.org/x/sys v0.0.0-20201126233918-771906719818 // indirect
+	golang.org/x/text v0.3.0 // indirect
 )

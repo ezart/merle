@@ -25,6 +25,8 @@ type thingConfig struct {
 		User string `yaml:"User"`
 		// Port for public HTTP server to view the thing, typically :80
 		PortPublic uint `yaml:"PortPublic"`
+		// Port for public HTTPS server to view the thing, typically :443
+		PortPublicTLS uint `yaml:"PortPublicTLS"`
 		// Port for private HTTP server.  The private port is used to
 		// connect to thing's mother using a websocket.
 		PortPrivate uint `yaml:"PortPrivate"`

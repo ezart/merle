@@ -76,7 +76,8 @@ func newThing(stork Storker, config Configurator, demo bool) (*thing, error) {
 		cfg.Mother.Key, cfg.Thing.PortPrivate, cfg.Mother.PortPrivate)
 
 	t.private = newWebPrivate(t, cfg.Thing.PortPrivate)
-	t.public = newWebPublic(t, cfg.Thing.User, cfg.Thing.PortPublic)
+	t.public = newWebPublic(t, cfg.Thing.User,
+		cfg.Thing.PortPublic, cfg.Thing.PortPublicTLS)
 
 	t.templ, t.templErr = template.ParseFiles(thinger.Template())
 

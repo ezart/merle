@@ -4,10 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
+	"crypto/tls"
 	"errors"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/msteinert/pam"
+	"golang.org/x/crypto/acme/autocert"
 	"log"
 	"net/http"
 	"strconv"
@@ -240,13 +242,21 @@ func (w *webPrivate) handleFunc(pattern string,
 // The thing's public HTTP server
 type webPublic struct {
 	sync.WaitGroup
-	user   string
-	port   uint
-	server *http.Server
+	user      string
+	port      uint
+	portTLS   uint
+	server    *http.Server
+	serverTLS *http.Server
 }
 
-func newWebPublic(t *thing, user string, port uint) *webPublic {
+func newWebPublic(t *thing, user string, port uint, portTLS uint) *webPublic {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
+	addrTLS := ":" + strconv.FormatUint(uint64(portTLS), 10)
+
+	certManager := autocert.Manager{
+		Prompt: autocert.AcceptTOS,
+		Cache:  autocert.DirCache("./certs"),
+	}
 
 	fs := http.FileServer(http.Dir("web"))
 
@@ -258,14 +268,30 @@ func newWebPublic(t *thing, user string, port uint) *webPublic {
 
 	server := &http.Server{
 		Addr:    addr,
-		Handler: mux,
 		// TODO add timeouts
 	}
 
+	if portTLS == 0 {
+		server.Handler = mux
+	} else {
+		server.Handler = certManager.HTTPHandler(nil)
+	}
+
+	serverTLS := &http.Server{
+		Addr:    addrTLS,
+		Handler: mux,
+		// TODO add timeouts
+		TLSConfig: &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		},
+	}
+
 	return &webPublic{
-		user:   user,
-		port:   port,
-		server: server,
+		user:      user,
+		port:      port,
+		portTLS:   portTLS,
+		server:    server,
+		serverTLS: serverTLS,
 	}
 }
 
@@ -283,6 +309,23 @@ func (w *webPublic) start() {
 	go func() {
 		if err := w.server.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalln("Public HTTP server failed:", err)
+		}
+		w.Done()
+	}()
+
+	if w.portTLS == 0 {
+		log.Println("Skipping public HTTPS server")
+		return
+	}
+
+	w.Add(2)
+	w.serverTLS.RegisterOnShutdown(w.Done)
+
+	log.Println("Public HTTPS server listening on", w.serverTLS.Addr)
+
+	go func() {
+		if err := w.serverTLS.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
+			log.Fatalln("Public HTTPS server failed:", err)
 		}
 		w.Done()
 	}()
