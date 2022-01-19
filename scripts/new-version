@@ -1,0 +1,7 @@
+#!/bin/bash
+
+read -p "New Version: " ver
+
+git tag ${ver}
+git push origin ${ver}
+GOPROXY=proxy.golang.org go list -m github.com/scottfeldman/merle@${ver}

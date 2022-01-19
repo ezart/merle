@@ -7,41 +7,60 @@ import (
 	"os"
 )
 
-// Thing configuration.  All things share this configuration.
-type thingConfig struct {
-	// The thing
+// Thing configuration.  All Things share this configuration.
+type ThingConfig struct {
+
+	// The section describes a Thing.
 	Thing struct {
-		// Thing ID.  IDs are unique within an application to
-		// differenciate one thing from another.
+		// (Optional) Thing's Id.  Ids are unique within an application
+		// to differenciate one Thing from another.  Id is optional; if
+		// Id is not given, a system-wide unique Id is assigned.
 		Id string `yaml:"Id"`
-		// Thing model
+		// Thing's Model.  Should match one of the models support by
+		// Merle.  See merle --models for list of support models.
 		Model string `yaml:"Model"`
-		// Thing name
+		// Thing's Name
 		Name string `yaml:"Name"`
-		// System user allowed to view thing with web browser.  HTTP
-		// basic attentication prompts for user/passwd.  The user must
-		// be a valid user on the system.  Passwd is set using standard
-		// system tools.
+		// (Optional) system User.  If a User is given, any browser
+		// views of the Thing's home page  will prompt for user/passwd.
+		// HTTP Basic Authentication is used and the user/passwd given
+		// must match the system creditials for the User.  If no User
+		// is given, HTTP Basic Authentication is skipped; anyone can
+		// view the home page.
 		User string `yaml:"User"`
-		// Port for public HTTP server to view the thing, typically :80
+		// (Optional) If PortPublic is given, an HTTP web server is
+		// started on port PortPublic.  PortPublic is typically set to
+		// 80.  The HTTP web server runs the Thing's home page.
 		PortPublic uint `yaml:"PortPublic"`
-		// Port for public HTTPS server to view the thing, typically :443
+		// (Optional) If PortPublicTLS is given, an HTTPS web server is
+		// started on port PortPublicTLS.  PortPublicTLS is typically
+		// set to 443.  The HTTPS web server will self-certify using a
+		// certificate from Let's Encrypt.  The public HTTPS server
+		// will securely run the Thing's home page.  If PortPublicTLS
+		// is given, PortPublic must be given.
 		PortPublicTLS uint `yaml:"PortPublicTLS"`
-		// Port for private HTTP server.  The private port is used to
-		// connect to thing's mother using a websocket.
+		// (Optional) If PortPrivate is given, a HTTP server is
+		// started on port PortPrivate.  This HTTP server does not
+		// server up the Thing's home page but rather connects to
+		// Thing's Mother using a websocket over HTTP.
 		PortPrivate uint `yaml:"PortPrivate"`
 	} `yaml:"Thing"`
-	// Every thing has a mother.  A Mother is also a thing.
+
+	// (Optional) This section describes a Thing's Mother.  Every Thing has
+	// a Mother.  A Mother is also a Thing, so we can build a hierarchy of
+	// Things, with a Thing having potentially a Mother, a GrandMother, a
+	// Great GrandMother, etc.
 	Mother struct {
-		// Mother host address
+		// Mother's Host address.  Host, User and Key are used to
+		// connect this Thing to it's Mother using a SSH connection.
+		// For example: ssh -i <Key> <User>@<Host>.
 		Host string `yaml:"Host"`
-		// User on host associated with key
+		// User on Host associated with Key
 		User string `yaml:"User"`
-		// Key is a file from which the identity (private key) for
-		// public key authentication is read.  See ssh -i option for
-		// more information.
+		// Key is the file path of the SSH identity key.  See ssh -i
+		// option for more information.
 		Key string `yaml:"Key"`
-		// Port on host for mother's private HTTP server
+		// Port on Host for Mother's private HTTP server
 		PortPrivate uint `yaml:"PortPrivate"`
 	} `yaml:"Mother"`
 }
@@ -53,11 +72,11 @@ type Configurator interface {
 	Parse(interface{}) error
 }
 
-// A YAML configurator
 type yamlConfig struct {
 	file string
 }
 
+// A YAML configurator
 func NewYamlConfig(file string) Configurator {
 	return &yamlConfig{file: file}
 }
@@ -95,7 +114,7 @@ func newChildConfig(id, model, name string) Configurator {
 }
 
 func (c *childConfig) Parse(cfg interface{}) error {
-	thingCfg, ok := cfg.(*thingConfig)
+	thingCfg, ok := cfg.(*ThingConfig)
 	if ok {
 		thingCfg.Thing.Id = c.id
 		thingCfg.Thing.Model = c.model

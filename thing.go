@@ -41,7 +41,7 @@ type thing struct {
 }
 
 func newThing(stork Storker, config Configurator, demo bool) (*thing, error) {
-	var cfg thingConfig
+	var cfg ThingConfig
 	var thinger Thinger
 	var log *glog.Logger
 	var err error
@@ -94,6 +94,16 @@ func newThing(stork Storker, config Configurator, demo bool) (*thing, error) {
 	return t, err
 }
 
+// RunThing is the main entry point for Merle.  A new Thing is created and run.
+//
+// The stork delivers a new Thing based on the config.  The config names the
+// Thing and sets the Thing's properties.  Any error creating or running the
+// Thing is returned.  The Thing should run forever.  It is an error for a
+// Thing to stop running once started.
+//
+// Demo is set true to run Thing in demo-mode.  In demo-mode, the Thing will
+// similuate hardware access.  Demo-mode is handy for testing functionality
+// without having access to hardware.
 func RunThing(stork Storker, config Configurator, demo bool) error {
 
 	thing, err := newThing(stork, config, demo)

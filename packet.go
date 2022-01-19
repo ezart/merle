@@ -8,7 +8,8 @@ import (
 	"encoding/json"
 )
 
-// A packet contains a message and a source.
+// A Packet is the basic unit of communication in Merle.  Message Subscribers
+// receive, process and optional forward a Packet.
 type Packet struct {
 	// Bus the packet lives on
 	bus *bus
@@ -28,18 +29,18 @@ func (p *Packet) clone(bus *bus, src socketer) *Packet {
 	return &Packet{bus: bus, src: src, msg: p.msg}
 }
 
-// JSON marshal into packet message
+// JSON marshal into Packet message
 func (p *Packet) Marshal(msg interface{}) *Packet {
 	p.msg, _ = json.Marshal(msg)
 	return p
 }
 
-// JSON unmarshal from packet message
+// JSON unmarshal from Packet message
 func (p *Packet) Unmarshal(msg interface{}) {
 	json.Unmarshal(p.msg, msg)
 }
 
-// String representation of packet message
+// String representation of Packet message
 func (p *Packet) String() string {
 	return string(p.msg)
 }
@@ -60,6 +61,8 @@ func (p *Packet) Send(dst interface{}) {
 	}
 }
 
+// Reply back to sender of Packet.  Reply is typically used to respond to a
+// request.
 func (p *Packet) Reply() {
 	p.bus.log.Printf("Reply: %.80s", p.String())
 	if err := p.bus.reply(p); err != nil {
@@ -67,10 +70,18 @@ func (p *Packet) Reply() {
 	}
 }
 
+// Subscriber callback function to broadcast packet.  In this example, any
+// packets received with message Alert are broadcast to all other listeners.
+//
+//	return merle.Subscribers{
+//		{"Alert", merle.Broadcast},
+//	}
+//	
 func Broadcast(p *Packet) {
 	p.Broadcast()
 }
 
+// Broadcast the Packet to all listeners except for the source of the Packet.
 func (p *Packet) Broadcast() {
 	p.bus.log.Printf("Broadcast: %.80s", p.String())
 	if err := p.bus.broadcast(p); err != nil {
