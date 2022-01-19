@@ -1,5 +1,17 @@
 #!/bin/bash
 
+git diff --exit-code >/dev/null
+if [ $? -ne 0 ]; then
+    echo "local, unstaged changes; aborting"
+    exit 1
+fi
+
+git diff --cached --exit-code >/dev/null
+if [ $? -ne 0 ]; then
+    echo "staged changes but not commited; aborting"
+    exit 1
+fi
+
 read -p "New Version: " ver
 
 git tag ${ver}
