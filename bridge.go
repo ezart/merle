@@ -7,8 +7,10 @@ import (
 	"net/http"
 )
 
-// Bridge configuration
-type bridgeConfig struct {
+// Bridge configuration.  A Thing implementing the Bridger interface will use
+// this config for bridge-specific configuration.
+type BridgeConfig struct {
+
 	Bridge struct {
 		// Beginning port number.  The bridge will listen for Thing
 		// (child) connections on the port range [BeginPort-EndPort].
@@ -44,8 +46,8 @@ type bridgeConfig struct {
 	} `yaml:"Bridge"`
 }
 
-// A thing implementing the bridger interface is a bridge
-type bridger interface {
+// A Thing implementing the Bridger interface is a bridge
+type Bridger interface {
 	// List of subscribers on bridge bus.  All packets from all connected
 	// things (children) are forwarded to the bridge bus and tested against
 	// these subscribers.  To ignore all packets on the bridge bus, install
@@ -67,14 +69,14 @@ type bridge struct {
 
 func newBridge(log *log.Logger, stork Storker, config Configurator,
 	thing *thing) (*bridge, error) {
-	var cfg bridgeConfig
+	var cfg BridgeConfig
 
 	if err := config.Parse(&cfg); err != nil {
 		log.Println("Configure bridge error:", err)
 		return nil, err
 	}
 
-	bridger := thing.thinger.(bridger)
+	bridger := thing.thinger.(Bridger)
 
 	b := &bridge{
 		log:      log,
