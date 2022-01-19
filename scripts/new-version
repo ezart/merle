@@ -12,6 +12,12 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+git status | grep "Your branch is up to date" >/dev/null
+if [ $? -ne 0 ]; then
+    echo "commits not pushed; aborting"
+    exit 1
+fi
+
 read -p "New Version: " ver
 
 git tag ${ver}
