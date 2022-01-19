@@ -2,7 +2,9 @@
 
 test test test
 
-# Getting Started {#started}
+# Getting Started
+
+[about](about.md)
 
 test test test
 
