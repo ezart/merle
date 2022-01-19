@@ -1,9 +1,3 @@
-#### Table of Contents
-
-- [Overview](#Overview)
-- [Getting Started](#started)
-- [Testing](#Testing)
-
 # Overview
 
 test test test
