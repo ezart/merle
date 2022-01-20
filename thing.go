@@ -124,7 +124,12 @@ func (t *thing) EnablePublicHTTP(port, portTLS uint, user, assetsDir string) {
 }
 
 func (t *thing) EnablePrivateHTTP(port uint) {
+	// TODO log WARNING if port not in ip_local_reserved_ports
 	t.private = newWebPrivate(t, port)
+}
+
+func (t *thing) EnableTunnel(host, user, key string, portPriv, remotePortPriv uint) {
+	t.tunnel = newTunnel(t.id, host, user, key, portPriv, remotePortPriv)
 }
 
 func (t *thing) SetTemplate(file string) {
@@ -207,6 +212,10 @@ func RunThing(stork Storker, config Configurator, demo bool) error {
 func (t *thing) Run() error {
 	t.startupTime = time.Now()
 	return t.run()
+}
+
+func (t *thing) RunPrime() error {
+	return nil
 }
 
 type msgIdentity struct {
