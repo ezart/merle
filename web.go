@@ -210,7 +210,7 @@ func newWebPrivate(t *thing, port uint) *webPrivate {
 
 func (w *webPrivate) start() {
 	if w.port == 0 {
-		log.Println("Skipping private HTTP server")
+		log.Println("Skipping private HTTP server; port is zero")
 		return
 	}
 
@@ -247,9 +247,10 @@ type webPublic struct {
 	portTLS   uint
 	server    *http.Server
 	serverTLS *http.Server
+	assetsDir string
 }
 
-func newWebPublic(t *thing, user string, port uint, portTLS uint) *webPublic {
+func newWebPublic(t *thing, port, portTLS uint, user, assetsDir string) *webPublic {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 	addrTLS := ":" + strconv.FormatUint(uint64(portTLS), 10)
 
@@ -258,13 +259,13 @@ func newWebPublic(t *thing, user string, port uint, portTLS uint) *webPublic {
 		Cache:  autocert.DirCache("./certs"),
 	}
 
-	fs := http.FileServer(http.Dir("web"))
+	fs := http.FileServer(http.Dir(assetsDir))
 
 	mux := mux.NewRouter()
 	mux.HandleFunc("/ws/{id}", t.basicAuth(user, t.ws))
 	mux.HandleFunc("/{id}", t.basicAuth(user, t.home))
 	mux.HandleFunc("/", t.basicAuth(user, t.home))
-	mux.PathPrefix("/web/").Handler(http.StripPrefix("/web/", fs))
+	mux.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", fs))
 
 	server := &http.Server{
 		Addr:    addr,
@@ -292,12 +293,18 @@ func newWebPublic(t *thing, user string, port uint, portTLS uint) *webPublic {
 		portTLS:   portTLS,
 		server:    server,
 		serverTLS: serverTLS,
+		assetsDir: assetsDir,
 	}
 }
 
 func (w *webPublic) start() {
 	if w.port == 0 {
-		log.Println("Skipping public HTTP server")
+		log.Println("Skipping public HTTP server; port is zero")
+		return
+	}
+
+	if w.assetsDir == "" {
+		log.Println("Skipping public HTTP server; assets directory is missing")
 		return
 	}
 
@@ -314,7 +321,7 @@ func (w *webPublic) start() {
 	}()
 
 	if w.portTLS == 0 {
-		log.Println("Skipping public HTTPS server")
+		log.Println("Skipping public HTTPS server; port is zero")
 		return
 	}
 

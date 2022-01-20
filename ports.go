@@ -69,7 +69,7 @@ func (p *port) wsOpen() error {
 }
 
 func (p *port) wsIdentity() error {
-	msg := struct{ Msg string }{Msg: "GetIdentity"}
+	msg := struct{ Msg string }{Msg: "_GetIdentity"}
 	p.log.Printf("Sending: %.80s", msg)
 	return p.ws.WriteJSON(&msg)
 }

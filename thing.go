@@ -3,7 +3,7 @@ package merle
 import (
 	"fmt"
 	"html/template"
-	glog "log"
+	"log"
 	"os"
 	"time"
 )
@@ -95,13 +95,45 @@ type thing struct {
 	templErr    error
 	isBridge    bool
 	bridge      *bridge
-	log         *glog.Logger
+	log         *log.Logger
+}
+
+func NewThing(thinger Thinger, id, model, name string) *thing {
+	id = defaultId(id)
+
+	prefix := "[" + id + "] "
+	log := log.New(os.Stderr, prefix, 0)
+
+	t := &thing{
+		thinger:     thinger,
+		status:      "online",
+		id:          id,
+		model:       model,
+		name:        name,
+		bus:         newBus(log, 10, thinger.Subscribe()),
+		log:         log,
+	}
+
+	t.bus.subscribe("_GetIdentity", t.getIdentity)
+
+	return t
+}
+
+func (t *thing) EnablePublicHTTP(port, portTLS uint, user, assetsDir string) {
+	t.public = newWebPublic(t, port, portTLS, user, assetsDir)
+}
+
+func (t *thing) EnablePrivateHTTP(port uint) {
+	t.private = newWebPrivate(t, port)
+}
+
+func (t *thing) SetTemplate(file string) {
+	t.templ, t.templErr = template.ParseFiles(file)
 }
 
 func newThing(stork Storker, config Configurator, demo bool) (*thing, error) {
 	var cfg ThingConfig
 	var thinger Thinger
-	var log *glog.Logger
 	var err error
 
 	if err = config.Parse(&cfg); err != nil {
@@ -111,7 +143,7 @@ func newThing(stork Storker, config Configurator, demo bool) (*thing, error) {
 	id := defaultId(cfg.Thing.Id)
 
 	prefix := "[" + id + "] "
-	log = glog.New(os.Stderr, prefix, 0)
+	log := log.New(os.Stderr, prefix, 0)
 
 	thinger, err = stork.NewThinger(log, cfg.Thing.Model, demo)
 	if err != nil {
@@ -134,8 +166,8 @@ func newThing(stork Storker, config Configurator, demo bool) (*thing, error) {
 		cfg.Mother.Key, cfg.Thing.PortPrivate, cfg.Mother.PortPrivate)
 
 	t.private = newWebPrivate(t, cfg.Thing.PortPrivate)
-	t.public = newWebPublic(t, cfg.Thing.User,
-		cfg.Thing.PortPublic, cfg.Thing.PortPublicTLS)
+	t.public = newWebPublic(t, cfg.Thing.PortPublic, cfg.Thing.PortPublicTLS,
+		cfg.Thing.User, "web")
 
 	t.templ, t.templErr = template.ParseFiles(thinger.Template())
 
@@ -172,6 +204,11 @@ func RunThing(stork Storker, config Configurator, demo bool) error {
 	return thing.run()
 }
 
+func (t *thing) Run() error {
+	t.startupTime = time.Now()
+	return t.run()
+}
+
 type msgIdentity struct {
 	Msg         string
 	Status      string
@@ -183,7 +220,7 @@ type msgIdentity struct {
 
 func (t *thing) getIdentity(p *Packet) {
 	resp := msgIdentity{
-		Msg:         "ReplyIdentity",
+		Msg:         "_ReplyIdentity",
 		Status:      t.status,
 		Id:          t.id,
 		Model:       t.model,
@@ -200,30 +237,66 @@ func (t *thing) getChild(id string) *thing {
 	return t.bridge.getChild(id)
 }
 
+func (t *thing) privateStart() {
+	if (t.private != nil) {
+		t.private.start()
+	}
+}
+
+func (t *thing) privateStop() {
+	if (t.private != nil) {
+		t.private.stop()
+	}
+}
+
+func (t *thing) publicStart() {
+	if (t.public != nil) {
+		t.public.start()
+	}
+}
+
+func (t *thing) publicStop() {
+	if (t.public != nil) {
+		t.public.stop()
+	}
+}
+
+func (t *thing) tunnelStart() {
+	if (t.tunnel != nil) {
+		t.tunnel.start()
+	}
+}
+
+func (t *thing) tunnelStop() {
+	if (t.tunnel != nil) {
+		t.tunnel.stop()
+	}
+}
+
 func (t *thing) run() error {
 
-	t.private.start()
-	t.public.start()
-	t.tunnel.start()
+	t.privateStart()
+	t.publicStart()
+	t.tunnelStart()
 
 	if t.isBridge {
 		t.bridge.Start()
 	}
 
-	msg := struct{ Msg string }{Msg: "CmdRun"}
+	msg := struct{ Msg string }{Msg: "_CmdRun"}
 	t.bus.receive(newPacket(t.bus, nil, &msg))
 
 	if t.isBridge {
 		t.bridge.Stop()
 	}
 
-	t.tunnel.stop()
-	t.public.stop()
-	t.private.stop()
+	t.tunnelStop()
+	t.publicStop()
+	t.privateStop()
 
 	t.bus.close()
 
-	return fmt.Errorf("CmdRun didn't run forever")
+	return fmt.Errorf("_CmdRun didn't run forever")
 }
 
 // Run a copy of the thing (shadow thing) in the bridge.
@@ -237,7 +310,7 @@ func (t *thing) runInBridge(p *port) {
 
 	// Send a CmdStart message on startup of shadow thing so shadow thing
 	// can get the current state from the real thing
-	msg := struct{ Msg string }{Msg: "CmdStart"}
+	msg := struct{ Msg string }{Msg: "_CmdStart"}
 	t.bus.receive(pkt.Marshal(&msg))
 
 	for {
