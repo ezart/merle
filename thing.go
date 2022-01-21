@@ -143,6 +143,7 @@ type Thing struct {
 	bridge      *bridge
 	isPrime     bool
 	primePort   *port
+	primeId     string
 	log         *log.Logger
 }
 
@@ -192,22 +193,27 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 }
 
 func (t *Thing) primeAttach(p *port, msg *msgIdentity) error {
+	return nil
 }
 
 func (t *Thing) getPrimePort(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	port := b.ports.getPort(id)
+	t.primePort.Lock()
+	defer t.primePort.Unlock()
 
-	switch port {
-	case -1:
-		fmt.Fprintf(w, "no ports available")
-	case -2:
+	if t.primePort.tunnelConnected {
 		fmt.Fprintf(w, "port busy")
-	default:
-		fmt.Fprintf(w, "%d", port)
+		return
 	}
+
+	if t.primeId != "" && t.primeId != id {
+		fmt.Fprintf(w, "no ports available")
+		return
+	}
+
+	fmt.Fprintf(w, "%d", t.primePort.port)
 }
 
 type msgIdentity struct {
@@ -238,7 +244,7 @@ func (t *Thing) getChild(id string) *Thing {
 	return t.bridge.getChild(id)
 }
 
-func (t *Thing) runThing() error {
+func (t *Thing) run() error {
 	t.private.start()
 	t.public.start()
 	t.tunnel.start()
@@ -267,14 +273,16 @@ func (t *Thing) runPrime() error {
 	t.private.start()
 	t.public.start()
 	t.tunnel.start()
-	return t.primePort.start()
+	return t.primePort.run()
 }
 
 func (t *Thing) Run() error {
-	if t.isPrime {
+	switch {
+	case t.isPrime:
 		return t.runPrime()
+	default:
+		return t.run()
 	}
-	return t.runThing()
 }
 
 // Run a copy of the thing (shadow thing) in the bridge.

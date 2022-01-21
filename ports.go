@@ -26,10 +26,10 @@ type port struct {
 	attachCb portAttachCb
 }
 
-func newPort(thing *Thing, port uint, attachCb portAttachCb) *port {
+func newPort(thing *Thing, p uint, attachCb portAttachCb) *port {
 	return &port{
 		thing:    thing,
-		port:     port,
+		port:     p,
 		done:     make(chan bool),
 		attachCb: attachCb,
 	}
@@ -169,6 +169,85 @@ func (p *port) attach(match string, cb portAttachCb) {
 	}
 }
 
+func listeningPorts(begin, end uint) (map[uint]bool, error) {
+	listeners := make(map[uint]bool)
+
+	// ss -Hntl4p src 127.0.0.1 sport ge 8081 sport le 9080
+
+	args := []string{
+		"-Hntl4",
+		"src", "127.0.0.1",
+		"sport", "ge", strconv.FormatUint(uint64(begin), 10),
+		"sport", "le", strconv.FormatUint(uint64(end), 10),
+	}
+
+	cmd := exec.Command("ss", args...)
+
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		return listeners, err
+	}
+
+	ss := string(stdoutStderr)
+	ss = strings.TrimSuffix(ss, "\n")
+
+	for _, ssLine := range strings.Split(ss, "\n") {
+		if len(ssLine) > 0 {
+			portStr := strings.Split(strings.Split(ssLine,
+				":")[1], " ")[0]
+			port, _ := strconv.Atoi(portStr)
+			listeners[uint(port)] = true
+		}
+	}
+
+	return listeners, nil
+}
+
+func (p *port) scan() error {
+	listeners, err := listeningPorts(p.port, p.port)
+	if err != nil {
+		return err
+	}
+
+	p.Lock()
+	defer p.Unlock()
+
+	if listeners[p.port] {
+		if p.tunnelConnected {
+			// no change
+		} else {
+			p.thing.log.Printf("Tunnel connected on Port[%d]", p.port)
+			p.tunnelConnected = true
+			go p.attachCb()
+		}
+	} else {
+		if p.tunnelConnected {
+			p.thing.log.Printf("Closing tunnel on Port[%d]", p.port)
+			p.tunnelConnected = false
+		} else {
+			// no change
+		}
+	}
+
+	return nil
+}
+
+func (p *port) run() error {
+	ticker := time.NewTicker(time.second)
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := p.scan(); err != nil {
+				p.thing.log.Println("Scanning port error:", err)
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (p *ports) nextPort() (port *port) {
 
 	for i := uint(0); i < p.num; i++ {
@@ -245,28 +324,9 @@ func (p *ports) init() error {
 
 func (p *ports) scan() error {
 
-	// ss -Hntl4p src 127.0.0.1 sport ge 8081 sport le 9080
-
-	cmd := exec.Command("ss", "-Hntl4", "src", "127.0.0.1",
-		"sport", "ge", strconv.FormatUint(uint64(p.begin), 10),
-		"sport", "le", strconv.FormatUint(uint64(p.end), 10))
-	stdoutStderr, err := cmd.CombinedOutput()
+	listeners, err := listeningPorts(p.port, p.port)
 	if err != nil {
 		return err
-	}
-
-	ss := string(stdoutStderr)
-	ss = strings.TrimSuffix(ss, "\n")
-
-	listeners := make(map[uint]bool)
-
-	for _, ssLine := range strings.Split(ss, "\n") {
-		if len(ssLine) > 0 {
-			portStr := strings.Split(strings.Split(ssLine,
-				":")[1], " ")[0]
-			port, _ := strconv.Atoi(portStr)
-			listeners[uint(port)] = true
-		}
 	}
 
 	for i := uint(0); i < p.num; i++ {
