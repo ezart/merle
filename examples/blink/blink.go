@@ -130,5 +130,5 @@ func (b *blink) Config(config merle.Configurator) error {
 }
 
 func (b *blink) Template() string {
-	return ""
+	return "templates/blink.html"
 }

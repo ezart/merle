@@ -3,48 +3,8 @@ package merle
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"log"
 	"net/http"
 )
-
-// Bridge configuration.  A Thing implementing the Bridger interface will use
-// this config for bridge-specific configuration.
-type BridgeConfig struct {
-
-	Bridge struct {
-		// Beginning port number.  The bridge will listen for Thing
-		// (child) connections on the port range [BeginPort-EndPort].
-		//
-		// The bridge port range must be within the system's
-		// ip_local_reserved_ports.
-		//
-		// Set a range using:
-		//
-		//   sudo sysctl -w net.ipv4.ip_local_reserved_ports="8000-8040"
-		//
-		// Or, to persist setting on next boot, add to /etc/sysctl.conf:
-		//
-		//   net.ipv4.ip_local_reserved_ports = 8000-8040
-		//
-		// And then run sudo sysctl -p
-		//
-		PortBegin uint `yaml:"PortBegin"`
-		// Ending port number.
-		PortEnd uint `yaml:"PortEnd"`
-		// Match is a regular expresion (re) to specifiy which things
-		// can connect to the bridge.  The re matches against three
-		// fields of the thing: ID, Model, and Name.  The re is
-		// composed with these three fields seperated by ":" character:
-		// "ID:Model:Name".  See
-		// https://github.com/google/re2/wiki/Syntax for regular
-		// expression syntax.  Examples:
-		//
-		//	".*:.*:.*"		Match any thing.
-		//	"123456:.*:.*"		Match only a thing with ID=123456
-		//	".*:chat:.*"		Match only chat things
-		Match string `yaml:"Match"`
-	} `yaml:"Bridge"`
-}
 
 // A Thing implementing the Bridger interface is a bridge
 type Bridger interface {
@@ -55,49 +15,38 @@ type Bridger interface {
 	BridgeSubscribe() Subscribers
 }
 
-// Children are the things connected to the bridge
-type children map[string]*thing
+// Children are the Things connected to the bridge, map keyed by Child Id
+type children map[string]*Thing
 
+// Bridge backing struct
 type bridge struct {
-	log      *log.Logger
-	stork    Storker
-	thing    *thing
+	thing    *Thing
 	children children
 	bus      *bus
 	ports    *ports
 }
 
-func newBridge(log *log.Logger, stork Storker, config Configurator,
-	thing *thing) (*bridge, error) {
-	var cfg BridgeConfig
-
-	if err := config.Parse(&cfg); err != nil {
-		log.Println("Configure bridge error:", err)
-		return nil, err
-	}
-
+func newBridge(thing *Thing) *bridge {
 	bridger := thing.thinger.(Bridger)
 
 	b := &bridge{
-		log:      log,
-		stork:    stork,
 		thing:    thing,
 		children: make(children),
-		bus:      newBus(thing.log, 10, bridger.BridgeSubscribe()),
+		bus:      newBus(thing, 10, bridger.BridgeSubscribe()),
 	}
 
-	b.ports = newPorts(thing.log, cfg.Bridge.PortBegin, cfg.Bridge.PortEnd,
-		cfg.Bridge.Match, b.attachCb)
+	b.ports = newPorts(thing, thing.cfg.Bridge.PortBegin,
+		thing.cfg.Bridge.PortEnd, thing.cfg.Bridge.Match, b.attachCb)
 
-	b.thing.bus.subscribe("GetOnlyChild", b.getOnlyChild)
-	b.thing.bus.subscribe("GetChildren", b.getChildren)
+	b.thing.bus.subscribe("_GetOnlyChild", b.getOnlyChild)
+	b.thing.bus.subscribe("_GetChildren", b.getChildren)
 
 	b.thing.private.handleFunc("/port/{id}", b.getPort)
 
-	return b, nil
+	return b
 }
 
-func (b *bridge) getChild(id string) *thing {
+func (b *bridge) getChild(id string) *Thing {
 	if child, ok := b.children[id]; ok {
 		return child
 	}
@@ -112,11 +61,11 @@ type SpamStatus struct {
 	Status string
 }
 
-func (b *bridge) changeStatus(child *thing, sock *wireSocket, status string) {
+func (b *bridge) changeStatus(child *Thing, sock *wireSocket, status string) {
 	child.status = status
 
 	spam := SpamStatus{
-		Msg:    "SpamStatus",
+		Msg:    "_SpamStatus",
 		Id:     child.id,
 		Model:  child.model,
 		Name:   child.name,
@@ -126,7 +75,7 @@ func (b *bridge) changeStatus(child *thing, sock *wireSocket, status string) {
 	b.bus.receive(newPacket(b.bus, sock, &spam))
 }
 
-func (b *bridge) runChild(p *port, child *thing) {
+func (b *bridge) runChild(p *port, child *Thing) {
 	bridgeSock := newWireSocket("bridge sock", b.bus, nil)
 	childSock := newWireSocket("child sock", child.bus, bridgeSock)
 	bridgeSock.opposite = childSock
@@ -154,8 +103,8 @@ func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
 	child := b.getChild(msg.Id)
 
 	if child == nil {
-		config := newChildConfig(msg.Id, msg.Model, msg.Name)
-		child, err = newThing(b.stork, config, false)
+		//config := newChildConfig(msg.Id, msg.Model, msg.Name)
+		//child, err = newThing(b.stork, config, false)
 		if err != nil {
 			return fmt.Errorf("Creating new Thing failed: %s", err)
 		}
@@ -228,13 +177,13 @@ func (b *bridge) getPort(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (b *bridge) Start() {
-	if err := b.ports.Start(); err != nil {
-		b.log.Println("Starting bridge error:", err)
+func (b *bridge) start() {
+	if err := b.ports.start(); err != nil {
+		b.thing.log.Println("Starting bridge error:", err)
 	}
 }
 
-func (b *bridge) Stop() {
-	b.ports.Stop()
+func (b *bridge) stop() {
+	b.ports.stop()
 	b.bus.close()
 }

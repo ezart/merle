@@ -19,7 +19,7 @@ import (
 var upgrader = websocket.Upgrader{}
 
 // Open a websocket on the thing
-func (t *thing) ws(w http.ResponseWriter, r *http.Request) {
+func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	vars := mux.Vars(r)
@@ -73,7 +73,7 @@ func (t *thing) ws(w http.ResponseWriter, r *http.Request) {
 }
 
 // Some things to pass into the thing's HTML template
-func (t *thing) homeParams(r *http.Request) interface{} {
+func (t *Thing) homeParams(r *http.Request) interface{} {
 	scheme := "wss://"
 	if r.TLS == nil {
 		scheme = "ws://"
@@ -97,7 +97,7 @@ func (t *thing) homeParams(r *http.Request) interface{} {
 }
 
 // Open the thing's home page
-func (t *thing) home(w http.ResponseWriter, r *http.Request) {
+func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -126,7 +126,7 @@ func (t *thing) home(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (t *thing) pamValidate(user, passwd string) (bool, error) {
+func (t *Thing) pamValidate(user, passwd string) (bool, error) {
 	trans, err := pam.StartFunc("", user,
 		func(s pam.Style, msg string) (string, error) {
 			switch s {
@@ -148,7 +148,7 @@ func (t *thing) pamValidate(user, passwd string) (bool, error) {
 	return true, nil
 }
 
-func (t *thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
+func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// skip basic authentication if no user
@@ -189,7 +189,7 @@ type webPrivate struct {
 	server *http.Server
 }
 
-func newWebPrivate(t *thing, port uint) *webPrivate {
+func newWebPrivate(t *Thing, port uint) *webPrivate {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 
 	mux := mux.NewRouter()
@@ -241,16 +241,16 @@ func (w *webPrivate) handleFunc(pattern string,
 
 // The thing's public HTTP server
 type webPublic struct {
+	thing *Thing
 	sync.WaitGroup
 	user      string
 	port      uint
 	portTLS   uint
 	server    *http.Server
 	serverTLS *http.Server
-	assetsDir string
 }
 
-func newWebPublic(t *thing, port, portTLS uint, user, assetsDir string) *webPublic {
+func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 	addrTLS := ":" + strconv.FormatUint(uint64(portTLS), 10)
 
@@ -259,7 +259,7 @@ func newWebPublic(t *thing, port, portTLS uint, user, assetsDir string) *webPubl
 		Cache:  autocert.DirCache("./certs"),
 	}
 
-	fs := http.FileServer(http.Dir(assetsDir))
+	fs := http.FileServer(http.Dir(t.assetsDir))
 
 	mux := mux.NewRouter()
 	mux.HandleFunc("/ws/{id}", t.basicAuth(user, t.ws))
@@ -288,12 +288,12 @@ func newWebPublic(t *thing, port, portTLS uint, user, assetsDir string) *webPubl
 	}
 
 	return &webPublic{
+		thing:     t,
 		user:      user,
 		port:      port,
 		portTLS:   portTLS,
 		server:    server,
 		serverTLS: serverTLS,
-		assetsDir: assetsDir,
 	}
 }
 
@@ -303,7 +303,7 @@ func (w *webPublic) start() {
 		return
 	}
 
-	if w.assetsDir == "" {
+	if w.thing.assetsDir == "" {
 		log.Println("Skipping public HTTP server; assets directory is missing")
 		return
 	}

@@ -17,8 +17,7 @@ type ThingConfig struct {
 		// to differenciate one Thing from another.  Id is optional; if
 		// Id is not given, a system-wide unique Id is assigned.
 		Id string `yaml:"Id"`
-		// Thing's Model.  Should match one of the models support by
-		// Merle.  See merle --models for list of support models.
+		// Thing's Model.
 		Model string `yaml:"Model"`
 		// Thing's Name
 		Name string `yaml:"Name"`
@@ -45,6 +44,10 @@ type ThingConfig struct {
 		// server up the Thing's home page but rather connects to
 		// Thing's Mother using a websocket over HTTP.
 		PortPrivate uint `yaml:"PortPrivate"`
+		// (Optional) Run as Thing-prime.
+		Prime bool `yaml:"Prime"`
+		// (Optional) Web assets directory (location of html/js/css files)
+		AssetsDir string `yaml:"AssetsDir"`
 	} `yaml:"Thing"`
 
 	// (Optional) This section describes a Thing's Mother.  Every Thing has
@@ -64,6 +67,42 @@ type ThingConfig struct {
 		// Port on Host for Mother's private HTTP server
 		PortPrivate uint `yaml:"PortPrivate"`
 	} `yaml:"Mother"`
+
+	// (Optional) Bridge configuration.  A Thing implementing the Bridger
+	// interface will use this config for bridge-specific configuration.
+	Bridge struct {
+		// Beginning port number.  The bridge will listen for Thing
+		// (child) connections on the port range [BeginPort-EndPort].
+		//
+		// The bridge port range must be within the system's
+		// ip_local_reserved_ports.
+		//
+		// Set a range using:
+		//
+		//   sudo sysctl -w net.ipv4.ip_local_reserved_ports="8000-8040"
+		//
+		// Or, to persist setting on next boot, add to /etc/sysctl.conf:
+		//
+		//   net.ipv4.ip_local_reserved_ports = 8000-8040
+		//
+		// And then run sudo sysctl -p
+		//
+		PortBegin uint `yaml:"PortBegin"`
+		// Ending port number.
+		PortEnd uint `yaml:"PortEnd"`
+		// Match is a regular expresion (re) to specifiy which things
+		// can connect to the bridge.  The re matches against three
+		// fields of the thing: ID, Model, and Name.  The re is
+		// composed with these three fields seperated by ":" character:
+		// "ID:Model:Name".  See
+		// https://github.com/google/re2/wiki/Syntax for regular
+		// expression syntax.  Examples:
+		//
+		//	".*:.*:.*"		Match any thing.
+		//	"123456:.*:.*"		Match only a thing with ID=123456
+		//	".*:chat:.*"		Match only chat things
+		Match string `yaml:"Match"`
+	} `yaml:"Bridge"`
 }
 
 // All things implement this interface
@@ -79,18 +118,19 @@ type Thinger interface {
 }
 
 // Thing's backing structure
-type thing struct {
+type Thing struct {
 	thinger     Thinger
+	cfg         *ThingConfig
 	status      string
 	id          string
 	model       string
 	name        string
 	startupTime time.Time
-	config      Configurator
 	bus         *bus
 	tunnel      *tunnel
 	private     *webPrivate
 	public      *webPublic
+	assetsDir   string
 	templ       *template.Template
 	templErr    error
 	isBridge    bool
@@ -98,95 +138,43 @@ type thing struct {
 	log         *log.Logger
 }
 
-func NewThing(thinger Thinger, id, model, name string) *thing {
-	id = defaultId(id)
-
-	prefix := "[" + id + "] "
-	log := log.New(os.Stderr, prefix, 0)
-
-	t := &thing{
-		thinger:     thinger,
-		status:      "online",
-		id:          id,
-		model:       model,
-		name:        name,
-		bus:         newBus(log, 10, thinger.Subscribe()),
-		log:         log,
-	}
-
-	t.bus.subscribe("_GetIdentity", t.getIdentity)
-
-	return t
-}
-
-func (t *thing) EnablePublicHTTP(port, portTLS uint, user, assetsDir string) {
-	t.public = newWebPublic(t, port, portTLS, user, assetsDir)
-}
-
-func (t *thing) EnablePrivateHTTP(port uint) {
-	// TODO log WARNING if port not in ip_local_reserved_ports
-	t.private = newWebPrivate(t, port)
-}
-
-func (t *thing) EnableTunnel(host, user, key string, portPriv, remotePortPriv uint) {
-	t.tunnel = newTunnel(t.id, host, user, key, portPriv, remotePortPriv)
-}
-
-func (t *thing) SetTemplate(file string) {
-	t.templ, t.templErr = template.ParseFiles(file)
-}
-
-func newThing(stork Storker, config Configurator, demo bool) (*thing, error) {
-	var cfg ThingConfig
-	var thinger Thinger
-	var err error
-
-	if err = config.Parse(&cfg); err != nil {
-		return nil, err
-	}
-
+func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 	id := defaultId(cfg.Thing.Id)
 
 	prefix := "[" + id + "] "
 	log := log.New(os.Stderr, prefix, 0)
 
-	thinger, err = stork.NewThinger(log, cfg.Thing.Model, demo)
-	if err != nil {
-		return nil, err
-	}
-
-	t := &thing{
+	t := &Thing{
 		thinger:     thinger,
+		cfg:         cfg,
 		status:      "online",
 		id:          id,
 		model:       cfg.Thing.Model,
 		name:        cfg.Thing.Name,
 		startupTime: time.Now(),
-		config:      config,
-		bus:         newBus(log, 10, thinger.Subscribe()),
+		assetsDir:   cfg.Thing.AssetsDir,
 		log:         log,
 	}
+
+	t.bus = newBus(t, 10, thinger.Subscribe())
 
 	t.tunnel = newTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
 		cfg.Mother.Key, cfg.Thing.PortPrivate, cfg.Mother.PortPrivate)
 
 	t.private = newWebPrivate(t, cfg.Thing.PortPrivate)
 	t.public = newWebPublic(t, cfg.Thing.PortPublic, cfg.Thing.PortPublicTLS,
-		cfg.Thing.User, "web")
+		cfg.Thing.User)
 
-	t.templ, t.templErr = template.ParseFiles(thinger.Template())
+	t.templ, t.templErr = template.ParseFiles(t.assetsDir + "/" + thinger.Template())
 
 	_, t.isBridge = t.thinger.(Bridger)
 	if t.isBridge {
-		t.bridge, err = newBridge(log, stork, config, t)
-		if err != nil {
-			return nil, err
-		}
+		t.bridge = newBridge(t)
 	}
 
-	t.bus.subscribe("GetIdentity", t.getIdentity)
+	t.bus.subscribe("_GetIdentity", t.getIdentity)
 
-	return t, err
+	return t
 }
 
 // RunThing is the main entry point for Merle.  A new Thing is created and run.
@@ -201,20 +189,23 @@ func newThing(stork Storker, config Configurator, demo bool) (*thing, error) {
 // without having access to hardware.
 func RunThing(stork Storker, config Configurator, demo bool) error {
 
+	return nil
+
+/*
 	thing, err := newThing(stork, config, demo)
 	if err != nil {
 		return err
 	}
 
 	return thing.run()
+*/
 }
 
-func (t *thing) Run() error {
-	t.startupTime = time.Now()
+func (t *Thing) Run() error {
 	return t.run()
 }
 
-func (t *thing) RunPrime() error {
+func (t *Thing) RunPrime() error {
 	return nil
 }
 
@@ -227,7 +218,7 @@ type msgIdentity struct {
 	StartupTime time.Time
 }
 
-func (t *thing) getIdentity(p *Packet) {
+func (t *Thing) getIdentity(p *Packet) {
 	resp := msgIdentity{
 		Msg:         "_ReplyIdentity",
 		Status:      t.status,
@@ -239,64 +230,64 @@ func (t *thing) getIdentity(p *Packet) {
 	p.Marshal(&resp).Reply()
 }
 
-func (t *thing) getChild(id string) *thing {
+func (t *Thing) getChild(id string) *Thing {
 	if !t.isBridge {
 		return nil
 	}
 	return t.bridge.getChild(id)
 }
 
-func (t *thing) privateStart() {
+func (t *Thing) privateStart() {
 	if (t.private != nil) {
 		t.private.start()
 	}
 }
 
-func (t *thing) privateStop() {
+func (t *Thing) privateStop() {
 	if (t.private != nil) {
 		t.private.stop()
 	}
 }
 
-func (t *thing) publicStart() {
+func (t *Thing) publicStart() {
 	if (t.public != nil) {
 		t.public.start()
 	}
 }
 
-func (t *thing) publicStop() {
+func (t *Thing) publicStop() {
 	if (t.public != nil) {
 		t.public.stop()
 	}
 }
 
-func (t *thing) tunnelStart() {
+func (t *Thing) tunnelStart() {
 	if (t.tunnel != nil) {
 		t.tunnel.start()
 	}
 }
 
-func (t *thing) tunnelStop() {
+func (t *Thing) tunnelStop() {
 	if (t.tunnel != nil) {
 		t.tunnel.stop()
 	}
 }
 
-func (t *thing) run() error {
+func (t *Thing) run() error {
 
 	t.privateStart()
 	t.publicStart()
 	t.tunnelStart()
 
 	if t.isBridge {
-		t.bridge.Start()
+		t.bridge.start()
 	}
 
 	msg := struct{ Msg string }{Msg: "_CmdRun"}
 	t.bus.receive(newPacket(t.bus, nil, &msg))
 
 	if t.isBridge {
-		t.bridge.Stop()
+		t.bridge.stop()
 	}
 
 	t.tunnelStop()
@@ -309,7 +300,7 @@ func (t *thing) run() error {
 }
 
 // Run a copy of the thing (shadow thing) in the bridge.
-func (t *thing) runInBridge(p *port) {
+func (t *Thing) runInBridge(p *port) {
 	var name = fmt.Sprintf("port:%d", p.port)
 	var sock = newWebSocket(name, p.ws)
 	var pkt = newPacket(t.bus, sock, nil)

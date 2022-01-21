@@ -2,7 +2,6 @@ package merle
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"sync"
 )
@@ -28,7 +27,7 @@ type sockets map[socketer]bool
 type socketQ chan bool
 
 type bus struct {
-	log *log.Logger
+	thing *Thing
 	// sockets
 	sockLock sync.RWMutex
 	sockets  sockets
@@ -37,9 +36,9 @@ type bus struct {
 	subs    Subscribers
 }
 
-func newBus(log *log.Logger, socketsMax uint, subs Subscribers) *bus {
+func newBus(thing *Thing, socketsMax uint, subs Subscribers) *bus {
 	return &bus{
-		log:     log,
+		thing:   thing,
 		sockets: make(sockets),
 		socketQ: make(socketQ, socketsMax),
 		subs:    subs,
@@ -87,7 +86,7 @@ func (b *bus) receive(p *Packet) error {
 		}
 		if matched {
 			if sub.Cb != nil {
-				b.log.Printf("Received: %.80s", p.String())
+				b.thing.log.Printf("Received: %.80s", p.String())
 				sub.Cb(p)
 			}
 			// first match wins
@@ -95,7 +94,7 @@ func (b *bus) receive(p *Packet) error {
 		}
 	}
 
-	b.log.Printf("Not handled: %.80s", p.String())
+	b.thing.log.Printf("Not handled: %.80s", p.String())
 
 	return nil
 }

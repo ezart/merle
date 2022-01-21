@@ -3,7 +3,6 @@ package merle
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"log"
 	"net/url"
 	"os/exec"
 	"regexp"
@@ -14,7 +13,7 @@ import (
 )
 
 type port struct {
-	log *log.Logger
+	thing *Thing
 	sync.Mutex
 	port              uint
 	tunnelTrying      bool
@@ -26,7 +25,7 @@ type port struct {
 type portAttachCb func(*port, *msgIdentity) error
 
 type ports struct {
-	log      *log.Logger
+	thing    *Thing
 	begin    uint
 	end      uint
 	num      uint
@@ -39,9 +38,9 @@ type ports struct {
 	attachCb portAttachCb
 }
 
-func newPorts(log *log.Logger, begin, end uint, match string, attachCb portAttachCb) *ports {
+func newPorts(thing *Thing, begin, end uint, match string, attachCb portAttachCb) *ports {
 	return &ports{
-		log:      log,
+		thing:    thing,
 		begin:    begin,
 		end:      end,
 		match:    match,
@@ -70,7 +69,7 @@ func (p *port) wsOpen() error {
 
 func (p *port) wsIdentity() error {
 	msg := struct{ Msg string }{Msg: "_GetIdentity"}
-	p.log.Printf("Sending: %.80s", msg)
+	p.thing.log.Printf("Sending: %.80s", msg)
 	return p.ws.WriteJSON(&msg)
 }
 
@@ -88,7 +87,7 @@ func (p *port) wsReplyIdentity() (resp *msgIdentity, err error) {
 	// Clear deadline
 	p.ws.SetReadDeadline(time.Time{})
 
-	p.log.Printf("Received: %.80s", identity)
+	p.thing.log.Printf("Received: %.80s", identity)
 	return &identity, nil
 }
 
@@ -135,27 +134,27 @@ func (p *port) attach(match string, cb portAttachCb) {
 	resp, err := p.connect()
 	defer p.disconnect()
 	if err != nil {
-		p.log.Printf("Port[%d] connect failure: %s", p.port, err)
+		p.thing.log.Printf("Port[%d] connect failure: %s", p.port, err)
 		return
 	}
 
 	spec := resp.Id + ":" + resp.Model + ":" + resp.Name
 	matched, err := regexp.MatchString(match, spec)
 	if err != nil {
-		p.log.Printf("Port[%d] error compiling regexp \"%s\": %s",
+		p.thing.log.Printf("Port[%d] error compiling regexp \"%s\": %s",
 			p.port, match, err)
 		return
 	}
 
 	if !matched {
-		p.log.Printf("Port[%d] Thing [%s] didn't match filter [%s]; not attaching",
+		p.thing.log.Printf("Port[%d] Thing [%s] didn't match filter [%s]; not attaching",
 			p.port, spec, match)
 		return
 	}
 
 	err = cb(p, resp)
 	if err != nil {
-		p.log.Printf("Port[%d] attach failed: %s", p.port, err)
+		p.thing.log.Printf("Port[%d] attach failed: %s", p.port, err)
 	}
 }
 
@@ -174,7 +173,7 @@ func (p *ports) nextPort() (port *port) {
 		}
 		if port.tunnelTrying && port.tunnelTryingUntil.After(time.Now()) {
 			port.Unlock()
-			p.log.Printf("Port[%d] still tunnelTrying", port.port)
+			p.thing.log.Printf("Port[%d] still tunnelTrying", port.port)
 			continue
 		}
 		port.tunnelTrying = true
@@ -225,10 +224,10 @@ func (p *ports) init() error {
 
 	for i := uint(0); i < p.num; i++ {
 		p.ports[i].port = p.begin + i
-		p.ports[i].log = p.log
+		p.ports[i].thing = p.thing
 	}
 
-	p.log.Printf("Bridge ports[%d-%d]", p.begin, p.end)
+	p.thing.log.Printf("Bridge ports[%d-%d]", p.begin, p.end)
 
 	return nil
 }
@@ -266,14 +265,14 @@ func (p *ports) scan() error {
 			if port.tunnelConnected {
 				// no change
 			} else {
-				p.log.Printf("Tunnel connected on Port[%d]", port.port)
+				p.thing.log.Printf("Tunnel connected on Port[%d]", port.port)
 				port.tunnelConnected = true
 				port.tunnelTrying = false
 				go port.attach(p.match, p.attachCb)
 			}
 		} else {
 			if port.tunnelConnected {
-				p.log.Printf("Closing tunnel on Port[%d]", port.port)
+				p.thing.log.Printf("Closing tunnel on Port[%d]", port.port)
 				port.tunnelConnected = false
 			} else {
 				// no change
@@ -285,7 +284,7 @@ func (p *ports) scan() error {
 	return nil
 }
 
-func (p *ports) Start() error {
+func (p *ports) start() error {
 	if err := p.init(); err != nil {
 		return err
 	}
@@ -299,7 +298,7 @@ func (p *ports) Start() error {
 				return
 			case <-p.ticker.C:
 				if err := p.scan(); err != nil {
-					p.log.Println("Scanning ports error:", err)
+					p.thing.log.Println("Scanning ports error:", err)
 					return
 				}
 			}
@@ -309,7 +308,7 @@ func (p *ports) Start() error {
 	return nil
 }
 
-func (p *ports) Stop() {
+func (p *ports) stop() {
 	p.ticker.Stop()
 	p.done <- true
 }

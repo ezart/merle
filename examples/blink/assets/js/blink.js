@@ -148,6 +148,9 @@ function Run(scheme, host, id) {
 		console.log('thing msg', msg)
 
 		switch(msg.Msg) {
+		case "_SpamStatus":
+			updateStatus(msg)
+			break
 		case "_ReplyIdentity":
 			saveIdentity(msg)
 			sendForPaused()
@@ -167,9 +170,6 @@ function Run(scheme, host, id) {
 		case "CmdResume":
 			paused = false
 			refreshButton()
-			break
-		case "SpamStatus":
-			updateStatus(msg)
 			break
 		}
 	}
