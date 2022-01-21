@@ -33,7 +33,7 @@ func flagThingConfig(id, model, name, user, assetsDir string) *merle.ThingConfig
 	flag.StringVar(&cfg.Mother.User, "ruser", user,
 		"Remote user")
 	flag.StringVar(&cfg.Mother.Key, "rkey",
-		"/home/admin/.ssh/id_rsa", "Remote SSH identity key")
+		"/home/" + user + "/.ssh/id_rsa", "Remote SSH identity key")
 	flag.UintVar(&cfg.Mother.PortPrivate, "rport", 8080,
 		"Remote private HTTP listening port")
 

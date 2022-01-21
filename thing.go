@@ -2,8 +2,10 @@ package merle
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
 	"html/template"
 	"log"
+	"net/http"
 	"os"
 	"time"
 )
@@ -13,7 +15,7 @@ type ThingConfig struct {
 
 	// The section describes a Thing.
 	Thing struct {
-		// (Optional) Thing's Id.  Ids are unique within an application
+		// [Optional] Thing's Id.  Ids are unique within an application
 		// to differenciate one Thing from another.  Id is optional; if
 		// Id is not given, a system-wide unique Id is assigned.
 		Id string `yaml:"Id"`
@@ -21,36 +23,40 @@ type ThingConfig struct {
 		Model string `yaml:"Model"`
 		// Thing's Name
 		Name string `yaml:"Name"`
-		// (Optional) system User.  If a User is given, any browser
+		// [Optional] system User.  If a User is given, any browser
 		// views of the Thing's home page  will prompt for user/passwd.
 		// HTTP Basic Authentication is used and the user/passwd given
 		// must match the system creditials for the User.  If no User
 		// is given, HTTP Basic Authentication is skipped; anyone can
 		// view the home page.
 		User string `yaml:"User"`
-		// (Optional) If PortPublic is given, an HTTP web server is
+		// [Optional] If PortPublic is given, an HTTP web server is
 		// started on port PortPublic.  PortPublic is typically set to
 		// 80.  The HTTP web server runs the Thing's home page.
 		PortPublic uint `yaml:"PortPublic"`
-		// (Optional) If PortPublicTLS is given, an HTTPS web server is
+		// [Optional] If PortPublicTLS is given, an HTTPS web server is
 		// started on port PortPublicTLS.  PortPublicTLS is typically
 		// set to 443.  The HTTPS web server will self-certify using a
 		// certificate from Let's Encrypt.  The public HTTPS server
 		// will securely run the Thing's home page.  If PortPublicTLS
 		// is given, PortPublic must be given.
 		PortPublicTLS uint `yaml:"PortPublicTLS"`
-		// (Optional) If PortPrivate is given, a HTTP server is
+		// [Optional] If PortPrivate is given, a HTTP server is
 		// started on port PortPrivate.  This HTTP server does not
 		// server up the Thing's home page but rather connects to
 		// Thing's Mother using a websocket over HTTP.
 		PortPrivate uint `yaml:"PortPrivate"`
-		// (Optional) Run as Thing-prime.
+		// [Optional] Run as Thing-prime.
 		Prime bool `yaml:"Prime"`
-		// (Optional) Web assets directory (location of html/js/css files)
+		// [Required, if Prime] PortPrime port is used to create a
+		// tunnel from Thing to Thing-prime.  The port should be a
+		// reserved port in ip_local_reserved_ports.
+		PortPrime uint `yaml:"PortPrime"`
+		// [Optional] Web assets directory (location of html/js/css files)
 		AssetsDir string `yaml:"AssetsDir"`
 	} `yaml:"Thing"`
 
-	// (Optional) This section describes a Thing's Mother.  Every Thing has
+	// [Optional] This section describes a Thing's Mother.  Every Thing has
 	// a Mother.  A Mother is also a Thing.  We can build a hierarchy of
 	// Things, with a Thing having a Mother, a GrandMother, a Great
 	// GrandMother, etc.
@@ -68,7 +74,7 @@ type ThingConfig struct {
 		PortPrivate uint `yaml:"PortPrivate"`
 	} `yaml:"Mother"`
 
-	// (Optional) Bridge configuration.  A Thing implementing the Bridger
+	// [Optional] Bridge configuration.  A Thing implementing the Bridger
 	// interface will use this config for bridge-specific configuration.
 	Bridge struct {
 		// Beginning port number.  The bridge will listen for Thing
@@ -135,6 +141,8 @@ type Thing struct {
 	templErr    error
 	isBridge    bool
 	bridge      *bridge
+	isPrime     bool
+	primePort   *port
 	log         *log.Logger
 }
 
@@ -153,6 +161,7 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 		name:        cfg.Thing.Name,
 		startupTime: time.Now(),
 		assetsDir:   cfg.Thing.AssetsDir,
+		isPrime:     cfg.Thing.Prime,
 		log:         log,
 	}
 
@@ -165,11 +174,16 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 	t.public = newWebPublic(t, cfg.Thing.PortPublic, cfg.Thing.PortPublicTLS,
 		cfg.Thing.User)
 
-	t.templ, t.templErr = template.ParseFiles(t.assetsDir + "/" + thinger.Template())
+	t.templ, t.templErr = template.ParseFiles(thinger.Template())
 
 	_, t.isBridge = t.thinger.(Bridger)
 	if t.isBridge {
 		t.bridge = newBridge(t)
+	}
+
+	if t.isPrime {
+		t.private.handleFunc("/port/{id}", t.getPrimePort)
+		t.primePort = newPort(t, cfg.Thing.PortPrime, t.primeAttach)
 	}
 
 	t.bus.subscribe("_GetIdentity", t.getIdentity)
@@ -177,36 +191,23 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 	return t
 }
 
-// RunThing is the main entry point for Merle.  A new Thing is created and run.
-//
-// The stork delivers a new Thing based on the config.  The config names the
-// Thing and sets the Thing's properties.  Any error creating or running the
-// Thing is returned.  The Thing should run forever.  It is an error for a
-// Thing to stop running once started.
-//
-// Demo is set true to run Thing in demo-mode.  In demo-mode, the Thing will
-// similuate hardware access.  Demo-mode is handy for testing functionality
-// without having access to hardware.
-func RunThing(stork Storker, config Configurator, demo bool) error {
+func (t *Thing) primeAttach(p *port, msg *msgIdentity) error {
+}
 
-	return nil
+func (t *Thing) getPrimePort(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
 
-/*
-	thing, err := newThing(stork, config, demo)
-	if err != nil {
-		return err
+	port := b.ports.getPort(id)
+
+	switch port {
+	case -1:
+		fmt.Fprintf(w, "no ports available")
+	case -2:
+		fmt.Fprintf(w, "port busy")
+	default:
+		fmt.Fprintf(w, "%d", port)
 	}
-
-	return thing.run()
-*/
-}
-
-func (t *Thing) Run() error {
-	return t.run()
-}
-
-func (t *Thing) RunPrime() error {
-	return nil
 }
 
 type msgIdentity struct {
@@ -237,47 +238,10 @@ func (t *Thing) getChild(id string) *Thing {
 	return t.bridge.getChild(id)
 }
 
-func (t *Thing) privateStart() {
-	if (t.private != nil) {
-		t.private.start()
-	}
-}
-
-func (t *Thing) privateStop() {
-	if (t.private != nil) {
-		t.private.stop()
-	}
-}
-
-func (t *Thing) publicStart() {
-	if (t.public != nil) {
-		t.public.start()
-	}
-}
-
-func (t *Thing) publicStop() {
-	if (t.public != nil) {
-		t.public.stop()
-	}
-}
-
-func (t *Thing) tunnelStart() {
-	if (t.tunnel != nil) {
-		t.tunnel.start()
-	}
-}
-
-func (t *Thing) tunnelStop() {
-	if (t.tunnel != nil) {
-		t.tunnel.stop()
-	}
-}
-
-func (t *Thing) run() error {
-
-	t.privateStart()
-	t.publicStart()
-	t.tunnelStart()
+func (t *Thing) runThing() error {
+	t.private.start()
+	t.public.start()
+	t.tunnel.start()
 
 	if t.isBridge {
 		t.bridge.start()
@@ -290,13 +254,27 @@ func (t *Thing) run() error {
 		t.bridge.stop()
 	}
 
-	t.tunnelStop()
-	t.publicStop()
-	t.privateStop()
+	t.tunnel.stop()
+	t.public.stop()
+	t.private.stop()
 
 	t.bus.close()
 
 	return fmt.Errorf("_CmdRun didn't run forever")
+}
+
+func (t *Thing) runPrime() error {
+	t.private.start()
+	t.public.start()
+	t.tunnel.start()
+	return t.primePort.start()
+}
+
+func (t *Thing) Run() error {
+	if t.isPrime {
+		return t.runPrime()
+	}
+	return t.runThing()
 }
 
 // Run a copy of the thing (shadow thing) in the bridge.

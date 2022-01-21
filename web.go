@@ -308,6 +308,10 @@ func (w *webPublic) start() {
 		return
 	}
 
+	if w.user != "" {
+		log.Println("Basic Authencation enabled for user", w.user)
+	}
+
 	w.Add(2)
 	w.server.RegisterOnShutdown(w.Done)
 

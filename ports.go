@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+type portAttachCb func(*port, *msgIdentity) error
+
 type port struct {
 	thing *Thing
 	sync.Mutex
@@ -20,9 +22,18 @@ type port struct {
 	tunnelTryingUntil time.Time
 	tunnelConnected   bool
 	ws                *websocket.Conn
+	done     chan bool
+	attachCb portAttachCb
 }
 
-type portAttachCb func(*port, *msgIdentity) error
+func newPort(thing *Thing, port uint, attachCb portAttachCb) *port {
+	return &port{
+		thing:    thing,
+		port:     port,
+		done:     make(chan bool),
+		attachCb: attachCb,
+	}
+}
 
 type ports struct {
 	thing    *Thing
