@@ -114,7 +114,7 @@ func (t *thing) run(p *merle.Packet) {
 	}
 }
 
-func (t *thing) Subscribe() merle.Subscribers {
+func (t *thing) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		"CmdRun": t.run,
 		"GetPaused": t.sendPaused,

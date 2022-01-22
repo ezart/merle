@@ -116,12 +116,12 @@ type Thinger interface {
 	// List of subscribers on thing bus.  On packet receipt, the
 	// subscribers are process in-order, and the first matching subscriber
 	// stops the processing.
-	Subscribe() Subscribers
-	// Thing configurator
-	Config(Configurator) error
+	Subscribers() Subscribers
 	// Path to thing's home page template
 	Template() string
 }
+
+type Thingers map[string]func() Thinger
 
 // Thing's backing structure
 type Thing struct {
@@ -173,7 +173,7 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 		log:         log.New(os.Stderr, prefix, 0),
 	}
 
-	t.bus = newBus(t, 10, thinger.Subscribe())
+	t.bus = newBus(t, 10, thinger.Subscribers())
 
 	t.tunnel = newTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
 		cfg.Mother.Key, cfg.Thing.PortPrivate, cfg.Mother.PortPrivate)

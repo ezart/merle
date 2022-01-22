@@ -97,7 +97,7 @@ func (t *thing) start(p *merle.Packet) {
 	p.Marshal(&msg).Reply()
 }
 
-func (t *thing) Subscribe() merle.Subscribers {
+func (t *thing) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		"CmdRun": t.run,
 		"CmdStart": t.start,

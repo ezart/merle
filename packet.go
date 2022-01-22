@@ -81,6 +81,10 @@ func Broadcast(p *Packet) {
 	p.Broadcast()
 }
 
+func RunForever(p *Packet) {
+	select {}
+}
+
 // Broadcast the Packet to all listeners except for the source of the Packet.
 func (p *Packet) Broadcast() {
 	p.bus.thing.log.Printf("Broadcast: %.80s", p.String())

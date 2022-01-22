@@ -1,7 +1,6 @@
 package blink
 
 import (
-	"log"
 	"github.com/scottfeldman/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
@@ -53,7 +52,6 @@ func (b *blink) resume(p *merle.Packet) {
 }
 
 func (b *blink) runPrime(p *merle.Packet) {
-	log.Println("****************** runPrime")
 	msg := struct{ Msg string }{Msg: "GetPaused"}
 	p.Marshal(&msg).Reply()
 }
@@ -115,7 +113,7 @@ func (b *blink) run(p *merle.Packet) {
 	}
 }
 
-func (b *blink) Subscribe() merle.Subscribers {
+func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		"_CmdRun": b.run,
 		"_CmdRunPrime": b.runPrime,
@@ -125,10 +123,6 @@ func (b *blink) Subscribe() merle.Subscribers {
 		"CmdResume": b.resume,
 		"SpamLedState": b.ledState,
 	}
-}
-
-func (b *blink) Config(config merle.Configurator) error {
-	return nil
 }
 
 func (b *blink) Template() string {

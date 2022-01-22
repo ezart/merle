@@ -8,11 +8,11 @@ import (
 
 // A Thing implementing the Bridger interface is a bridge
 type Bridger interface {
+	BridgeThingers() Thingers
 	// List of subscribers on bridge bus.  All packets from all connected
 	// things (children) are forwarded to the bridge bus and tested against
-	// these subscribers.  To ignore all packets on the bridge bus, install
-	// the subscriber {".*", nil}.  This will drop all packets.
-	BridgeSubscribe() Subscribers
+	// these subscribers.
+	BridgeSubscribers() Subscribers
 }
 
 // Children are the Things connected to the bridge, map keyed by Child Id
@@ -32,7 +32,7 @@ func newBridge(thing *Thing) *bridge {
 	b := &bridge{
 		thing:    thing,
 		children: make(children),
-		bus:      newBus(thing, 10, bridger.BridgeSubscribe()),
+		bus:      newBus(thing, 10, bridger.BridgeSubscribers()),
 	}
 
 	b.ports = newPorts(thing, thing.cfg.Bridge.PortBegin,

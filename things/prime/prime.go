@@ -13,7 +13,7 @@ func NewModel(log *log.Logger, demo bool) merle.Thinger {
 	return &thing{log: log}
 }
 
-func (t *thing) BridgeSubscribe() merle.Subscribers {
+func (t *thing) BridgeSubscribers() merle.Subscribers {
 	return merle.Subscribers{
 		// drop everything
 	}
@@ -23,7 +23,7 @@ func (t *thing) run(p *merle.Packet) {
 	select {}
 }
 
-func (t *thing) Subscribe() merle.Subscribers {
+func (t *thing) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		"CmdRun": t.run,
 	}
