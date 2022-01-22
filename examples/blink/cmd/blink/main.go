@@ -12,6 +12,7 @@ func flagThingConfig(id, model, name, user, assetsDir string) *merle.ThingConfig
 	var cfg merle.ThingConfig
 
 	flag.BoolVar(&cfg.Thing.Prime, "prime", false, "Run as Thing-prime")
+	flag.UintVar(&cfg.Thing.PortPrime, "pport", 0, "Prime Port")
 
 	flag.StringVar(&cfg.Thing.Id, "id", id, "Thing ID")
 	flag.StringVar(&cfg.Thing.Model, "model", model, "Thing model")
@@ -21,8 +22,8 @@ func flagThingConfig(id, model, name, user, assetsDir string) *merle.ThingConfig
 		"Local user for HTTP Basic Authentication")
 	flag.UintVar(&cfg.Thing.PortPublic, "lport", 80,
 		"Local public HTTP listening port")
-	flag.UintVar(&cfg.Thing.PortPublicTLS, "lportTLS", 443,
-		"Local public HTTPS listening port")
+	flag.UintVar(&cfg.Thing.PortPublicTLS, "lportTLS", 0,
+		"Local public HTTPS listening port (default 0, but usually 443)")
 	flag.UintVar(&cfg.Thing.PortPrivate, "lportPriv", 8080,
 		"Local private HTTP listening port")
 	flag.StringVar(&cfg.Thing.AssetsDir, "lassets", assetsDir,

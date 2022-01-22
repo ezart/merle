@@ -2,6 +2,7 @@ package merle
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/gorilla/websocket"
 	"net/url"
 	"os/exec"
@@ -116,19 +117,17 @@ func (p *port) wsClose() {
 func (p *port) connect() (resp *msgIdentity, err error) {
 	err = p.wsOpen()
 	if err != nil {
-		return nil, fmt.Errorf("Websocket open error: %s", err)
+		return nil, errors.Wrap(err, "Websocket open error")
 	}
 
 	err = p.wsIdentity()
 	if err != nil {
-		return nil, fmt.Errorf("Send request for Identity failed: %s", err)
+		return nil, errors.Wrap(err, "Send request for Identity failed")
 	}
 
 	resp, err = p.wsReplyIdentity()
 	if err != nil {
-		return nil,
-			fmt.Errorf("Didn't reply with Identity in a reasonable time: %s",
-				err)
+		return nil, errors.Wrap(err, "Didn't reply with Identity in a reasonable time")
 	}
 
 	return resp, nil
@@ -139,6 +138,20 @@ func (p *port) disconnect() {
 	p.Lock()
 	p.tunnelConnected = false
 	p.Unlock()
+}
+
+func (p *port) attachX() {
+	defer p.disconnect()
+	resp, err := p.connect()
+	if err != nil {
+		p.thing.log.Printf("Port[%d] connect failure: %s", p.port, err)
+		return
+	}
+
+	err = p.attachCb(p, resp)
+	if err != nil {
+		p.thing.log.Printf("Port[%d] attach failed: %s", p.port, err)
+	}
 }
 
 func (p *port) attach(match string, cb portAttachCb) {
@@ -169,6 +182,8 @@ func (p *port) attach(match string, cb portAttachCb) {
 	}
 }
 
+// listeningPorts are ports in the range [begin, end] with an active listener.
+// An active listener is a Merle tunnel end-point port.
 func listeningPorts(begin, end uint) (map[uint]bool, error) {
 	listeners := make(map[uint]bool)
 
@@ -218,7 +233,7 @@ func (p *port) scan() error {
 		} else {
 			p.thing.log.Printf("Tunnel connected on Port[%d]", p.port)
 			p.tunnelConnected = true
-			go p.attachCb()
+			go p.attachX()
 		}
 	} else {
 		if p.tunnelConnected {
@@ -233,7 +248,7 @@ func (p *port) scan() error {
 }
 
 func (p *port) run() error {
-	ticker := time.NewTicker(time.second)
+	ticker := time.NewTicker(time.Second)
 
 	for {
 		select {
@@ -324,7 +339,7 @@ func (p *ports) init() error {
 
 func (p *ports) scan() error {
 
-	listeners, err := listeningPorts(p.port, p.port)
+	listeners, err := listeningPorts(p.begin, p.end)
 	if err != nil {
 		return err
 	}

@@ -1,23 +1,18 @@
 package merle
 
 import (
-	"log"
 	"net"
 )
 
-// If no id, make up an id using the MAC address of the first non-lo interface
-func defaultId(id string) string {
-	if id == "" {
-		ifaces, err := net.Interfaces()
-		if err == nil {
-			for _, iface := range ifaces {
-				if iface.Name != "lo" {
-					id = iface.HardwareAddr.String()
-					log.Println("Defaulting ID to", id)
-					break
-				}
+// Make up an id using the MAC address of the first non-lo interface
+func defaultId() string {
+	ifaces, err := net.Interfaces()
+	if err == nil {
+		for _, iface := range ifaces {
+			if iface.Name != "lo" {
+				return iface.HardwareAddr.String()
 			}
 		}
 	}
-	return id
+	return "unknown"
 }
