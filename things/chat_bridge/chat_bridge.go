@@ -14,8 +14,8 @@ func NewModel(log *log.Logger, demo bool) merle.Thinger {
 
 func (t *thing) BridgeSubscribe() merle.Subscribers {
 	return merle.Subscribers{
-		{"SpamStatus", nil},
-		{".*", merle.Broadcast},
+		"SpamStatus": nil,
+		"default": merle.Broadcast,
 	}
 }
 
@@ -25,7 +25,7 @@ func (t *thing) run(p *merle.Packet) {
 
 func (t *thing) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
-		{"CmdRun", t.run},
+		"CmdRun": t.run,
 	}
 }
 

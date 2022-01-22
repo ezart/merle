@@ -116,13 +116,13 @@ func (t *thing) run(p *merle.Packet) {
 
 func (t *thing) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
-		{"CmdRun", t.run},
-		{"GetPaused", t.sendPaused},
-		{"ReplyPaused", t.savePaused},
-		{"CmdPause", t.pause},
-		{"CmdResume", t.resume},
-		{"CmdStart", t.start},
-		{"SpamLedState", t.ledState},
+		"CmdRun": t.run,
+		"GetPaused": t.sendPaused,
+		"ReplyPaused": t.savePaused,
+		"CmdPause": t.pause,
+		"CmdResume": t.resume,
+		"CmdStart": t.start,
+		"SpamLedState": t.ledState,
 	}
 }
 

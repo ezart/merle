@@ -18,10 +18,10 @@ func (t *thing) run(p *merle.Packet) {
 
 func (t *thing) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
-		{"CmdRun", t.run},
-		{"CmdNewUser", merle.Broadcast},
-		{"CmdText", merle.Broadcast},
-		{"CmdStart", nil},
+		"CmdRun": t.run,
+		"CmdNewUser": merle.Broadcast,
+		"CmdText": merle.Broadcast,
+		"CmdStart": nil,
 	}
 }
 

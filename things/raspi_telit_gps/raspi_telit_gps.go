@@ -99,10 +99,10 @@ func (t *thing) start(p *merle.Packet) {
 
 func (t *thing) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
-		{"CmdRun", t.run},
-		{"CmdStart", t.start},
-		{"GetLocation", t.getLocation},
-		{"Location", t.saveLocation},
+		"CmdRun": t.run,
+		"CmdStart": t.start,
+		"GetLocation": t.getLocation,
+		"Location": t.saveLocation,
 	}
 }
 

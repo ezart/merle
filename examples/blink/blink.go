@@ -117,13 +117,13 @@ func (b *blink) run(p *merle.Packet) {
 
 func (b *blink) Subscribe() merle.Subscribers {
 	return merle.Subscribers{
-		{"_CmdRunPrime", b.runPrime},
-		{"_CmdRun", b.run},
-		{"GetPaused", b.sendPaused},
-		{"ReplyPaused", b.savePaused},
-		{"CmdPause", b.pause},
-		{"CmdResume", b.resume},
-		{"SpamLedState", b.ledState},
+		"_CmdRun": b.run,
+		"_CmdRunPrime": b.runPrime,
+		"GetPaused": b.sendPaused,
+		"ReplyPaused": b.savePaused,
+		"CmdPause": b.pause,
+		"CmdResume": b.resume,
+		"SpamLedState": b.ledState,
 	}
 }
 

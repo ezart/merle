@@ -2,26 +2,11 @@ package merle
 
 import (
 	"fmt"
-	"regexp"
 	"sync"
 )
 
-// Subcriber calls a callback when a packet received on the bus matches the
-// matching criteria.  The subscriber uses regular expression matching to test
-// each packet message.  See https://github.com/google/re2/wiki/Syntax for
-// regular expression syntax.
-type Subscriber struct {
-	// Regular expression (re) for packet matching.  The re could be
-	// an exact match ("CmdStart"), or something more exotic ("Cmd.*").
-	Msg string
-	// The callback to call when a packet message matches.  To drop a
-	// packet, specify nil for the callback.
-	Cb func(*Packet)
-}
-
-// Subscibers is a list of subscribers.  On packet receipt, the subscribers are
-// processed in-order, and the first matching subscriber stops the processing.
-type Subscribers []Subscriber
+// Subscibers is a list of subscribers.
+type Subscribers map[string]func(*Packet)
 
 type sockets map[socketer]bool
 type socketQ chan bool
@@ -66,36 +51,29 @@ func (b *bus) unplug(s socketer) {
 
 // Subscribe to message
 func (b *bus) subscribe(msg string, f func(*Packet)) {
-	// add to front of array for highest priority
-	b.subs = append([]Subscriber{{msg, f}}, b.subs...)
+	b.subs[msg] = f
 }
 
-// Receive matches the packet against subscriber.  The first matching
-// subscriber gets the packet.  If no subscribers match, the packet is dropped.
-func (b *bus) receive(p *Packet) error {
+// Receive matches the packet against subscribers.  If no subscribers match the
+// received message, the "default" subscriber matches.  If still not matches,
+// the packet is dropped.
+func (b *bus) receive(p *Packet) {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
 
-	// TODO optimization: compile regexps
-
-	for _, sub := range b.subs {
-		matched, err := regexp.MatchString(sub.Msg, msg.Msg)
-		if err != nil {
-			return fmt.Errorf("Error compiling regexp \"%s\": %s", sub.Msg, err)
-		}
-		if matched {
-			if sub.Cb != nil {
-				b.thing.log.Printf("Received: %.80s", p.String())
-				sub.Cb(p)
-			}
-			// first match wins
-			return nil
+	f, match := b.subs[msg.Msg]
+	if match {
+		b.thing.log.Printf("Received: %.80s", p.String())
+		f(p)
+	} else {
+		f, match := b.subs["default"]
+		if match {
+			b.thing.log.Printf("Received by default: %.80s", p.String())
+			f(p)
 		}
 	}
 
 	b.thing.log.Printf("Not handled: %.80s", p.String())
-
-	return nil
 }
 
 // Reply sends the packet back to the source socket
