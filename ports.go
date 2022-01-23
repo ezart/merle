@@ -137,7 +137,7 @@ func (p *port) disconnect() {
 	p.Unlock()
 }
 
-func (p *port) attachX() {
+func (p *port) attach() {
 	defer p.disconnect()
 	resp, err := p.connect()
 	if err != nil {
@@ -146,36 +146,6 @@ func (p *port) attachX() {
 	}
 
 	err = p.attachCb(p, resp)
-	if err != nil {
-		p.thing.log.Printf("Port[%d] attach failed: %s", p.port, err)
-	}
-}
-
-func (p *port) attach(cb portAttachCb) {
-	resp, err := p.connect()
-	defer p.disconnect()
-	if err != nil {
-		p.thing.log.Printf("Port[%d] connect failure: %s", p.port, err)
-		return
-	}
-
-	/*
-	spec := resp.Id + ":" + resp.Model + ":" + resp.Name
-	matched, err := regexp.MatchString(match, spec)
-	if err != nil {
-		p.thing.log.Printf("Port[%d] error compiling regexp \"%s\": %s",
-			p.port, match, err)
-		return
-	}
-
-	if !matched {
-		p.thing.log.Printf("Port[%d] Thing [%s] didn't match filter [%s]; not attaching",
-			p.port, spec, match)
-		return
-	}
-	*/
-
-	err = cb(p, resp)
 	if err != nil {
 		p.thing.log.Printf("Port[%d] attach failed: %s", p.port, err)
 	}
@@ -232,7 +202,7 @@ func (p *port) scan() error {
 		} else {
 			p.thing.log.Printf("Tunnel connected on Port[%d]", p.port)
 			p.tunnelConnected = true
-			go p.attachX()
+			go p.attach()
 		}
 	} else {
 		if p.tunnelConnected {
@@ -353,7 +323,7 @@ func (p *ports) scan() error {
 				p.thing.log.Printf("Tunnel connected on Port[%d]", port.port)
 				port.tunnelConnected = true
 				port.tunnelTrying = false
-				go port.attach(p.attachCb)
+				go port.attach()
 			}
 		} else {
 			if port.tunnelConnected {
