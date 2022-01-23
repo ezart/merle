@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
+var hubId
+
 function sendForChildren() {
 	conn.send(JSON.stringify({Msg: "_GetChildren"}))
 }
@@ -21,7 +23,7 @@ function showIcon(msg) {
 	newpre.innerText = msg.Name
 	newpre.id = "pre-" + msg.Id
 
-	newimg.src = "/assets/images/" + msg.Model + "/" + msg.Status + ".jpg"
+	newimg.src = "/" + hubId + "/assets/images/" + msg.Status + ".jpg"
 	newimg.onclick = function (){show(msg.Id);}
 	newimg.id = msg.Id
 
@@ -55,13 +57,15 @@ function updateStatus(msg) {
 	if (img == null) {
 		addChild(msg)
 	} else {
-		img.src = "/assetsb/images/" + msg.Model + "/" + msg.Status + ".jpg"
+		img.src = "/" + hubId + "/assets/images/" + msg.Status + ".jpg"
 		pre.innerText = msg.Name
 		show(msg.Id)
 	}
 }
 
 function Run(scheme, host, id) {
+
+	hubId = id
 
 	conn = new WebSocket(scheme + host + "/ws/" + id)
 
@@ -82,7 +86,7 @@ function Run(scheme, host, id) {
 		case "ReplyChildren":
 			saveChildren(msg)
 			break
-		case "SpamStatus":
+		case "_SpamStatus":
 			updateStatus(msg)
 			break
 		}

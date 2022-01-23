@@ -246,6 +246,7 @@ type webPublic struct {
 	user      string
 	port      uint
 	portTLS   uint
+	mux       *mux.Router
 	server    *http.Server
 	serverTLS *http.Server
 }
@@ -265,16 +266,16 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 	mux.HandleFunc("/ws/{id}", t.basicAuth(user, t.ws))
 	mux.HandleFunc("/{id}", t.basicAuth(user, t.home))
 	mux.HandleFunc("/", t.basicAuth(user, t.home))
-	mux.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", fs))
+	mux.PathPrefix("/" + t.id + "/assets/").
+		Handler(http.StripPrefix("/" + t.id + "/assets/", fs))
 
 	server := &http.Server{
 		Addr:    addr,
+		Handler: mux,
 		// TODO add timeouts
 	}
 
-	if portTLS == 0 {
-		server.Handler = mux
-	} else {
+	if portTLS != 0 {
 		server.Handler = certManager.HTTPHandler(nil)
 	}
 
@@ -292,6 +293,7 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 		user:      user,
 		port:      port,
 		portTLS:   portTLS,
+		mux:       mux,
 		server:    server,
 		serverTLS: serverTLS,
 	}

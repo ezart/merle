@@ -63,7 +63,7 @@ function refreshLed() {
 		image.style.opacity = 0.3
 	}
 	// force refresh of image by using getTime() trick
-	image.src = "./assets/images/led-gpio17-" + on + ".png?t=" +
+	image.src = "/" + id + "/assets/images/led-gpio17-" + on + ".png?t=" +
 		new Date().getTime()
 	image.style.visibility = "visible"
 }

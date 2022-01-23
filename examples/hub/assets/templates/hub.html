@@ -14,7 +14,7 @@ found in the LICENSE file.
 		<title>{{.Name}}</title>
 
 		<link rel="stylesheet" type="text/css"
-		       href="/assets/css/{{.Model}}.css">
+			href="/{{.Id}}/assets/css/{{.Model}}.css">
 
 	</head>
 
@@ -25,7 +25,7 @@ found in the LICENSE file.
 			<iframe class="child" id="child"></iframe>
 		</div>
 
-		<script src="/assets/js/{{.Model}}.js"></script>
+		<script src="/{{.Id}}/assets/js/{{.Model}}.js"></script>
 		<script>Run({{.Scheme}}, {{.Host}}, {{.Id}})</script>
 
 	</body>

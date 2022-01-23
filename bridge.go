@@ -128,6 +128,10 @@ func (b *bridge) newChild(id, model, name string) (*Thing, error) {
 
 	child := NewThing(thinger, &cfg)
 
+	fs := http.FileServer(http.Dir(child.assets.Dir))
+	b.thing.public.mux.PathPrefix("/" + child.id + "/assets/").
+		Handler(http.StripPrefix("/" + child.id + "/assets/", fs))
+
 	return child, nil
 }
 
