@@ -50,23 +50,23 @@ func (p *Packet) Source() interface{} {
 }
 
 func (p *Packet) Send(dst interface{}) {
-	p.bus.log.Printf("Send: %.80s", p.String())
+	p.bus.thing.log.Printf("Send: %.80s", p.String())
 	dstSock, ok := dst.(socketer)
 	if ok {
 		if err := p.bus.send(p, dstSock); err != nil {
-			p.bus.log.Println(err)
+			p.bus.thing.log.Println(err)
 		}
 	} else {
-		p.bus.log.Println("Send: can't send to non-socket")
+		p.bus.thing.log.Println("Send: can't send to non-socket")
 	}
 }
 
 // Reply back to sender of Packet.  Reply is typically used to respond to a
 // request.
 func (p *Packet) Reply() {
-	p.bus.log.Printf("Reply: %.80s", p.String())
+	p.bus.thing.log.Printf("Reply: %.80s", p.String())
 	if err := p.bus.reply(p); err != nil {
-		p.bus.log.Println(err)
+		p.bus.thing.log.Println(err)
 	}
 }
 
@@ -81,10 +81,14 @@ func Broadcast(p *Packet) {
 	p.Broadcast()
 }
 
+func RunForever(p *Packet) {
+	select {}
+}
+
 // Broadcast the Packet to all listeners except for the source of the Packet.
 func (p *Packet) Broadcast() {
-	p.bus.log.Printf("Broadcast: %.80s", p.String())
+	p.bus.thing.log.Printf("Broadcast: %.80s", p.String())
 	if err := p.bus.broadcast(p); err != nil {
-		p.bus.log.Println(err)
+		p.bus.thing.log.Println(err)
 	}
 }

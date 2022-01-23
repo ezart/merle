@@ -3,101 +3,53 @@ package merle
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"log"
 	"net/http"
+	"regexp"
 )
-
-// Bridge configuration.  A Thing implementing the Bridger interface will use
-// this config for bridge-specific configuration.
-type BridgeConfig struct {
-
-	Bridge struct {
-		// Beginning port number.  The bridge will listen for Thing
-		// (child) connections on the port range [BeginPort-EndPort].
-		//
-		// The bridge port range must be within the system's
-		// ip_local_reserved_ports.
-		//
-		// Set a range using:
-		//
-		//   sudo sysctl -w net.ipv4.ip_local_reserved_ports="8000-8040"
-		//
-		// Or, to persist setting on next boot, add to /etc/sysctl.conf:
-		//
-		//   net.ipv4.ip_local_reserved_ports = 8000-8040
-		//
-		// And then run sudo sysctl -p
-		//
-		PortBegin uint `yaml:"PortBegin"`
-		// Ending port number.
-		PortEnd uint `yaml:"PortEnd"`
-		// Match is a regular expresion (re) to specifiy which things
-		// can connect to the bridge.  The re matches against three
-		// fields of the thing: ID, Model, and Name.  The re is
-		// composed with these three fields seperated by ":" character:
-		// "ID:Model:Name".  See
-		// https://github.com/google/re2/wiki/Syntax for regular
-		// expression syntax.  Examples:
-		//
-		//	".*:.*:.*"		Match any thing.
-		//	"123456:.*:.*"		Match only a thing with ID=123456
-		//	".*:chat:.*"		Match only chat things
-		Match string `yaml:"Match"`
-	} `yaml:"Bridge"`
-}
 
 // A Thing implementing the Bridger interface is a bridge
 type Bridger interface {
+	BridgeThingers() Thingers
 	// List of subscribers on bridge bus.  All packets from all connected
 	// things (children) are forwarded to the bridge bus and tested against
-	// these subscribers.  To ignore all packets on the bridge bus, install
-	// the subscriber {".*", nil}.  This will drop all packets.
-	BridgeSubscribe() Subscribers
+	// these subscribers.
+	BridgeSubscribers() Subscribers
 }
 
-// Children are the things connected to the bridge
-type children map[string]*thing
+// Children are the Things connected to the bridge, map keyed by Child Id
+type children map[string]*Thing
 
+// Bridge backing struct
 type bridge struct {
-	log      *log.Logger
-	stork    Storker
-	thing    *thing
+	thing    *Thing
+	thingers Thingers
 	children children
 	bus      *bus
 	ports    *ports
 }
 
-func newBridge(log *log.Logger, stork Storker, config Configurator,
-	thing *thing) (*bridge, error) {
-	var cfg BridgeConfig
-
-	if err := config.Parse(&cfg); err != nil {
-		log.Println("Configure bridge error:", err)
-		return nil, err
-	}
-
+func newBridge(thing *Thing) *bridge {
 	bridger := thing.thinger.(Bridger)
 
 	b := &bridge{
-		log:      log,
-		stork:    stork,
 		thing:    thing,
+		thingers: bridger.BridgeThingers(),
 		children: make(children),
-		bus:      newBus(thing.log, 10, bridger.BridgeSubscribe()),
+		bus:      newBus(thing, 10, bridger.BridgeSubscribers()),
 	}
 
-	b.ports = newPorts(thing.log, cfg.Bridge.PortBegin, cfg.Bridge.PortEnd,
-		cfg.Bridge.Match, b.attachCb)
+	b.ports = newPorts(thing, thing.cfg.Bridge.PortBegin,
+		thing.cfg.Bridge.PortEnd, b.attachCb)
 
-	b.thing.bus.subscribe("GetOnlyChild", b.getOnlyChild)
-	b.thing.bus.subscribe("GetChildren", b.getChildren)
+	b.thing.bus.subscribe("_GetOnlyChild", b.getOnlyChild)
+	b.thing.bus.subscribe("_GetChildren", b.getChildren)
 
 	b.thing.private.handleFunc("/port/{id}", b.getPort)
 
-	return b, nil
+	return b
 }
 
-func (b *bridge) getChild(id string) *thing {
+func (b *bridge) getChild(id string) *Thing {
 	if child, ok := b.children[id]; ok {
 		return child
 	}
@@ -112,11 +64,11 @@ type SpamStatus struct {
 	Status string
 }
 
-func (b *bridge) changeStatus(child *thing, sock *wireSocket, status string) {
+func (b *bridge) changeStatus(child *Thing, sock *wireSocket, status string) {
 	child.status = status
 
 	spam := SpamStatus{
-		Msg:    "SpamStatus",
+		Msg:    "_SpamStatus",
 		Id:     child.id,
 		Model:  child.model,
 		Name:   child.name,
@@ -126,7 +78,7 @@ func (b *bridge) changeStatus(child *thing, sock *wireSocket, status string) {
 	b.bus.receive(newPacket(b.bus, sock, &spam))
 }
 
-func (b *bridge) runChild(p *port, child *thing) {
+func (b *bridge) runChild(p *port, child *Thing) {
 	bridgeSock := newWireSocket("bridge sock", b.bus, nil)
 	childSock := newWireSocket("child sock", child.bus, bridgeSock)
 	bridgeSock.opposite = childSock
@@ -142,22 +94,56 @@ func (b *bridge) runChild(p *port, child *thing) {
 	b.bus.unplug(childSock)
 }
 
-func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
-	var err error
+func (b *bridge) newChild(id, model, name string) (*Thing, error) {
+	var thinger Thinger
+	var cfg ThingConfig
 
 	// TODO think about if it makes sense to allow you to be your own Mother?
-
-	if b.thing.id == msg.Id {
-		return fmt.Errorf("Sorry, you can't be your own Mother")
+	if b.thing.id == id {
+		return nil, fmt.Errorf("Sorry, you can't be your own Mother")
 	}
+
+	spec := id + ":" + model + ":" + name
+
+	for key, f := range b.thingers {
+		match, err := regexp.MatchString(key, spec)
+		if err != nil {
+			return nil, fmt.Errorf("Thinger regexp error: %s", err)
+		}
+		if match {
+			if f != nil {
+				thinger = f()
+			}
+			break
+		}
+	}
+
+	if thinger == nil {
+		return nil, fmt.Errorf("No Thinger matched [%s], not attaching", spec)
+	}
+
+	cfg.Thing.Id = id
+	cfg.Thing.Model = model
+	cfg.Thing.Name = name
+
+	child := NewThing(thinger, &cfg)
+
+	fs := http.FileServer(http.Dir(child.assets.Dir))
+	b.thing.public.mux.PathPrefix("/" + child.id + "/assets/").
+		Handler(http.StripPrefix("/" + child.id + "/assets/", fs))
+
+	return child, nil
+}
+
+func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
+	var err error
 
 	child := b.getChild(msg.Id)
 
 	if child == nil {
-		config := newChildConfig(msg.Id, msg.Model, msg.Name)
-		child, err = newThing(b.stork, config, false)
+		child, err = b.newChild(msg.Id, msg.Model, msg.Name)
 		if err != nil {
-			return fmt.Errorf("Creating new Thing failed: %s", err)
+			return fmt.Errorf("Creating new child Thing failed: %s", err)
 		}
 		b.children[msg.Id] = child
 	} else {
@@ -228,13 +214,13 @@ func (b *bridge) getPort(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (b *bridge) Start() {
-	if err := b.ports.Start(); err != nil {
-		b.log.Println("Starting bridge error:", err)
+func (b *bridge) start() {
+	if err := b.ports.start(); err != nil {
+		b.thing.log.Println("Starting bridge error:", err)
 	}
 }
 
-func (b *bridge) Stop() {
-	b.ports.Stop()
+func (b *bridge) stop() {
+	b.ports.stop()
 	b.bus.close()
 }

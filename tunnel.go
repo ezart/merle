@@ -41,16 +41,17 @@ func newTunnel(id, host, user, key string, portPrivate, portRemote uint) *tunnel
 // TODO merle for bespoke ssh server.
 
 func (t *tunnel) getPort() string {
-	args := []string{}
 
 	// ssh -i <key> <user>@<host> curl -s localhost:<privatePort>/port/<id>
 
-	args = append(args, "-i", t.key)
-	args = append(args, t.user+"@"+t.host)
-	args = append(args, "curl", "-s")
-	args = append(args, "localhost:"+
-		strconv.FormatUint(uint64(t.portRemote), 10)+
-		"/port/"+t.id)
+	privatePort := strconv.FormatUint(uint64(t.portRemote), 10)
+
+	args := []string{
+		"-i", t.key,
+		t.user+"@"+t.host,
+		"curl", "-s",
+		"localhost:"+privatePort+"/port/"+t.id,
+	}
 
 	log.Printf("Tunnel getting port [ssh %s]...", args)
 
@@ -83,8 +84,6 @@ func (t *tunnel) getPort() string {
 
 func (t *tunnel) tunnel(port string) error {
 
-	args := []string{}
-
 	// ssh -o ExitOnForwardFailure=yes -CNT -i <key> -R 8081:localhost:8080 <hub>
 	//
 	//  (The ExitOnForwardFailure=yes is to exit ssh if the remote port forwarding fails,
@@ -92,10 +91,12 @@ func (t *tunnel) tunnel(port string) error {
 
 	remote := fmt.Sprintf("%s:localhost:%d", port, t.portPrivate)
 
-	args = append(args, "-CNT")
-	args = append(args, "-i", t.key)
-	args = append(args, "-o", "ExitOnForwardFailure=yes")
-	args = append(args, "-R", remote, t.user+"@"+t.host)
+	args := []string{
+		"-CNT",
+		"-i", t.key,
+		"-o", "ExitOnForwardFailure=yes",
+		"-R", remote, t.user+"@"+t.host,
+	}
 
 	log.Printf("Creating tunnel [ssh %s]...", args)
 

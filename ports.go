@@ -2,36 +2,45 @@ package merle
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/gorilla/websocket"
-	"log"
 	"net/url"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
+type portAttachCb func(*port, *msgIdentity) error
+
 type port struct {
-	log *log.Logger
+	thing *Thing
 	sync.Mutex
 	port              uint
 	tunnelTrying      bool
 	tunnelTryingUntil time.Time
 	tunnelConnected   bool
 	ws                *websocket.Conn
+	done     chan bool
+	attachCb portAttachCb
 }
 
-type portAttachCb func(*port, *msgIdentity) error
+func newPort(thing *Thing, p uint, attachCb portAttachCb) *port {
+	return &port{
+		thing:    thing,
+		port:     p,
+		done:     make(chan bool),
+		attachCb: attachCb,
+	}
+}
 
 type ports struct {
-	log      *log.Logger
+	thing    *Thing
 	begin    uint
 	end      uint
 	num      uint
 	next     uint
-	match    string
 	ticker   *time.Ticker
 	done     chan bool
 	ports    []port
@@ -39,12 +48,11 @@ type ports struct {
 	attachCb portAttachCb
 }
 
-func newPorts(log *log.Logger, begin, end uint, match string, attachCb portAttachCb) *ports {
+func newPorts(thing *Thing, begin, end uint, attachCb portAttachCb) *ports {
 	return &ports{
-		log:      log,
+		thing:    thing,
 		begin:    begin,
 		end:      end,
-		match:    match,
 		done:     make(chan bool),
 		portMap:  make(map[string]*port),
 		attachCb: attachCb,
@@ -69,8 +77,8 @@ func (p *port) wsOpen() error {
 }
 
 func (p *port) wsIdentity() error {
-	msg := struct{ Msg string }{Msg: "GetIdentity"}
-	p.log.Printf("Sending: %.80s", msg)
+	msg := struct{ Msg string }{Msg: "_GetIdentity"}
+	p.thing.log.Printf("Sending: %.80s", msg)
 	return p.ws.WriteJSON(&msg)
 }
 
@@ -88,7 +96,7 @@ func (p *port) wsReplyIdentity() (resp *msgIdentity, err error) {
 	// Clear deadline
 	p.ws.SetReadDeadline(time.Time{})
 
-	p.log.Printf("Received: %.80s", identity)
+	p.thing.log.Printf("Received: %.80s", identity)
 	return &identity, nil
 }
 
@@ -106,19 +114,17 @@ func (p *port) wsClose() {
 func (p *port) connect() (resp *msgIdentity, err error) {
 	err = p.wsOpen()
 	if err != nil {
-		return nil, fmt.Errorf("Websocket open error: %s", err)
+		return nil, errors.Wrap(err, "Websocket open error")
 	}
 
 	err = p.wsIdentity()
 	if err != nil {
-		return nil, fmt.Errorf("Send request for Identity failed: %s", err)
+		return nil, errors.Wrap(err, "Send request for Identity failed")
 	}
 
 	resp, err = p.wsReplyIdentity()
 	if err != nil {
-		return nil,
-			fmt.Errorf("Didn't reply with Identity in a reasonable time: %s",
-				err)
+		return nil, errors.Wrap(err, "Didn't reply with Identity in a reasonable time")
 	}
 
 	return resp, nil
@@ -131,32 +137,99 @@ func (p *port) disconnect() {
 	p.Unlock()
 }
 
-func (p *port) attach(match string, cb portAttachCb) {
-	resp, err := p.connect()
+func (p *port) attach() {
 	defer p.disconnect()
+	resp, err := p.connect()
 	if err != nil {
-		p.log.Printf("Port[%d] connect failure: %s", p.port, err)
+		p.thing.log.Printf("Port[%d] connect failure: %s", p.port, err)
 		return
 	}
 
-	spec := resp.Id + ":" + resp.Model + ":" + resp.Name
-	matched, err := regexp.MatchString(match, spec)
+	err = p.attachCb(p, resp)
 	if err != nil {
-		p.log.Printf("Port[%d] error compiling regexp \"%s\": %s",
-			p.port, match, err)
-		return
+		p.thing.log.Printf("Port[%d] attach failed: %s", p.port, err)
+	}
+}
+
+// listeningPorts are ports in the range [begin, end] with an active listener.
+// An active listener is a Merle tunnel end-point port.
+func listeningPorts(begin, end uint) (map[uint]bool, error) {
+	listeners := make(map[uint]bool)
+
+	// ss -Hntl4p src 127.0.0.1 sport ge 8081 sport le 9080
+
+	args := []string{
+		"-Hntl4",
+		"src", "127.0.0.1",
+		"sport", "ge", strconv.FormatUint(uint64(begin), 10),
+		"sport", "le", strconv.FormatUint(uint64(end), 10),
 	}
 
-	if !matched {
-		p.log.Printf("Port[%d] Thing [%s] didn't match filter [%s]; not attaching",
-			p.port, spec, match)
-		return
+	cmd := exec.Command("ss", args...)
+
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		return listeners, err
 	}
 
-	err = cb(p, resp)
-	if err != nil {
-		p.log.Printf("Port[%d] attach failed: %s", p.port, err)
+	ss := string(stdoutStderr)
+	ss = strings.TrimSuffix(ss, "\n")
+
+	for _, ssLine := range strings.Split(ss, "\n") {
+		if len(ssLine) > 0 {
+			portStr := strings.Split(strings.Split(ssLine,
+				":")[1], " ")[0]
+			port, _ := strconv.Atoi(portStr)
+			listeners[uint(port)] = true
+		}
 	}
+
+	return listeners, nil
+}
+
+func (p *port) scan() error {
+	listeners, err := listeningPorts(p.port, p.port)
+	if err != nil {
+		return err
+	}
+
+	p.Lock()
+	defer p.Unlock()
+
+	if listeners[p.port] {
+		if p.tunnelConnected {
+			// no change
+		} else {
+			p.thing.log.Printf("Tunnel connected on Port[%d]", p.port)
+			p.tunnelConnected = true
+			go p.attach()
+		}
+	} else {
+		if p.tunnelConnected {
+			p.thing.log.Printf("Closing tunnel on Port[%d]", p.port)
+			p.tunnelConnected = false
+		} else {
+			// no change
+		}
+	}
+
+	return nil
+}
+
+func (p *port) run() error {
+	ticker := time.NewTicker(time.Second)
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := p.scan(); err != nil {
+				p.thing.log.Println("Scanning port error:", err)
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (p *ports) nextPort() (port *port) {
@@ -174,7 +247,7 @@ func (p *ports) nextPort() (port *port) {
 		}
 		if port.tunnelTrying && port.tunnelTryingUntil.After(time.Now()) {
 			port.Unlock()
-			p.log.Printf("Port[%d] still tunnelTrying", port.port)
+			p.thing.log.Printf("Port[%d] still tunnelTrying", port.port)
 			continue
 		}
 		port.tunnelTrying = true
@@ -225,38 +298,19 @@ func (p *ports) init() error {
 
 	for i := uint(0); i < p.num; i++ {
 		p.ports[i].port = p.begin + i
-		p.ports[i].log = p.log
+		p.ports[i].thing = p.thing
 	}
 
-	p.log.Printf("Bridge ports[%d-%d]", p.begin, p.end)
+	p.thing.log.Printf("Bridge ports[%d-%d]", p.begin, p.end)
 
 	return nil
 }
 
 func (p *ports) scan() error {
 
-	// ss -Hntl4p src 127.0.0.1 sport ge 8081 sport le 9080
-
-	cmd := exec.Command("ss", "-Hntl4", "src", "127.0.0.1",
-		"sport", "ge", strconv.FormatUint(uint64(p.begin), 10),
-		"sport", "le", strconv.FormatUint(uint64(p.end), 10))
-	stdoutStderr, err := cmd.CombinedOutput()
+	listeners, err := listeningPorts(p.begin, p.end)
 	if err != nil {
 		return err
-	}
-
-	ss := string(stdoutStderr)
-	ss = strings.TrimSuffix(ss, "\n")
-
-	listeners := make(map[uint]bool)
-
-	for _, ssLine := range strings.Split(ss, "\n") {
-		if len(ssLine) > 0 {
-			portStr := strings.Split(strings.Split(ssLine,
-				":")[1], " ")[0]
-			port, _ := strconv.Atoi(portStr)
-			listeners[uint(port)] = true
-		}
 	}
 
 	for i := uint(0); i < p.num; i++ {
@@ -266,14 +320,14 @@ func (p *ports) scan() error {
 			if port.tunnelConnected {
 				// no change
 			} else {
-				p.log.Printf("Tunnel connected on Port[%d]", port.port)
+				p.thing.log.Printf("Tunnel connected on Port[%d]", port.port)
 				port.tunnelConnected = true
 				port.tunnelTrying = false
-				go port.attach(p.match, p.attachCb)
+				go port.attach()
 			}
 		} else {
 			if port.tunnelConnected {
-				p.log.Printf("Closing tunnel on Port[%d]", port.port)
+				p.thing.log.Printf("Closing tunnel on Port[%d]", port.port)
 				port.tunnelConnected = false
 			} else {
 				// no change
@@ -285,7 +339,7 @@ func (p *ports) scan() error {
 	return nil
 }
 
-func (p *ports) Start() error {
+func (p *ports) start() error {
 	if err := p.init(); err != nil {
 		return err
 	}
@@ -299,7 +353,7 @@ func (p *ports) Start() error {
 				return
 			case <-p.ticker.C:
 				if err := p.scan(); err != nil {
-					p.log.Println("Scanning ports error:", err)
+					p.thing.log.Println("Scanning ports error:", err)
 					return
 				}
 			}
@@ -309,7 +363,7 @@ func (p *ports) Start() error {
 	return nil
 }
 
-func (p *ports) Stop() {
+func (p *ports) stop() {
 	p.ticker.Stop()
 	p.done <- true
 }
