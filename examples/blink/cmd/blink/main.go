@@ -10,8 +10,7 @@ import (
 
 func main() {
 	demo := flag.Bool("demo", false, "Run in demo mode; will simulate I/O")
-	cfg := merle.FlagThingConfig("", "blink", "blinky", "admin",
-		"examples/blink/assets")
+	cfg := merle.FlagThingConfig("", "blink", "blinky", "admin")
 	flag.Parse()
 
 	if os.Geteuid() != 0 {

@@ -1,0 +1,43 @@
+body, html {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+.flex-container {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	flex-direction: column;
+}
+
+.children {
+	display: flex;
+	flex-wrap: nowrap;
+	flex-direction: row;
+	align-content: space-between;
+	height: 100px;
+	background-color: black;
+}
+
+.children > div {
+	margin: 10px;
+	display: flex;
+	flex-direction: column;
+	text-align: center;
+	align-items: center;
+	justify-content: center;
+}
+
+.children > div > pre {
+	color: white;
+	font: 14px Arial, sans-serif;
+}
+
+.child {
+	flex-grow: 1;
+	border: none;
+	margin: 0;
+	padding: 0;
+}

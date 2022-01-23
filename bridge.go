@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"regexp"
 )
 
 // A Thing implementing the Bridger interface is a bridge
@@ -21,6 +22,7 @@ type children map[string]*Thing
 // Bridge backing struct
 type bridge struct {
 	thing    *Thing
+	thingers Thingers
 	children children
 	bus      *bus
 	ports    *ports
@@ -31,12 +33,13 @@ func newBridge(thing *Thing) *bridge {
 
 	b := &bridge{
 		thing:    thing,
+		thingers: bridger.BridgeThingers(),
 		children: make(children),
 		bus:      newBus(thing, 10, bridger.BridgeSubscribers()),
 	}
 
 	b.ports = newPorts(thing, thing.cfg.Bridge.PortBegin,
-		thing.cfg.Bridge.PortEnd, thing.cfg.Bridge.Match, b.attachCb)
+		thing.cfg.Bridge.PortEnd, b.attachCb)
 
 	b.thing.bus.subscribe("_GetOnlyChild", b.getOnlyChild)
 	b.thing.bus.subscribe("_GetChildren", b.getChildren)
@@ -91,22 +94,52 @@ func (b *bridge) runChild(p *port, child *Thing) {
 	b.bus.unplug(childSock)
 }
 
-func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
-	var err error
+func (b *bridge) newChild(id, model, name string) (*Thing, error) {
+	var thinger Thinger
+	var cfg ThingConfig
 
 	// TODO think about if it makes sense to allow you to be your own Mother?
-
-	if b.thing.id == msg.Id {
-		return fmt.Errorf("Sorry, you can't be your own Mother")
+	if b.thing.id == id {
+		return nil, fmt.Errorf("Sorry, you can't be your own Mother")
 	}
+
+	spec := id + ":" + model + ":" + name
+
+	for key, f := range b.thingers {
+		match, err := regexp.MatchString(key, spec)
+		if err != nil {
+			return nil, fmt.Errorf("Thinger regexp error: %s", err)
+		}
+		if match {
+			if f != nil {
+				thinger = f()
+			}
+			break
+		}
+	}
+
+	if thinger == nil {
+		return nil, fmt.Errorf("No Thinger matched [%s], not attaching", spec)
+	}
+
+	cfg.Thing.Id = id
+	cfg.Thing.Model = model
+	cfg.Thing.Name = name
+
+	child := NewThing(thinger, &cfg)
+
+	return child, nil
+}
+
+func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
+	var err error
 
 	child := b.getChild(msg.Id)
 
 	if child == nil {
-		//config := newChildConfig(msg.Id, msg.Model, msg.Name)
-		//child, err = newThing(b.stork, config, false)
+		child, err = b.newChild(msg.Id, msg.Model, msg.Name)
 		if err != nil {
-			return fmt.Errorf("Creating new Thing failed: %s", err)
+			return fmt.Errorf("Creating new child Thing failed: %s", err)
 		}
 		b.children[msg.Id] = child
 	} else {

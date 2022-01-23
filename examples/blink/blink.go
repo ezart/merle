@@ -125,6 +125,9 @@ func (b *blink) Subscribers() merle.Subscribers {
 	}
 }
 
-func (b *blink) Template() string {
-	return "examples/blink/assets/templates/blink.html"
+func (b *blink) Assets() *merle.ThingAssets {
+	return &merle.ThingAssets{
+		Dir: "examples/blink/assets",
+		Template: "templates/blink.html",
+	}
 }

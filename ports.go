@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/websocket"
 	"net/url"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -42,7 +41,6 @@ type ports struct {
 	end      uint
 	num      uint
 	next     uint
-	match    string
 	ticker   *time.Ticker
 	done     chan bool
 	ports    []port
@@ -50,12 +48,11 @@ type ports struct {
 	attachCb portAttachCb
 }
 
-func newPorts(thing *Thing, begin, end uint, match string, attachCb portAttachCb) *ports {
+func newPorts(thing *Thing, begin, end uint, attachCb portAttachCb) *ports {
 	return &ports{
 		thing:    thing,
 		begin:    begin,
 		end:      end,
-		match:    match,
 		done:     make(chan bool),
 		portMap:  make(map[string]*port),
 		attachCb: attachCb,
@@ -154,7 +151,7 @@ func (p *port) attachX() {
 	}
 }
 
-func (p *port) attach(match string, cb portAttachCb) {
+func (p *port) attach(cb portAttachCb) {
 	resp, err := p.connect()
 	defer p.disconnect()
 	if err != nil {
@@ -162,6 +159,7 @@ func (p *port) attach(match string, cb portAttachCb) {
 		return
 	}
 
+	/*
 	spec := resp.Id + ":" + resp.Model + ":" + resp.Name
 	matched, err := regexp.MatchString(match, spec)
 	if err != nil {
@@ -175,6 +173,7 @@ func (p *port) attach(match string, cb portAttachCb) {
 			p.port, spec, match)
 		return
 	}
+	*/
 
 	err = cb(p, resp)
 	if err != nil {
@@ -354,7 +353,7 @@ func (p *ports) scan() error {
 				p.thing.log.Printf("Tunnel connected on Port[%d]", port.port)
 				port.tunnelConnected = true
 				port.tunnelTrying = false
-				go port.attach(p.match, p.attachCb)
+				go port.attach(p.attachCb)
 			}
 		} else {
 			if port.tunnelConnected {

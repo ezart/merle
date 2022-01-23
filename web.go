@@ -259,7 +259,7 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 		Cache:  autocert.DirCache("./certs"),
 	}
 
-	fs := http.FileServer(http.Dir(t.assetsDir))
+	fs := http.FileServer(http.Dir(t.assets.Dir))
 
 	mux := mux.NewRouter()
 	mux.HandleFunc("/ws/{id}", t.basicAuth(user, t.ws))
@@ -303,7 +303,7 @@ func (w *webPublic) start() {
 		return
 	}
 
-	if w.thing.assetsDir == "" {
+	if w.thing.assets.Dir == "" {
 		log.Println("Skipping public HTTP server; assets directory is missing")
 		return
 	}
