@@ -34,7 +34,7 @@ go get github.com/scottfeldman/merle
 
 ## Writing Your First Thing
 
-Once you have the Merle package installed, you're ready to start writing your own code. The first program we are going to create is the "Hello, World" of things, which is a web-app that shows "Hello, World!".
+Once you have the Merle package installed, you're ready to start writing your own code. The first program we are going to create is the "Hello, World" of things, which is a web-app that shows "Hello, World!" when viewed with a browser.
 
 ### Hello, World!
 
