@@ -56,7 +56,7 @@ func (b *bus) subscribe(msg string, f func(*Packet)) {
 
 // Receive matches the packet against subscribers.  If no subscribers match the
 // received message, the "default" subscriber matches.  If still not matches,
-// the packet is dropped.
+// the packet is (silently) dropped.
 func (b *bus) receive(p *Packet) {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)

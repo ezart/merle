@@ -83,7 +83,7 @@ function Run(scheme, host, id) {
 		console.log('hub msg', msg)
 
 		switch(msg.Msg) {
-		case "ReplyChildren":
+		case "_ReplyChildren":
 			saveChildren(msg)
 			break
 		case "_SpamStatus":

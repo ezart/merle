@@ -99,23 +99,14 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 		t.primePort = newPort(t, cfg.Thing.PortPrime, t.primeAttach)
 	}
 
-	t.bus.subscribe("_GetIdentity", t.getIdentity)
+	t.bus.subscribe(GetIdentity, t.getIdentity)
 
 	return t
 }
 
-type msgIdentity struct {
-	Msg         string
-	Status      string
-	Id          string
-	Model       string
-	Name        string
-	StartupTime time.Time
-}
-
 func (t *Thing) getIdentity(p *Packet) {
-	resp := msgIdentity{
-		Msg:         "_ReplyIdentity",
+	resp := MsgIdentity{
+		Msg:         ReplyIdentity,
 		Status:      t.status,
 		Id:          t.id,
 		Model:       t.model,
@@ -141,7 +132,7 @@ func (t *Thing) run() error {
 		t.bridge.start()
 	}
 
-	msg := struct{ Msg string }{Msg: "_CmdRun"}
+	msg := struct{ Msg string }{Msg: CmdRun}
 	t.bus.receive(newPacket(t.bus, nil, &msg))
 
 	if t.isBridge {
@@ -154,7 +145,7 @@ func (t *Thing) run() error {
 
 	t.bus.close()
 
-	return fmt.Errorf("_CmdRun didn't run forever")
+	return fmt.Errorf("CmdRun didn't run forever")
 }
 
 func (t *Thing) Run() error {
@@ -176,7 +167,7 @@ func (t *Thing) runOnPort(p *port) error {
 
 	t.bus.plugin(sock)
 
-	msg := struct{ Msg string }{Msg: "_CmdRunPrime"}
+	msg := struct{ Msg string }{Msg: CmdRunPrime}
 	t.bus.receive(pkt.Marshal(&msg))
 
 	for {

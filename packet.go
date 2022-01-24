@@ -45,6 +45,7 @@ func (p *Packet) String() string {
 	return string(p.msg)
 }
 
+/*
 func (p *Packet) Source() interface{} {
 	return p.src
 }
@@ -60,6 +61,7 @@ func (p *Packet) Send(dst interface{}) {
 		p.bus.thing.log.Println("Send: can't send to non-socket")
 	}
 }
+*/
 
 // Reply back to sender of Packet.  Reply is typically used to respond to a
 // request.
@@ -78,10 +80,20 @@ func (p *Packet) Reply() {
 //	}
 //	
 func Broadcast(p *Packet) {
+	msg := struct{ Msg string }{}
+	p.Unmarshal(&msg)
+	if msg.Msg == CmdRun || msg.Msg == CmdRunPrime {
+		return
+	}
 	p.Broadcast()
 }
 
 func RunForever(p *Packet) {
+	msg := struct{ Msg string }{}
+	p.Unmarshal(&msg)
+	if msg.Msg != CmdRun {
+		return
+	}
 	select {}
 }
 

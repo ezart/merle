@@ -11,8 +11,8 @@ import (
 func (t *Thing) changeStatus(status string) {
 	t.status = status
 
-	spam := SpamStatus{
-		Msg:    "_SpamStatus",
+	spam := MsgSpamStatus{
+		Msg:    SpamStatus,
 		Id:     t.id,
 		Model:  t.model,
 		Name:   t.name,
@@ -21,7 +21,7 @@ func (t *Thing) changeStatus(status string) {
 	newPacket(t.bus, nil, &spam).Broadcast()
 }
 
-func (t *Thing) primeAttach(p *port, msg *msgIdentity) error {
+func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
 	if msg.Model != t.cfg.Thing.Model {
 		return fmt.Errorf("Model mis-match: want %s, got %s",
 			t.cfg.Thing.Model, msg.Model)

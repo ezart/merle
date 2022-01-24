@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type portAttachCb func(*port, *msgIdentity) error
+type portAttachCb func(*port, *MsgIdentity) error
 
 type port struct {
 	thing *Thing
@@ -77,13 +77,13 @@ func (p *port) wsOpen() error {
 }
 
 func (p *port) wsIdentity() error {
-	msg := struct{ Msg string }{Msg: "_GetIdentity"}
+	msg := struct{ Msg string }{Msg: GetIdentity}
 	p.thing.log.Printf("Sending: %.80s", msg)
 	return p.ws.WriteJSON(&msg)
 }
 
-func (p *port) wsReplyIdentity() (resp *msgIdentity, err error) {
-	var identity msgIdentity
+func (p *port) wsReplyIdentity() (resp *MsgIdentity, err error) {
+	var identity MsgIdentity
 
 	// Wait for response no longer than a second
 	p.ws.SetReadDeadline(time.Now().Add(time.Second))
@@ -111,7 +111,7 @@ func (p *port) wsClose() {
 	p.ws = nil
 }
 
-func (p *port) wsConnect() (resp *msgIdentity, err error) {
+func (p *port) wsConnect() (resp *MsgIdentity, err error) {
 	err = p.wsOpen()
 	if err != nil {
 		return nil, errors.Wrap(err, "Websocket open error")

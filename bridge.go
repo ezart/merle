@@ -42,7 +42,7 @@ func newBridge(thing *Thing) *bridge {
 	b.ports = newPorts(thing, thing.cfg.Bridge.PortBegin,
 		thing.cfg.Bridge.PortEnd, b.bridgeAttach)
 
-	b.thing.bus.subscribe("_GetChildren", b.getChildren)
+	b.thing.bus.subscribe(GetChildren, b.getChildren)
 	b.thing.private.handleFunc("/port/{id}", b.getPort)
 
 	return b
@@ -52,19 +52,11 @@ func (b *bridge) getChild(id string) *Thing {
 	return b.children[id]
 }
 
-type SpamStatus struct {
-	Msg    string
-	Id     string
-	Model  string
-	Name   string
-	Status string
-}
-
 func (b *bridge) changeStatus(child *Thing, sock *wireSocket, status string) {
 	child.status = status
 
-	spam := SpamStatus{
-		Msg:    "_SpamStatus",
+	spam := MsgSpamStatus{
+		Msg:    SpamStatus,
 		Id:     child.id,
 		Model:  child.model,
 		Name:   child.name,
@@ -129,7 +121,7 @@ func (b *bridge) newChild(id, model, name string) (*Thing, error) {
 	return child, nil
 }
 
-func (b *bridge) bridgeAttach(p *port, msg *msgIdentity) error {
+func (b *bridge) bridgeAttach(p *port, msg *MsgIdentity) error {
 	var err error
 
 	child := b.getChild(msg.Id)
@@ -156,23 +148,10 @@ func (b *bridge) bridgeAttach(p *port, msg *msgIdentity) error {
 	return nil
 }
 
-type msgChild struct {
-	Msg    string
-	Id     string
-	Model  string
-	Name   string
-	Status string
-}
-
-type msgChildren struct {
-	Msg      string
-	Children []msgChild
-}
-
 func (b *bridge) getChildren(p *Packet) {
-	resp := msgChildren{Msg: "ReplyChildren"}
+	resp := MsgChildren{Msg: ReplyChildren}
 	for _, child := range b.children {
-		resp.Children = append(resp.Children, msgChild{"", child.id,
+		resp.Children = append(resp.Children, MsgChild{"", child.id,
 			child.model, child.name, child.status})
 	}
 	p.Marshal(&resp).Reply()
