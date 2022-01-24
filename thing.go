@@ -29,7 +29,7 @@ type ThingAssets struct {
 //
 // A Thing's subscribers handle incoming messages.  The collection of message
 // handlers comprise the Thing's "model".
-
+//
 // Minimally, the Thing should subscibe to the CmdRun message as CmdRun is the
 // Thing's main loop.  This loop should run forever.  It is an error for CmdRun
 // to end.  The main loop initializes the Thing's resources and asynchronously
