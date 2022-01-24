@@ -16,6 +16,8 @@ go get github.com/scottfeldman/merle
 
 ## Hello, World!
 
+Here's a simple "Hello, World!" Thing written in Merle.  It doesn't do much other than serve up a static HTML page showing "Hello, World!".
+
 ```golang
 package main
 
@@ -35,7 +37,7 @@ func (h *hello) Subscribers() merle.Subscribers {
 
 func (h *hello) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
-		TemplateText: "Hello, world!\n",
+		TemplateText: "Hello, World!\n",
 	}
 }
 
@@ -50,6 +52,40 @@ func main() {
 
 	log.Fatalln(thing.Run())
 }
+```
+
+Let's build it:
+
+```sh
+$ mkdir hello_world
+$ cd hello_world
+```
+
+Copy the above Thing code to hello_world.go and initialize the go module:
+
+```
+$ go mod init hello_world
+$ go mod tidy
+```
+
+Now build and run hello_world.  (We have to run as sudo because we're starting a web server on port 80 and that requires sudo privileges):
+
+```
+$ go build
+$ sudo ./hello_world
+Defaulting ID to 00:16:3e:30:e5:f5
+Skipping private HTTP server; port is zero
+Public HTTP server listening on :80
+Skipping public HTTPS server; port is zero
+Skipping tunnel; missing host
+[00:16:3e:30:e5:f5] Received: {"Msg":"_CmdRun"}
+```
+
+In another shell, view the Thing's web output:
+
+```
+$ curl localhost
+Hello, World!
 ```
 
 ## Architecture
