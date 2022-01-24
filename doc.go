@@ -3,5 +3,6 @@
 // in the LICENSE file.
 
 /*
+Merle is a framework for building secure web-apps for your IoT project.
  */
 package merle

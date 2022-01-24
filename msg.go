@@ -17,14 +17,14 @@ const (
 	CmdRunPrime = "_CmdRunPrime"
 	// GetIdentity requests Thing's identity
 	GetIdentity = "_GetIdentity"
-	// Reply to GetIdentity
+	// Reply to GetIdentity with MsgIdentity
 	ReplyIdentity = "_ReplyIdentity"
 	// SpamStatus is sent when Thing's status (online, offline, etc)
 	// changes
 	SpamStatus = "_SpamStatus"
-	// GetChildren requests Bridge's child Things
+	// GetChildren requests Bridge's children
 	GetChildren = "_GetChildren"
-	// Reply to GetChildren
+	// Reply to GetChildren with MsgChildren
 	ReplyChildren = "_ReplyChildren"
 )
 
@@ -48,7 +48,7 @@ type MsgSpamStatus struct {
 	Status string
 }
 
-// A Bridge child Thing
+// A Bridge child
 type MsgChild struct {
 	Msg    string
 	Id     string
@@ -57,7 +57,7 @@ type MsgChild struct {
 	Status string
 }
 
-// ReplyChildren returns MsgChildren, a list of the Bridge's child Things
+// ReplyChildren returns MsgChildren, a list of the Bridge's children
 // (MsgChild)
 type MsgChildren struct {
 	Msg      string

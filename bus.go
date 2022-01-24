@@ -5,7 +5,9 @@ import (
 	"sync"
 )
 
-// Subscibers is a list of subscribers.
+// Subscibers is a map of message subscribers, keyed by the message.  On packet
+// receipt, the packet message is used to lookup a subsciber.  The subscriber
+// callback is called to handle the packet.
 type Subscribers map[string]func(*Packet)
 
 type sockets map[socketer]bool
