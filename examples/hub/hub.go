@@ -12,8 +12,8 @@ func NewHub() merle.Thinger {
 	return &hub{}
 }
 
-func (h *hub) BridgeThingers() merle.Thingers {
-	return merle.Thingers{
+func (h *hub) BridgeThingers() merle.BridgeThingers {
+	return merle.BridgeThingers{
 		".*:blink:.*": func() merle.Thinger { return blink.NewBlinker(false) },
 	}
 }

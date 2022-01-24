@@ -45,24 +45,6 @@ func (p *Packet) String() string {
 	return string(p.msg)
 }
 
-/*
-func (p *Packet) Source() interface{} {
-	return p.src
-}
-
-func (p *Packet) Send(dst interface{}) {
-	p.bus.thing.log.Printf("Send: %.80s", p.String())
-	dstSock, ok := dst.(socketer)
-	if ok {
-		if err := p.bus.send(p, dstSock); err != nil {
-			p.bus.thing.log.Println(err)
-		}
-	} else {
-		p.bus.thing.log.Println("Send: can't send to non-socket")
-	}
-}
-*/
-
 // Reply back to sender of Packet.  Reply is typically used to respond to a
 // request.
 func (p *Packet) Reply() {
@@ -72,8 +54,17 @@ func (p *Packet) Reply() {
 	}
 }
 
+// Broadcast the Packet to all listeners except for the source of the Packet.
+func (p *Packet) Broadcast() {
+	p.bus.thing.log.Printf("Broadcast: %.80s", p.String())
+	if err := p.bus.broadcast(p); err != nil {
+		p.bus.thing.log.Println(err)
+	}
+}
+
 // Subscriber callback function to broadcast packet.  In this example, any
 // packets received with message Alert are broadcast to all other listeners.
+// Not applicable for CmdRun or CmdRunPrime.
 //
 //	return merle.Subscribers{
 //		{"Alert", merle.Broadcast},
@@ -88,6 +79,13 @@ func Broadcast(p *Packet) {
 	p.Broadcast()
 }
 
+// Subscriber callback function to run forever.  Only applicable for CmdRun.
+// Use this callback when there is no other work to do in CmdRun than select{}.
+//
+//	return merle.Subscribers{
+//		{CmdRun, merle.RunForver},
+//	}
+//	
 func RunForever(p *Packet) {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
@@ -95,12 +93,4 @@ func RunForever(p *Packet) {
 		return
 	}
 	select {}
-}
-
-// Broadcast the Packet to all listeners except for the source of the Packet.
-func (p *Packet) Broadcast() {
-	p.bus.thing.log.Printf("Broadcast: %.80s", p.String())
-	if err := p.bus.broadcast(p); err != nil {
-		p.bus.thing.log.Println(err)
-	}
 }

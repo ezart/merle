@@ -8,12 +8,30 @@ import (
 	"regexp"
 )
 
-// A Thing implementing the Bridger interface is a bridge
+// BridgeThingers is a map of functions which can generate Thingers, keyed by a
+// regular expression (re) of the form: id:model:name specifying which Things
+// can attach to the bridge. 
+type BridgeThingers map[string]func() Thinger
+
+// A Thing implementing the Bridger interface is a Bridge
 type Bridger interface {
-	BridgeThingers() Thingers
-	// List of subscribers on bridge bus.  All packets from all connected
-	// things (children) are forwarded to the bridge bus and tested against
-	// these subscribers.
+
+	// Map of Thingers supported by Bridge.  Map keyed by a regular
+	// expression (re) of the form: id:model:name specifying which Things
+	// can attach to the bridge. E.g.:
+	//
+	//	return merle.Thingers{
+	//		".*:blink:.*": blink.NewBlinker,
+	//		".*:gps:.*": gps.NewGps,
+	//	}
+	//
+	// In this example, "01234:blink:blinky" would match the first entry.
+	// "8888:foo:bar" would not match either entry and would not attach.
+	BridgeThingers() BridgeThingers
+
+	// List of subscribers on Bridge bus.  All packets from all connected
+	// Things (children) are forwarded to the Bridge bus and tested against
+	// the subscribers.
 	BridgeSubscribers() Subscribers
 }
 
@@ -23,7 +41,7 @@ type children map[string]*Thing
 // Bridge backing struct
 type bridge struct {
 	thing    *Thing
-	thingers Thingers
+	thingers BridgeThingers
 	children children
 	bus      *bus
 	ports    *ports

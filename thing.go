@@ -11,20 +11,41 @@ import (
 )
 
 type ThingAssets struct {
+
+	// Directory on file system for Thing's assets (html, css, js, etc)
+	// This is an absolute or relative directory.  If relative, it's
+	// relative to the Thing's executable.
 	Dir string
+
+	// Relative directory to Thing's HTML template file, relative to
+	// ThingAssets.Dir.
 	Template string
 }
 
-// All things implement this interface
+// All Things implement this interface
 type Thinger interface {
-	// List of subscribers on thing bus.  On packet receipt, the
-	// subscribers are process in-order, and the first matching subscriber
-	// stops the processing.
+
+	// Map of Thing's subscribers, keyed by message.  On packet receipt, a
+	// subscriber is looked up by packet message.  If there is a match, the
+	// subscriber callback is called.  If no subscribers match the received
+	// message, the "default" subscriber matches.  If still no matches, the
+	// packet is not handled.  If the callback is nil, the packet is
+	// (silently) dropped.  Here is an example of a subscriber map:
+	//
+	//	func (t *thing) Subscribers() merle.Subscribers {
+	//		return merle.Subscribers{
+	//			merle.CmdRun: t.run,
+	//			"GetState": t.getState,
+	//			"ReplyState": t.saveState,
+	//			"SpamUpdate": t.update,
+	//			"SpamTimer": nil,         // silent drop
+	//		}
+	//	}
 	Subscribers() Subscribers
+
+	// Thing's assets, see ThingAssets
 	Assets() *ThingAssets
 }
-
-type Thingers map[string]func() Thinger
 
 // Thing's backing structure
 type Thing struct {
