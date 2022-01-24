@@ -15,21 +15,32 @@ Merle uses the Go programming language.
 
 Go is an open-source programming language that makes it easy to develop simple, reliable, and efficient software.
 
-Follow the [official installation instructions](https://go.dev/doc/install) to get started.
+Go may already be installed on your distribution.  Try running ```go version``` to verify.
+
+```sh
+$ go version
+go version go1.17.3 linux/amd64
+```
+
+If Go is not installed, follow the [official installation instructions](https://go.dev/doc/install) to get started.
 
 ## Installing Merle
 
-With Go installed, the go get tool will help you install Merle and its required dependencies:
+With Go installed, the ```go get``` tool will help you install Merle and its required dependencies:
 
 ```sh
 go get github.com/scottfeldman/merle
 ```
 
-## Hello, World!
+## Writing Your First Thing
 
-Here's a simple "Hello, World!" Thing written in Merle.  It doesn't do much other than serve up a static HTML page with "Hello, World!".
+Once you have the Merle package installed, you're ready to start writing your own code. The first program we are going to create is the "Hello, World" of things, which is a web-app that shows "Hello, World!".
+
+### Hello, World!
 
 ```go
+// file: hello_world.go
+
 package main
 
 import (
@@ -65,7 +76,7 @@ func main() {
 }
 ```
 
-Let's build it:
+Let's make a new directory:
 
 ```sh
 $ mkdir hello_world
@@ -79,11 +90,10 @@ $ go mod init hello_world
 $ go mod tidy
 ```
 
-Now build and run hello_world:
+Now run hello_world:
 
 ```sh
-$ go build
-$ ./hello_world
+$ go run hello_world.go
 Defaulting ID to 00:16:3e:30:e5:f5
 Skipping private HTTP server; port is zero
 Public HTTP server listening on :80
