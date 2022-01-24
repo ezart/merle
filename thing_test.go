@@ -5,11 +5,9 @@
 package merle
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -20,83 +18,63 @@ const testModel = "240z"
 const testName = "Fairlady"
 const helloWorld = "Hello World!"
 
-func newDevice(m IModel) *Device {
-	var inHub = false
-	var status = "online"
-	var startupTime = time.Now()
-
-	return NewDevice(m, inHub, testId, testModel,
-		testName, status, startupTime)
+type sparse struct {
 }
 
-type minimal struct {
+func (s *sparse) Subscribers() Subscribers {
+	return Subscribers{}
 }
 
-func (m *minimal) Init(d *Device) error {
-	return nil
+func (s *sparse) Assets() *ThingAssets {
+	return &ThingAssets{}
 }
 
-func (m *minimal) Run() {
-}
+func TestBogusParams(t *testing.T) {
+	var cfg ThingConfig
+	var thinger sparse
 
-func (m *minimal) Receive(p *Packet) {
-}
+	cfg.Thing.Id = testId
 
-func (m *minimal) HomePage(w http.ResponseWriter, r *http.Request) {
-}
-
-func TestMinimalParams(t *testing.T) {
-	var m minimal
-
-	d := NewDevice(&m, false, "", "foo", "bar", "online", time.Now())
-	if d == nil {
-		t.Errorf("Create new device failed")
+	thing := NewThing(nil, nil)
+	if thing != nil {
+		t.Errorf("Create with nil params succeeded")
 	}
 
-	if d.Id() == "" {
-		t.Errorf("d.Id() empty string")
+	thing = NewThing(nil, &cfg)
+	if thing != nil {
+		t.Errorf("Create with nil thinger succeeded")
 	}
 
-	d = NewDevice(&m, false, "", "", "bar", "online", time.Now())
-	if d != nil {
-		t.Errorf("Create new device succeeded with model=''")
-	}
-
-	d = NewDevice(&m, false, "", "foo", "", "online", time.Now())
-	if d != nil {
-		t.Errorf("Create new device succeeded with name=''")
-	}
-
-	d = NewDevice(&m, false, "", "foo", "bar", "", time.Now())
-	if d != nil {
-		t.Errorf("Create new device succeeded with status=''")
+	thing = NewThing(&thinger, nil)
+	if thing != nil {
+		t.Errorf("Create with nil cfg succeeded")
 	}
 }
 
-func TestMinimalRun(t *testing.T) {
-	var m minimal
+func TestBogusRun(t *testing.T) {
+	var cfg ThingConfig
+	var thinger sparse
 
-	d := newDevice(&m)
-	if d == nil {
-		t.Errorf("Create new device failed")
+	cfg.Thing.Id = testId
+
+	thing := NewThing(&thinger, &cfg)
+	if thing == nil {
+		t.Errorf("Create with non-nil thinger/cfg failed")
 	}
 
-	err := d.Run("", 80, 8080, "", "", "")
-	if err.Error() != "Device Run() exited unexpectedly" {
-		t.Errorf("Run failed: %s", err)
+	err := thing.Run()
+	if err == nil {
+		t.Errorf("Run should have errored out")
 	}
 }
 
 type simple struct {
-	done chan (bool)
+	done chan bool
 }
 
-func (s *simple) Init(d *Device) error {
-	s.done = make(chan (bool))
-	return nil
-}
+func (s *simple) run(p *Packet) {
+	s.done = make(chan bool)
 
-func (s *simple) Run() {
 	for {
 		select {
 		case <-s.done:
@@ -105,20 +83,24 @@ func (s *simple) Run() {
 	}
 }
 
-func (s *simple) Receive(p *Packet) {
-	var msg MsgCmd
-	json.Unmarshal(p.Msg, &msg)
-	switch msg.Cmd {
-	case "Done":
-		s.done <- true
+func (s *simple) quit(p *Packet) {
+	s.done <- true
+}
+
+func (s *simple) Subscribers() Subscribers {
+	return Subscribers{
+		CmdRun: s.run,
+		"quit": s.quit,
 	}
 }
 
-func (s *simple) HomePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, helloWorld)
+func (s *simple) Assets() *ThingAssets {
+	return &ThingAssets{
+		TemplateText: helloWorld,
+	}
 }
 
-func checkIdentifyResp(r *MsgIdentifyResp) error {
+func checkIdentityResp(r *MsgIdentity) error {
 	if r.Id != testId ||
 		r.Model != testModel ||
 		r.Name != testName {
@@ -127,25 +109,25 @@ func checkIdentifyResp(r *MsgIdentifyResp) error {
 	return nil
 }
 
-func testIdentify(t *testing.T, httpPort int) {
-	var p = &port{port: httpPort}
+func testIdentify(t *testing.T, thing *Thing, httpPort uint) {
+	var p = newPort(thing, httpPort, nil)
 
 	err := p.wsOpen()
 	if err != nil {
 		t.Errorf("ws open failed: %s", err)
 	}
 
-	err = p.wsIdentify()
+	err = p.wsIdentity()
 	if err != nil {
 		t.Errorf("ws identify failed: %s", err)
 	}
 
-	resp, err := p.wsIdentifyResp()
+	resp, err := p.wsReplyIdentity()
 	if err != nil {
 		t.Errorf("ws identify response failed: %s", err)
 	}
 
-	err = checkIdentifyResp(resp)
+	err = checkIdentityResp(resp)
 	if err != nil {
 		t.Errorf("Unexpected identify response: %s", err)
 	}
@@ -153,8 +135,8 @@ func testIdentify(t *testing.T, httpPort int) {
 	p.ws.Close()
 }
 
-func testDone(t *testing.T, httpPort int) {
-	var p = &port{port: httpPort}
+func testDone(t *testing.T, thing *Thing, httpPort uint) {
+	var p = newPort(thing, httpPort, nil)
 
 	err := p.wsOpen()
 	if err != nil {
@@ -162,9 +144,9 @@ func testDone(t *testing.T, httpPort int) {
 	}
 
 	// Send msg to shutdown device
-	var msg = MsgCmd{Type: "cmd", Cmd: "Done"}
+	var msg = struct { Msg string }{Msg: "quit"}
 
-	err = p.writeJSON(msg)
+	err = p.ws.WriteJSON(msg)
 	if err != nil {
 		t.Errorf("ws writeJSON failed: %s", err)
 	}
@@ -172,8 +154,8 @@ func testDone(t *testing.T, httpPort int) {
 	p.ws.Close()
 }
 
-func testHomePage(t *testing.T, httpPort int) {
-	addr := ":" + strconv.Itoa(httpPort)
+func testHomePage(t *testing.T, httpPort uint) {
+	addr := fmt.Sprintf(":%d", httpPort)
 
 	get, err := http.Get("http://localhost" + addr)
 	if err != nil {
@@ -194,29 +176,36 @@ func testHomePage(t *testing.T, httpPort int) {
 	}
 }
 
-func testSimple(t *testing.T, publicPort, privatePort int) {
+func testSimple(t *testing.T, thing *Thing, publicPort, privatePort uint) {
 	// sleep a second for http servers to start
 	time.Sleep(time.Second)
 	testHomePage(t, publicPort)
-	testIdentify(t, publicPort)
-	testIdentify(t, privatePort)
-	testDone(t, privatePort)
+	testIdentify(t, thing, privatePort)
+	testDone(t, thing, privatePort)
 }
 
-func TestSimple(t *testing.T) {
-	var s simple
-	var portPublic = 8081
-	var portPrivate = 8080
+func TestRun(t *testing.T) {
+	var cfg ThingConfig
+	var thinger simple
 
-	d := newDevice(&s)
-	if d == nil {
-		t.Errorf("Create new device failed")
+	cfg.Thing.Id = testId
+	cfg.Thing.Model  = testModel
+	cfg.Thing.Name = testName
+
+	cfg.Thing.PortPublic = 8080
+	cfg.Thing.PortPrivate = 8081
+
+	thing := NewThing(&thinger, &cfg)
+	if thing == nil {
+		t.Errorf("Create with non-nil thinger/cfg failed")
 	}
 
-	go testSimple(t, portPublic, portPrivate)
+	go testSimple(t, thing, cfg.Thing.PortPublic, cfg.Thing.PortPrivate)
 
-	err := d.Run("testtest", portPublic, portPrivate, "", "", "")
-	if err.Error() != "Device Run() exited unexpectedly" {
-		t.Errorf("Run failed: %s", err)
+	err := thing.Run()
+	if err == nil {
+		t.Errorf("Run should have errored out")
 	}
 }
+
+

@@ -72,10 +72,10 @@ func (t *tunnel) getPort() string {
 
 	switch port {
 	case "no ports available":
-		log.Println("Tunnel no ports available; trying again\n")
+		log.Println("Tunnel no ports available; trying again")
 		return ""
 	case "port busy":
-		log.Println("Tunnel port is busy; trying again\n")
+		log.Println("Tunnel port is busy; trying again")
 		return ""
 	}
 

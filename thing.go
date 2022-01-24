@@ -140,6 +140,10 @@ type Thing struct {
 //	}
 //
 func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
+	if thinger == nil || cfg == nil {
+		return nil
+	}
+
 	id := cfg.Thing.Id
 	isPrime := cfg.Thing.Prime
 
