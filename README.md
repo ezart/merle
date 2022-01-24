@@ -3,13 +3,23 @@
 [![Go Reference](https://pkg.go.dev/badge/pkg.dev.go/github.com/scottfeldman/merle.svg)](https://pkg.go.dev/github.com/scottfeldman/merle)
 [![Go Report Card](https://goreportcard.com/badge/github.com/scottfeldman/merle)](https://goreportcard.com/report/github.com/scottfeldman/merle)
 
-Merle is a framework for building secure web-apps for your IoT project.
+[Merle](https://merliot.org) is a framework for building secure web-apps for your IoT project.
 
 Put your **Thing** on the **Internet** with Merle.
 
-Merle uses the Go programming language (https://golang.org/).
+Merle uses the Go programming language.
 
-## Installation
+## Set Up Your Environment
+
+### Installing Go
+
+Go is an open-source programming language that makes it easy to develop simple, reliable, and efficient software.
+
+Follow the [official installation instructions](https://go.dev/doc/install) to get started.
+
+## Installing Merle
+
+With Go installed, the go get tool will help you install Merle and its required dependencies:
 
 ```sh
 go get github.com/scottfeldman/merle
