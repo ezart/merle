@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"os"
+	"net/http"
 	"path"
 	"time"
 )
@@ -65,6 +66,7 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 	t := &Thing{
 		thinger:     thinger,
 		cfg:         cfg,
+		assets:      thinger.Assets(),
 		status:      "online",
 		id:          id,
 		model:       cfg.Thing.Model,
@@ -74,8 +76,6 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 		log:         log.New(os.Stderr, prefix, 0),
 	}
 
-	t.assets = thinger.Assets()
-
 	t.bus = newBus(t, 10, thinger.Subscribers())
 
 	t.tunnel = newTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
@@ -84,6 +84,7 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 	t.private = newWebPrivate(t, cfg.Thing.PortPrivate)
 	t.public = newWebPublic(t, cfg.Thing.PortPublic, cfg.Thing.PortPublicTLS,
 		cfg.Thing.User)
+	t.setAssetsDir(t)
 
 	templ := path.Join(t.assets.Dir, t.assets.Template)
 	t.templ, t.templErr = template.ParseFiles(templ)
@@ -165,11 +166,13 @@ func (t *Thing) Run() error {
 	}
 }
 
-func (t *Thing) runInBridge(p *port) {
+func (t *Thing) runOnPort(p *port) error {
 	var name = fmt.Sprintf("port:%d", p.port)
 	var sock = newWebSocket(name, p.ws)
 	var pkt = newPacket(t.bus, sock, nil)
 	var err error
+
+	t.log.Printf("Websocket opened [%s]", name)
 
 	t.bus.plugin(sock)
 
@@ -182,10 +185,19 @@ func (t *Thing) runInBridge(p *port) {
 
 		pkt.msg, err = p.readMessage()
 		if err != nil {
+			t.log.Printf("Websocket closed [%s]", name)
 			break
 		}
 		t.bus.receive(pkt)
 	}
 
 	t.bus.unplug(sock)
+
+	return err
+}
+
+func (t *Thing) setAssetsDir(child *Thing) {
+	fs := http.FileServer(http.Dir(child.assets.Dir))
+	t.public.mux.PathPrefix("/" + child.id + "/assets/").
+		Handler(http.StripPrefix("/" + child.id + "/assets/", fs))
 }

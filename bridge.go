@@ -2,6 +2,7 @@ package merle
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/gorilla/mux"
 	"net/http"
 	"regexp"
@@ -39,21 +40,16 @@ func newBridge(thing *Thing) *bridge {
 	}
 
 	b.ports = newPorts(thing, thing.cfg.Bridge.PortBegin,
-		thing.cfg.Bridge.PortEnd, b.attachCb)
+		thing.cfg.Bridge.PortEnd, b.bridgeAttach)
 
-	b.thing.bus.subscribe("_GetOnlyChild", b.getOnlyChild)
 	b.thing.bus.subscribe("_GetChildren", b.getChildren)
-
 	b.thing.private.handleFunc("/port/{id}", b.getPort)
 
 	return b
 }
 
 func (b *bridge) getChild(id string) *Thing {
-	if child, ok := b.children[id]; ok {
-		return child
-	}
-	return nil
+	return b.children[id]
 }
 
 type SpamStatus struct {
@@ -87,7 +83,7 @@ func (b *bridge) runChild(p *port, child *Thing) {
 	child.bus.plugin(bridgeSock)
 
 	b.changeStatus(child, childSock, "online")
-	child.runInBridge(p)
+	child.runOnPort(p)
 	b.changeStatus(child, childSock, "offline")
 
 	child.bus.unplug(bridgeSock)
@@ -128,14 +124,12 @@ func (b *bridge) newChild(id, model, name string) (*Thing, error) {
 
 	child := NewThing(thinger, &cfg)
 
-	fs := http.FileServer(http.Dir(child.assets.Dir))
-	b.thing.public.mux.PathPrefix("/" + child.id + "/assets/").
-		Handler(http.StripPrefix("/" + child.id + "/assets/", fs))
+	b.thing.setAssetsDir(child)
 
 	return child, nil
 }
 
-func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
+func (b *bridge) bridgeAttach(p *port, msg *msgIdentity) error {
 	var err error
 
 	child := b.getChild(msg.Id)
@@ -143,15 +137,15 @@ func (b *bridge) attachCb(p *port, msg *msgIdentity) error {
 	if child == nil {
 		child, err = b.newChild(msg.Id, msg.Model, msg.Name)
 		if err != nil {
-			return fmt.Errorf("Creating new child Thing failed: %s", err)
+			return errors.Wrap(err, "Bridge attach creating new child")
 		}
 		b.children[msg.Id] = child
 	} else {
 		if child.model != msg.Model {
-			return fmt.Errorf("Model mismatch")
+			return fmt.Errorf("Bridge attach model mismatch")
 		}
 		if child.name != msg.Name {
-			return fmt.Errorf("Name mismatch")
+			return fmt.Errorf("Bridge attach name mismatch")
 		}
 	}
 
@@ -173,20 +167,6 @@ type msgChild struct {
 type msgChildren struct {
 	Msg      string
 	Children []msgChild
-}
-
-func (b *bridge) getOnlyChild(p *Packet) {
-	for _, child := range b.children {
-		resp := msgChild{
-			Msg:    "ReplyOnlyChild",
-			Id:     child.id,
-			Model:  child.model,
-			Name:   child.name,
-			Status: child.status,
-		}
-		p.Marshal(&resp).Reply()
-		break
-	}
 }
 
 func (b *bridge) getChildren(p *Packet) {

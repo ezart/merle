@@ -68,15 +68,15 @@ func (b *bus) receive(p *Packet) {
 			f(p)
 		}
 		return
-	} else {
-		f, match := b.subs["default"]
-		if match {
-			if f != nil {
-				b.thing.log.Printf("Received by default: %.80s", p.String())
-				f(p)
-			}
-			return
+	}
+
+	f, match = b.subs["default"]
+	if match {
+		if f != nil {
+			b.thing.log.Printf("Received by default: %.80s", p.String())
+			f(p)
 		}
+		return
 	}
 
 	b.thing.log.Printf("Not handled: %.80s", p.String())

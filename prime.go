@@ -8,11 +8,20 @@ import (
 	"os"
 )
 
-func (t *Thing) primeAttach(p *port, msg *msgIdentity) error {
-	var sockname = fmt.Sprintf("port:%d", p.port)
-	var sock = newWebSocket(sockname, p.ws)
-	var err error
+func (t *Thing) changeStatus(status string) {
+	t.status = status
 
+	spam := SpamStatus{
+		Msg:    "_SpamStatus",
+		Id:     t.id,
+		Model:  t.model,
+		Name:   t.name,
+		Status: t.status,
+	}
+	newPacket(t.bus, nil, &spam).Broadcast()
+}
+
+func (t *Thing) primeAttach(p *port, msg *msgIdentity) error {
 	if msg.Model != t.cfg.Thing.Model {
 		return fmt.Errorf("Model mis-match: want %s, got %s",
 			t.cfg.Thing.Model, msg.Model)
@@ -22,32 +31,16 @@ func (t *Thing) primeAttach(p *port, msg *msgIdentity) error {
 	t.model = msg.Model
 	t.name = msg.Name
 	t.startupTime = msg.StartupTime
+	t.primeId = t.id
 
 	prefix := "[" + t.id + "] "
 	t.log = log.New(os.Stderr, prefix, 0)
 
-	t.primeId = t.id
+	t.setAssetsDir(t)
 
-	t.bus.plugin(sock)
-
-	// Send a _CmdRunPrime message on startup to Thing-prime so Thing-prime
-	// can get current state from the real Thing
-	msgRunPrime := struct{ Msg string }{Msg: "_CmdRunPrime"}
-	pkt := newPacket(t.bus, sock, nil)
-	t.bus.receive(pkt.Marshal(&msgRunPrime))
-
-	for {
-		// new pkt for each rcv
-		var pkt = newPacket(t.bus, sock, nil)
-
-		pkt.msg, err = p.readMessage()
-		if err != nil {
-			break
-		}
-		t.bus.receive(pkt)
-	}
-
-	t.bus.unplug(sock)
+	t.changeStatus("online")
+	err := t.runOnPort(p)
+	t.changeStatus("offline")
 
 	return err
 }

@@ -59,8 +59,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 		_, pkt.msg, err = ws.ReadMessage()
 		if err != nil {
-			t.log.Printf("Websocket closed [%s:%s]",
-				r.RemoteAddr, r.RequestURI)
+			t.log.Printf("Websocket closed [%s]", name)
 			break
 		}
 
@@ -260,14 +259,10 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 		Cache:  autocert.DirCache("./certs"),
 	}
 
-	fs := http.FileServer(http.Dir(t.assets.Dir))
-
 	mux := mux.NewRouter()
 	mux.HandleFunc("/ws/{id}", t.basicAuth(user, t.ws))
 	mux.HandleFunc("/{id}", t.basicAuth(user, t.home))
 	mux.HandleFunc("/", t.basicAuth(user, t.home))
-	mux.PathPrefix("/" + t.id + "/assets/").
-		Handler(http.StripPrefix("/" + t.id + "/assets/", fs))
 
 	server := &http.Server{
 		Addr:    addr,

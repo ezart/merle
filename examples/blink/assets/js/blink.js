@@ -59,6 +59,7 @@ function refreshLed() {
 		if (ledState) {
 			on = "on"
 		}
+		image.style.opacity = 1.0
 	} else {
 		image.style.opacity = 0.3
 	}

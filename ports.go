@@ -111,7 +111,7 @@ func (p *port) wsClose() {
 	p.ws = nil
 }
 
-func (p *port) connect() (resp *msgIdentity, err error) {
+func (p *port) wsConnect() (resp *msgIdentity, err error) {
 	err = p.wsOpen()
 	if err != nil {
 		return nil, errors.Wrap(err, "Websocket open error")
@@ -130,7 +130,7 @@ func (p *port) connect() (resp *msgIdentity, err error) {
 	return resp, nil
 }
 
-func (p *port) disconnect() {
+func (p *port) wsDisconnect() {
 	p.wsClose()
 	p.Lock()
 	p.tunnelConnected = false
@@ -138,8 +138,8 @@ func (p *port) disconnect() {
 }
 
 func (p *port) attach() {
-	defer p.disconnect()
-	resp, err := p.connect()
+	defer p.wsDisconnect()
+	resp, err := p.wsConnect()
 	if err != nil {
 		p.thing.log.Printf("Port[%d] connect failure: %s", p.port, err)
 		return
@@ -187,30 +187,36 @@ func listeningPorts(begin, end uint) (map[uint]bool, error) {
 	return listeners, nil
 }
 
+func (p *port) connect() {
+	p.Lock()
+	defer p.Unlock()
+	if !p.tunnelConnected {
+		p.thing.log.Printf("Tunnel connected on Port[%d]", p.port)
+		p.tunnelConnected = true
+		p.tunnelTrying = false
+		go p.attach()
+	}
+}
+
+func (p *port) disconnect() {
+	p.Lock()
+	defer p.Unlock()
+	if p.tunnelConnected {
+		p.thing.log.Printf("Closing tunnel on Port[%d]", p.port)
+		p.tunnelConnected = false
+	}
+}
+
 func (p *port) scan() error {
 	listeners, err := listeningPorts(p.port, p.port)
 	if err != nil {
 		return err
 	}
 
-	p.Lock()
-	defer p.Unlock()
-
 	if listeners[p.port] {
-		if p.tunnelConnected {
-			// no change
-		} else {
-			p.thing.log.Printf("Tunnel connected on Port[%d]", p.port)
-			p.tunnelConnected = true
-			go p.attach()
-		}
+		p.connect()
 	} else {
-		if p.tunnelConnected {
-			p.thing.log.Printf("Closing tunnel on Port[%d]", p.port)
-			p.tunnelConnected = false
-		} else {
-			// no change
-		}
+		p.disconnect()
 	}
 
 	return nil
@@ -299,6 +305,7 @@ func (p *ports) init() error {
 	for i := uint(0); i < p.num; i++ {
 		p.ports[i].port = p.begin + i
 		p.ports[i].thing = p.thing
+		p.ports[i].attachCb = p.attachCb
 	}
 
 	p.thing.log.Printf("Bridge ports[%d-%d]", p.begin, p.end)
@@ -315,25 +322,11 @@ func (p *ports) scan() error {
 
 	for i := uint(0); i < p.num; i++ {
 		port := &p.ports[i]
-		port.Lock()
 		if listeners[port.port] {
-			if port.tunnelConnected {
-				// no change
-			} else {
-				p.thing.log.Printf("Tunnel connected on Port[%d]", port.port)
-				port.tunnelConnected = true
-				port.tunnelTrying = false
-				go port.attach()
-			}
+			port.connect()
 		} else {
-			if port.tunnelConnected {
-				p.thing.log.Printf("Closing tunnel on Port[%d]", port.port)
-				port.tunnelConnected = false
-			} else {
-				// no change
-			}
+			port.disconnect()
 		}
-		port.Unlock()
 	}
 
 	return nil
