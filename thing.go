@@ -17,9 +17,12 @@ type ThingAssets struct {
 	// relative to the Thing's executable.
 	Dir string
 
-	// Relative directory to Thing's HTML template file, relative to
+	// Directory to Thing's HTML template file, relative to
 	// ThingAssets.Dir.
 	Template string
+
+	// TemplateText is text passed in lieu of a template file.
+	TemplateText string
 }
 
 // All Things implement this interface.
@@ -174,6 +177,10 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 
 	templ := path.Join(t.assets.Dir, t.assets.Template)
 	t.templ, t.templErr = template.ParseFiles(templ)
+	if t.assets.TemplateText != "" {
+		t.templ, t.templErr =
+			template.New("merle").Parse(t.assets.TemplateText)
+	}
 
 	_, t.isBridge = t.thinger.(Bridger)
 	if t.isBridge {

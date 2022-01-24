@@ -300,11 +300,6 @@ func (w *webPublic) start() {
 		return
 	}
 
-	if w.thing.assets.Dir == "" {
-		log.Println("Skipping public HTTP server; assets directory is missing")
-		return
-	}
-
 	if w.user != "" {
 		log.Println("Basic Authencation enabled for user", w.user)
 	}
