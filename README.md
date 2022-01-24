@@ -47,7 +47,7 @@ func main() {
 
 	log.SetFlags(0)
 
-	cfg.Thing.PortPublic = 80
+	cfg.Thing.PortPublic = 8080
 
 	thing := merle.NewThing(&hello{}, &cfg)
 
@@ -69,11 +69,11 @@ $ go mod init hello_world
 $ go mod tidy
 ```
 
-Now build and run hello_world.  (We have to run as sudo because we're starting a web server on port 80 and that requires sudo privileges):
+Now build and run hello_world:
 
 ```sh
 $ go build
-$ sudo ./hello_world
+$ ./hello_world
 Defaulting ID to 00:16:3e:30:e5:f5
 Skipping private HTTP server; port is zero
 Public HTTP server listening on :80
@@ -85,7 +85,7 @@ Skipping tunnel; missing host
 In another shell, view the Thing's web output:
 
 ```sh
-$ curl localhost
+$ curl localhost:8080
 Hello, World!
 ```
 

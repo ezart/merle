@@ -155,24 +155,24 @@ func testDone(t *testing.T, thing *Thing, httpPort uint) {
 }
 
 func testHomePage(t *testing.T, httpPort uint) {
-	addr := fmt.Sprintf(":%d", httpPort)
+	url := fmt.Sprintf("http://localhost:%d", httpPort)
 
-	get, err := http.Get("http://localhost" + addr)
+	get, err := http.Get(url)
 	if err != nil {
-		t.Errorf("Get http://localhost%s failed: %s", addr, err)
+		t.Errorf("Get %s failed: %s", url, err)
 	}
 
 	body, err := io.ReadAll(get.Body)
 	get.Body.Close()
 
 	if err != nil {
-		t.Errorf("Get localhost%s failed: %s", addr, err)
+		t.Errorf("Get %s failed: %s", url, err)
 	}
 
 	contents := strings.TrimSpace(string(body))
 	if contents != helloWorld {
-		t.Errorf("Get localhost%s body failed.  Got: %s, wanted %s",
-			addr, contents, helloWorld)
+		t.Errorf("Get %s body failed.  Got: %s, wanted %s",
+			url, contents, helloWorld)
 	}
 }
 

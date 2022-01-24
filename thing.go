@@ -22,6 +22,7 @@ type ThingAssets struct {
 	Template string
 
 	// TemplateText is text passed in lieu of a template file.
+	// TemplateText takes priority over Template, if both are present.
 	TemplateText string
 }
 

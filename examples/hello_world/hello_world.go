@@ -25,7 +25,7 @@ func main() {
 
 	log.SetFlags(0)
 
-	cfg.Thing.PortPublic = 80
+	cfg.Thing.PortPublic = 8080
 
 	thing := merle.NewThing(&hello{}, &cfg)
 
