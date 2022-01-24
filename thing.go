@@ -74,7 +74,6 @@ type ThingAssets struct {
 //		}
 //		p.Marshal(&spam).Broadcast()
 //	}
-
 //
 // The Thing's assets are the web assets locations.
 type Thinger interface {
@@ -127,11 +126,7 @@ type Thing struct {
 // NewThing will return a Thing built from a Thinger and a ThingConfig.  E.g.
 //
 //	func main() {
-//		cfg := merle.ThingConfig{
-//			Id: "01234",
-//			Model: "foo",
-//			Name: "bar",
-//		}
+//		var cfg merle.ThingConfig
 //	
 //		fooer := foo.NewFooer()
 //		thing := merle.NewThing(fooer, &cfg)
