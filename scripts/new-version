@@ -18,7 +18,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-git tag | tail -n5
+git tag -l --sort=-version:refname | tac | tail -n5
 
 read -p "New Version: " ver
 
