@@ -6,7 +6,7 @@ Merle is a framework for building secure web-apps for your IoT project.
 
 Put your **Thing** on the **Internet** with Merle.
 
-Merle uses the Go programming language and javascript.
+Merle uses the Go programming language (https://golang.org/).
 
 ## Installation
 
