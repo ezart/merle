@@ -18,7 +18,7 @@ go get github.com/scottfeldman/merle
 
 Here's a simple "Hello, World!" Thing written in Merle.  It doesn't do much other than serve up a static HTML page showing "Hello, World!".
 
-```golang
+```go
 package main
 
 import (
@@ -63,14 +63,14 @@ $ cd hello_world
 
 Copy the above Thing code to hello_world.go and initialize the go module:
 
-```
+```sh
 $ go mod init hello_world
 $ go mod tidy
 ```
 
 Now build and run hello_world.  (We have to run as sudo because we're starting a web server on port 80 and that requires sudo privileges):
 
-```
+```sh
 $ go build
 $ sudo ./hello_world
 Defaulting ID to 00:16:3e:30:e5:f5
@@ -83,7 +83,7 @@ Skipping tunnel; missing host
 
 In another shell, view the Thing's web output:
 
-```
+```sh
 $ curl localhost
 Hello, World!
 ```
