@@ -17,7 +17,7 @@ go get github.com/scottfeldman/merle
 
 ## Hello, World!
 
-Here's a simple "Hello, World!" Thing written in Merle.  It doesn't do much other than serve up a static HTML page showing "Hello, World!".
+Here's a simple "Hello, World!" Thing written in Merle.  It doesn't do much other than serve up a static HTML page with "Hello, World!".
 
 ```go
 package main
