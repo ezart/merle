@@ -210,7 +210,7 @@ It's updating the LED state on screen when the "update" message is received.
 The Thing will generate new "update" message periodically.  We'll add that code
 in a bit.  The Thing is running a web server listening on port 8080.
 
-```go
+```
 const html = `<html lang="en">
 	<body>
 		<img id="LED" style="width: 400px">
@@ -218,7 +218,7 @@ const html = `<html lang="en">
 		<script>
 			image = document.getElementById("LED")
 
-			conn = new WebSocket("ws://localhost:8080/ws/{{{{.Id}}}}")
+			conn = new WebSocket("ws://localhost:8080/ws/{{.Id}}")
 
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
@@ -226,7 +226,7 @@ const html = `<html lang="en">
 
 				switch(msg.Msg) {
 				case "update":
-					image.src = "/{{{{.Id}}}}/assets/images/led-" +
+					image.src = "/{{.Id}}/assets/images/led-" +
 						msg.State + ".png"
 					break
 				}
