@@ -31,7 +31,7 @@ $ go get github.com/scottfeldman/merle
 
 # Tutorial
 
-This tutorial is broken up into multiple steps, each step building on the
+This tutorial is broken into multiple steps, each step building on the
 previous.  The goal is to build a working, secure web-app available anywhere on
 the Internet for your Thing.  In this tutorial, your Thing is a Raspberry Pi,
 an LED, a resistor, and some wires.  We're going to make the LED blink and show
@@ -52,7 +52,7 @@ smallest Thing you can make in Merle, but it will compile and run.  It doesn't
 do anything, yet.
 
 ```go
-// file: examples/tutorial/blinkv0/blink.go
+// file: examples/tutorial/blinkv1/blink.go
 
 package main
 
@@ -109,7 +109,7 @@ $ go install ./...
 Then run our Thing:
 
 ```sh
-$ ../go/bin/blinkv0
+$ ../go/bin/blinkv1
 2022/01/24 17:57:26 Defaulting ID to 00:16:3e:30:e5:f5
 2022/01/24 17:57:26 Skipping private HTTP server; port is zero
 2022/01/24 17:57:26 Skipping public HTTP server; port is zero
@@ -188,11 +188,11 @@ func (b *blink) run(p *merle.Packet) {
 }
 ```
 
-Build and run our Thing (note blinkv1):
+Build and run our Thing (note blinkv2):
 
 ```sh
 $ go install ./...
-$ ../go/bin/blinkv1
+$ ../go/bin/blinkv2
 2022/01/24 20:35:28 Defaulting ID to 00:16:3e:30:e5:f5
 2022/01/24 20:35:28 Skipping private HTTP server; port is zero
 2022/01/24 20:35:28 Skipping public HTTP server; port is zero
@@ -214,10 +214,10 @@ in a bit.  The Thing is running a web server listening on port 8080.
 ```go
 const html = `<html lang="en">
 	<body>
-		<pre id="state">LED State:</pre>
+		<img id="LED" style="width: 400px">
 
 		<script>
-			pre = document.getElementById("state")
+			image = document.getElementById("LED")
 
 			conn = new WebSocket("ws://localhost:8080/ws/{{.Id}}")
 
@@ -227,7 +227,8 @@ const html = `<html lang="en">
 
 				switch(msg.Msg) {
 				case "update":
-					pre.textContent = "LED state: " + msg.State
+					image.src = "/{{.Id}}/assets/images/led-" +
+						msg.State + ".png"
 					break
 				}
 			}
@@ -237,6 +238,7 @@ const html = `<html lang="en">
 
 func (b *blink) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
+		Dir: "examples/tutorial/blinkv3/assets",
 		TemplateText: html,
 	}
 }
@@ -254,7 +256,7 @@ func main() {
 }
 ```
 
-CmdRun handler can send out "update" message each time the LED state changes.  Here's the new CmdRun handler.
+CmdRun handler will send out "update" message each time the LED state changes.  Here's the new CmdRun handler.
 
 ```go
 func (b *blink) run(p *merle.Packet) {
@@ -286,11 +288,11 @@ from Javascript.  Every web browser browsing to http://localhost:8080 makes
 it's own websocket connection back to the Thing.  The broadcast ensures all
 listeners get the same update when hardware changes.
 
-Build and run our Thing (note blinkv2):
+Build and run our Thing (note blinkv3):
 
 ```sh
 $ go install ./...
-$ ../go/bin/blinkv2
+$ ../go/bin/blinkv3
 2022/01/24 22:04:41 Defaulting ID to 00:16:3e:30:e5:f5
 2022/01/24 22:04:41 Skipping private HTTP server; port is zero
 2022/01/24 22:04:41 Public HTTP server listening on :8080
