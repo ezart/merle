@@ -45,7 +45,6 @@ package main
 
 import (
 	"github.com/scottfeldman/merle"
-	"log"
 )
 
 type hello struct {
@@ -65,14 +64,10 @@ func (h *hello) Assets() *merle.ThingAssets {
 
 func main() {
 	var cfg merle.ThingConfig
-
-	log.SetFlags(0)
-
+	
 	cfg.Thing.PortPublic = 8080
 
-	thing := merle.NewThing(&hello{}, &cfg)
-
-	log.Fatalln(thing.Run())
+	merle.NewThing(&hello{}, &cfg).Run()
 }
 ```
 
