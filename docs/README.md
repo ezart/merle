@@ -205,4 +205,113 @@ step, we'll put the front-end on our Thing.
 
 ## Step 3: Front-end
 
+Let's add some HTML and Javascript to the Assets.  The Javascript opens a
+websocket back to the Thing and listens for new JSON messages from the Thing.
+It's updating the LED state on screen when the "update" message is received.
+The Thing will generate new "update" message periodically.  We'll add that code
+in a bit.  The Thing is running a web server listening on port 8080.
 
+```go
+const html = `<html lang="en">
+	<body>
+		<pre id="state">LED State:</pre>
+
+		<script>
+			pre = document.getElementById("state")
+
+			conn = new WebSocket("ws://localhost:8080/ws/{{.Id}}")
+
+			conn.onmessage = function(evt) {
+				msg = JSON.parse(evt.data)
+				console.log('msg', msg)
+
+				switch(msg.Msg) {
+				case "update":
+					pre.textContent = "LED state: " + msg.State
+					break
+				}
+			}
+		</script>
+	</body>
+</html>`
+
+func (b *blink) Assets() *merle.ThingAssets {
+	return &merle.ThingAssets{
+		TemplateText: html,
+	}
+}
+```
+
+To enable the web server on port 8080, set PortPublic in the Thing's config.
+
+```go
+func main() {
+	var cfg merle.ThingConfig
+
+	cfg.Thing.PortPublic = 8080
+
+	merle.NewThing(&blink{}, &cfg).Run()
+}
+```
+
+CmdRun handler can send out "update" message each time the LED state changes.  Here's the new CmdRun handler.
+
+```go
+func (b *blink) run(p *merle.Packet) {
+	update := struct {
+		Msg   string
+		State bool
+	}{Msg: "update"}
+
+	adaptor := raspi.NewAdaptor()
+	adaptor.Connect()
+
+	led := gpio.NewLedDriver(adaptor, "11")
+	led.Start()
+
+	for {
+		led.Toggle()
+
+		update.State = led.State()
+		p.Marshal(&update).Broadcast()
+
+		time.Sleep(time.Second)
+	}
+}
+```
+
+Each second, the LED is toggled and an "update" message is broadcast to any
+listeners.  The listener we're interested in here is the websocket connection
+from Javascript.  Every web browser browsing to http://localhost:8080 makes
+it's own websocket connection back to the Thing.  The broadcast ensures all
+listeners get the same update when hardware changes.
+
+Build and run our Thing (note blinkv2):
+
+```sh
+$ go install ./...
+$ ../go/bin/blinkv2
+2022/01/24 22:04:41 Defaulting ID to 00:16:3e:30:e5:f5
+2022/01/24 22:04:41 Skipping private HTTP server; port is zero
+2022/01/24 22:04:41 Public HTTP server listening on :8080
+2022/01/24 22:04:41 Skipping public HTTPS server; port is zero
+2022/01/24 22:04:41 Skipping tunnel; missing host
+[00:16:3e:30:e5:f5] Received: {"Msg":"_CmdRun"}
+[00:16:3e:30:e5:f5] Broadcast: {"Msg":"update","State":false}
+[00:16:3e:30:e5:f5] Would broadcast: {"Msg":"update","State":false}
+[00:16:3e:30:e5:f5] Broadcast: {"Msg":"update","State":true}
+[00:16:3e:30:e5:f5] Would broadcast: {"Msg":"update","State":true}
+[00:16:3e:30:e5:f5] Broadcast: {"Msg":"update","State":false}
+[00:16:3e:30:e5:f5] Would broadcast: {"Msg":"update","State":false}
+```
+
+"Would broadcast" log messages mean no one is listening.  Open a web browser on
+http://localhost:8080.  The LED state on screen should be changing every
+second.  Notice the LED state is always synced between the hardware LED and the
+LED shown in the browser.  Open another browser window to
+http://localhost:8080.  Now both browsers and the hardware LEDs are synced.
+This is the first principle of Merle:
+
+### Principle #1: The Thing is the truth and all views of the Thing hold this truth.
+
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vSFA_YrT_qzAuwEeaWBx979uzXB_IQU0mDUEhc0ogqgAONlSirhV_NDgLUzrYCP484qR5QdZqqPhO-M/pub?w=1226&amp;h=938">
