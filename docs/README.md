@@ -35,7 +35,7 @@ This tutorial is broken into multiple steps, each step building on the
 previous.  The goal is to build a working, secure web-app available anywhere on
 the Internet for your Thing.  In this tutorial, your Thing is a Raspberry Pi,
 an LED, a resistor, and some wires.  We're going to make the LED blink and show
-and control the LED status on the web-app.
+and control the LED status with the web-app.
 
 ![LED blinker](assets/images/led-off.png)
 *Thing wiring*
@@ -218,7 +218,7 @@ const html = `<html lang="en">
 		<script>
 			image = document.getElementById("LED")
 
-			conn = new WebSocket("ws://localhost:8080/ws/{{.Id}}")
+			conn = new WebSocket("ws://localhost:8080/ws/\{\{.Id\}\}")
 
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
@@ -226,7 +226,7 @@ const html = `<html lang="en">
 
 				switch(msg.Msg) {
 				case "update":
-					image.src = "/{{.Id}}/assets/images/led-" +
+					image.src = "/\{\{.Id\}\}/assets/images/led-" +
 						msg.State + ".png"
 					break
 				}
