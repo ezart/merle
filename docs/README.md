@@ -187,3 +187,22 @@ func (b *blink) run(p *merle.Packet) {
 	}
 }
 ```
+
+Build and run our Thing (note blinkv1):
+
+```sh
+$ go install ./...
+$ ../go/bin/blinkv1
+2022/01/24 20:35:28 Defaulting ID to 00:16:3e:30:e5:f5
+2022/01/24 20:35:28 Skipping private HTTP server; port is zero
+2022/01/24 20:35:28 Skipping public HTTP server; port is zero
+2022/01/24 20:35:28 Skipping tunnel; missing host
+[00:16:3e:30:e5:f5] Received: {"Msg":"_CmdRun"}
+```
+
+Now CmdRun is handled and the LED should be blinking every second.  In the next
+step, we'll put the front-end on our Thing.
+
+## Step 3: Front-end
+
+
