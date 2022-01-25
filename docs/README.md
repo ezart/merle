@@ -37,6 +37,9 @@ the Internet for your Thing.  In this tutorial, your Thing is a Raspberry Pi,
 an LED, a resistor, and some wires.  We're going to make the LED blink and show
 and control the LED status on the web-app.
 
+![LED](examples/blink/assets/images/led-pgio17-off-small.png)
+*Caption*
+
 If you don't have the hardware needed for this tutorial, you can still run
 through the tutorial.  There is no real LED to blink, so that's not very
 exciting, but everything else should work.  All that's really needed is a
@@ -125,7 +128,7 @@ The second thing to notice is the program quit.  It should not quit.  In this
 case, the message CmdRun was not handled.  In the next step on this tutorial,
 we'll handle the CmdRun message to blink the LED.
 
-## Step 2
+## Step 2: Blink the LED
 
 Let's add a handler for CmdRun.  Every Thing should handle CmdRun.
 
