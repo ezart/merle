@@ -210,7 +210,7 @@ It's updating the LED state on screen when the "update" message is received.
 The Thing will generate new "update" message periodically.  We'll add that code
 in a bit.  The Thing is running a web server listening on port 8080.
 
-```html
+```go
 const html = `<html lang="en">
 	<body>
 		<img id="LED" style="width: 400px">
@@ -234,9 +234,7 @@ const html = `<html lang="en">
 		</script>
 	</body>
 </html>`
-```
 
-```go
 func (b *blink) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
 		Dir: "examples/tutorial/blinkv3/assets",
@@ -309,8 +307,7 @@ $ ../go/bin/blinkv3
 ```
 
 "Would broadcast" log messages mean no one is listening.  Open a web browser on
-http://localhost:8080.  The LED state in the browser should be changing every
-second.  
+http://localhost:8080.  The LED state in the browser should be blinking.
 
 ![LED blinker](assets/images/led-blink.gif)
 
