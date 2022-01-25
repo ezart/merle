@@ -29,7 +29,7 @@ If Go is not installed, follow the [official installation instructions](https://
 With Go installed, the ```go get``` tool will help you install Merle and its required dependencies:
 
 ```sh
-go get github.com/scottfeldman/merle
+$ go get github.com/scottfeldman/merle
 ```
 
 ## Writing Your First Thing

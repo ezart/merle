@@ -26,7 +26,7 @@ If Go is not installed, follow the [official installation instructions](https://
 With Go installed, the ```go get``` tool will help you install Merle and its required dependencies:
 
 ```sh
-go get github.com/scottfeldman/merle
+$ go get github.com/scottfeldman/merle
 ```
 
 # Tutorial
@@ -90,8 +90,37 @@ this tutorial that everything is a message in Merle, and Subscribers is the
 message dispatcher.
 
 Assets are the Thing's web assets, things like HTML and Javascript files.
-These assets amke up the front-end of your Thing (the side you see with a web
+These assets make up the front-end of your Thing (the side you see with a web
 browser).
 
 In our minimalist Thing, we don't (yet) subscribe to any messages and we don't
 have any web assets.
+
+Let's run our Thing and see what happens.  First, build Merle at the top level
+to build the tutorial.
+
+```sh
+$ go install ./...
+```
+
+Then run our Thing:
+
+```sh
+$ ../go/bin/blinkv0
+2022/01/24 17:57:26 Defaulting ID to 00:16:3e:30:e5:f5
+2022/01/24 17:57:26 Skipping private HTTP server; port is zero
+2022/01/24 17:57:26 Skipping public HTTP server; port is zero
+2022/01/24 17:57:26 Skipping tunnel; missing host
+[00:16:3e:30:e5:f5] Not handled: {"Msg":"_CmdRun"}
+```
+
+Ignore the "Skipping..." log messages for now.  Those are features we'll enable
+in future tutorial steps.  The first thing to notice is the Thing was assigned
+an ID of 00:16:3e:30:e5:f5.  If that looks like a MAC address, you're right.
+Every Thing has an ID and since one wasn't given in the program, a default is
+assigned, made up from a MAC address of one of the network interfaces on your
+system.
+
+The second thing to notice is the program quit.  It should not quit.  In this
+case, the message CmdRun was not handled.  In the next step on this tutorial,
+we'll handle the CmdRun message to blink the LED.
