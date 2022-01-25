@@ -132,9 +132,7 @@ we'll handle the CmdRun message to blink the LED.
 
 Let's wire up the LED to the Raspberry Pi.
 
-<center>
 ![LED blinker](assets/images/led-gpio17-off-small.png)
-</center>
 
 ### Parts List
 
