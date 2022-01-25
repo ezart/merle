@@ -39,5 +39,59 @@ and control the LED status on the web-app.
 
 If you don't have the hardware needed for this tutorial, you can still run
 through the tutorial.  There is no real LED to blink, so that's not very
-exciting, but everything should work otherwise.  All that's really needed is a
-system with the Go environment installed.
+exciting, but everything else should work otherwise.  All that's really needed
+is a system with the Go environment installed.
+
+## Step 1: Minimal Thing
+
+This is the start of our Thing.  We'll call it blink.go.  It's basically the
+smallest Thing you can make in Merle, but it will compile and run.  It doesn't
+do anything, yet.
+
+```go
+// file: examples/tutorial/blinkv0/blink.go
+
+package main
+
+import (
+	"github.com/scottfeldman/merle"
+)
+
+type blink struct {
+}
+
+func (b *blink) Subscribers() merle.Subscribers {
+	return merle.Subscribers{}
+}
+
+func (b *blink) Assets() *merle.ThingAssets {
+	return &merle.ThingAssets{}
+}
+
+func main() {
+	var cfg merle.ThingConfig
+
+	merle.NewThing(&blink{}, &cfg).Run()
+}
+```
+
+A Thing in Merle is a Go program which implements and runs the Thinger
+interface.  The Thinger interface has two methods: Subscribers and Assets.
+
+```go
+type Thinger interface {
+	Subscribers() Subscribers
+	Assets() *ThingAssets
+}
+```
+
+Subscribers is a list of message handlers for your Thing.  We'll see later in
+this tutorial that everything is a message in Merle, and Subscribers is the
+message dispatcher.
+
+Assets are the Thing's web assets, things like HTML and Javascript files.
+These assets amke up the front-end of your Thing (the side you see with a web
+browser).
+
+In our minimalist Thing, we don't (yet) subscribe to any messages and we don't
+have any web assets.

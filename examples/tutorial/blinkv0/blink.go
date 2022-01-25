@@ -1,3 +1,5 @@
+// file: examples/tutorial/blinkv0/blink.go
+
 package main
 
 import (
