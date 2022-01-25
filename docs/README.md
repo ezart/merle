@@ -309,7 +309,7 @@ $ ../go/bin/blinkv3
 ```
 
 "Would broadcast" log messages mean no one is listening.  Open a web browser on
-http://localhost:8080.  The LED state n the browser should be changing every
+http://localhost:8080.  The LED state in the browser should be changing every
 second.  
 
 ![LED blinker](assets/images/led-blink.gif)
