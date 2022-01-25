@@ -37,7 +37,7 @@ the Internet for your Thing.  In this tutorial, your Thing is a Raspberry Pi,
 an LED, a resistor, and some wires.  We're going to make the LED blink and show
 and control the LED status on the web-app.
 
-![LED blinker](assets/images/led-gpio17-off-small.png)
+![LED blinker](assets/images/led-off.png)
 *Thing wiring*
 
 If you don't have the hardware needed for this tutorial, you can still run
@@ -132,7 +132,7 @@ we'll handle the CmdRun message to blink the LED.
 
 Let's wire up the LED to the Raspberry Pi.
 
-![LED blinker](assets/images/led-gpio17-off-small.png)
+![LED blinker](assets/images/led-off.png)
 
 ### Parts List
 
@@ -164,7 +164,6 @@ more than sleep so let's initialize the hardware and blink the LED.
 
 We're using the excellent [GoBot](https://gobot.io) package to blink the LED
 from the Raspberry Pi.  The CmdRun handler calls GoBot in Metal mode.
-
 
 ```go
 import (
@@ -306,6 +305,8 @@ $ ../go/bin/blinkv3
 [00:16:3e:30:e5:f5] Broadcast: {"Msg":"update","State":false}
 [00:16:3e:30:e5:f5] Would broadcast: {"Msg":"update","State":false}
 ```
+
+![LED blinker](assets/images/led-on-off.gif)
 
 "Would broadcast" log messages mean no one is listening.  Open a web browser on
 http://localhost:8080.  The LED state on screen should be changing every
