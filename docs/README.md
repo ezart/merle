@@ -306,7 +306,7 @@ $ ../go/bin/blinkv3
 [00:16:3e:30:e5:f5] Would broadcast: {"Msg":"update","State":false}
 ```
 
-![LED blinker](assets/images/led-on-off.gif)
+![LED blinker](assets/images/led-blink.gif)
 
 "Would broadcast" log messages mean no one is listening.  Open a web browser on
 http://localhost:8080.  The LED state on screen should be changing every
