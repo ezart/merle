@@ -1,4 +1,4 @@
-# Overview
+# Merle
 
 [Merle](https://merliot.org) is a framework for building secure web-apps for your IoT project.
 
@@ -8,7 +8,7 @@ Merle uses the Go programming language.
 
 ## Set Up Your Environment
 
-### Installing Go {#go}
+### Installing Go
 
 Go is an open-source programming language that makes it easy to develop simple, reliable, and efficient software.
 
@@ -40,4 +40,4 @@ and control the LED status on the web-app.
 If you don't have the hardware needed for this tutorial, you can still run
 through the tutorial.  There is no real LED to blink, so that's not very
 exciting, but everything should work otherwise.  All that's really needed is a
-system with the [Go](#go) environment installed.
+system with the Go environment installed.
