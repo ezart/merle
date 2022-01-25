@@ -37,8 +37,8 @@ the Internet for your Thing.  In this tutorial, your Thing is a Raspberry Pi,
 an LED, a resistor, and some wires.  We're going to make the LED blink and show
 and control the LED status on the web-app.
 
-![LED](assets/images/led-gpio17-off-small.png)
-*Caption*
+![LED blinker](assets/images/led-gpio17-off-small.png)
+*Thing wiring*
 
 If you don't have the hardware needed for this tutorial, you can still run
 through the tutorial.  There is no real LED to blink, so that's not very
