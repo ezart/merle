@@ -308,11 +308,13 @@ $ ../go/bin/blinkv3
 [00:16:3e:30:e5:f5] Would broadcast: {"Msg":"update","State":false}
 ```
 
+"Would broadcast" log messages mean no one is listening.  Open a web browser on
+http://localhost:8080.  The LED state n the browser should be changing every
+second.  
+
 ![LED blinker](assets/images/led-blink.gif)
 
-"Would broadcast" log messages mean no one is listening.  Open a web browser on
-http://localhost:8080.  The LED state on screen should be changing every
-second.  Notice the LED state is always synced between the hardware LED and the
+Notice the LED state is always synced between the hardware LED and the
 LED shown in the browser.  Open another browser window to
 http://localhost:8080.  Now both browsers and the hardware LEDs are synced.
 This is the first principle of Merle:
