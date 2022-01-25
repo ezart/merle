@@ -19,13 +19,9 @@ func (b *blink) run(p *merle.Packet) {
 	led := gpio.NewLedDriver(adaptor, "11")
 	led.Start()
 
-	ticker := time.NewTicker(time.Second)
-
 	for {
-		select {
-		case <-ticker.C:
-			led.Toggle()
-		}
+		led.Toggle()
+		time.Sleep(time.Second)
 	}
 }
 

@@ -39,8 +39,8 @@ and control the LED status on the web-app.
 
 If you don't have the hardware needed for this tutorial, you can still run
 through the tutorial.  There is no real LED to blink, so that's not very
-exciting, but everything else should work otherwise.  All that's really needed
-is a system with the Go environment installed.
+exciting, but everything else should work.  All that's really needed is a
+system with the Go environment installed.
 
 ## Step 1: Minimal Thing
 
@@ -115,12 +115,59 @@ $ ../go/bin/blinkv0
 ```
 
 Ignore the "Skipping..." log messages for now.  Those are features we'll enable
-in future tutorial steps.  The first thing to notice is the Thing was assigned
-an ID of 00:16:3e:30:e5:f5.  If that looks like a MAC address, you're right.
-Every Thing has an ID and since one wasn't given in the program, a default is
+in future steps.  The first thing to notice is the Thing was assigned an ID of
+00:16:3e:30:e5:f5.  If that looks like a MAC address, you're right.  Every
+Thing has an ID and since one wasn't given in the program, a default is
 assigned, made up from a MAC address of one of the network interfaces on your
 system.
 
 The second thing to notice is the program quit.  It should not quit.  In this
 case, the message CmdRun was not handled.  In the next step on this tutorial,
 we'll handle the CmdRun message to blink the LED.
+
+## Step 2
+
+Let's add a handler for CmdRun.  Every Thing should handle CmdRun.
+
+```go
+func (b *blink) run(p *merle.Packet) {
+	select {}
+}
+
+func (b *blink) Subscribers() merle.Subscribers {
+	return merle.Subscribers{
+		merle.CmdRun: b.run,
+	}
+}
+```
+
+The CmdRun handler should not exit unless some error occurs.  Otherwise, CmdRun
+handler is the main loop for the Thing and is designed to run forever.  CmdRun
+handler must not block.  select{} will not block or exit.  But we need to do
+more than sleep so let's initialize the hardware and blink the LED.
+
+We're using the excellent [GoBot](https://gobot.io) package to blink the LED
+from the Raspberry Pi.  The CmdRun handler calls GoBot in Metal mode.
+
+
+```go
+import (
+	"github.com/scottfeldman/merle"
+	"gobot.io/x/gobot/drivers/gpio"
+	"gobot.io/x/gobot/platforms/raspi"
+	"time"
+)
+
+func (b *blink) run(p *merle.Packet) {
+	adaptor := raspi.NewAdaptor()
+	adaptor.Connect()
+
+	led := gpio.NewLedDriver(adaptor, "11")
+	led.Start()
+
+	for {
+		led.Toggle()
+		time.Sleep(time.Second)
+	}
+}
+```
