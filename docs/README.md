@@ -319,3 +319,9 @@ This is the first principle of Merle:
 ### Principle #1: The Thing is the truth and all views of the Thing hold this truth.
 
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vSFA_YrT_qzAuwEeaWBx979uzXB_IQU0mDUEhc0ogqgAONlSirhV_NDgLUzrYCP484qR5QdZqqPhO-M/pub?w=1226&amp;h=938">
+
+## Step 4: Thing on the Internet
+
+Now that Thing is blinking the LED on hardware and in the browser, the next step is to run Thing on the Internet.  Actually, we're going to run Thing Prime (Thing') on the Internet and Thing' will synchronize with Thing.  Thing' is a proxy for Thing.  Here's a picture.
+
+
