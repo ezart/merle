@@ -89,7 +89,7 @@ type Thinger interface {
 ```
 
 Subscribers is a list of message handlers for your Thing.  We'll see later in
-this tutorial that everything is a message in Merle, and Subscribers is the
+this tutorial that **everything** is a message in Merle, and Subscribers is the
 message dispatcher.
 
 Assets are the Thing's web assets, things like HTML and Javascript files.
@@ -129,6 +129,19 @@ case, the message CmdRun was not handled.  In the next step on this tutorial,
 we'll handle the CmdRun message to blink the LED.
 
 ## Step 2: Blink the LED
+
+Let's wire up the LED to the Raspberry Pi.
+
+![LED blinker](assets/images/led-gpio17-off-small.png)
+
+### Parts List
+
+- Rapsberry Pi (any model except Pico)
+- An LED
+- A 120ohm resistor
+- some wire.
+
+Wire the LED and resistor to GPIO pin 17 and ground as shown.
 
 Let's add a handler for CmdRun.  Every Thing should handle CmdRun.
 
