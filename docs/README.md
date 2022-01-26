@@ -218,7 +218,7 @@ const html = `<html lang="en">
 		<script>
 			image = document.getElementById("LED")
 
-			conn = new WebSocket("ws://localhost:8080/ws/\{\{.Id\}\}")
+			conn = new WebSocket("ws://localhost:8080/ws/{{.Id}}")
 
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
@@ -226,7 +226,7 @@ const html = `<html lang="en">
 
 				switch(msg.Msg) {
 				case "update":
-					image.src = "/\{\{.Id\}\}/assets/images/led-" +
+					image.src = "/{{.Id}}/assets/images/led-" +
 						msg.State + ".png"
 					break
 				}
