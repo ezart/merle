@@ -2,3 +2,10 @@ theme: jekyll-theme-cayman
 markdown: GFM
 title: Merle
 description: Put your Thing on the Internet with Merle
+
+defaults:
+  -
+    scope:
+      path: ""
+    values:
+      layout: "default"
