@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const testId = "HS30-01132" // sorry if that's your car
+const testId = "HS30_01132" // sorry if that's your car
 const testModel = "240z"
 const testName = "Fairlady"
 const helloWorld = "Hello World!"
@@ -27,28 +27,6 @@ func (s *sparse) Subscribers() Subscribers {
 
 func (s *sparse) Assets() *ThingAssets {
 	return &ThingAssets{}
-}
-
-func TestBogusParams(t *testing.T) {
-	var cfg ThingConfig
-	var thinger sparse
-
-	cfg.Thing.Id = testId
-
-	thing := NewThing(nil, nil)
-	if thing != nil {
-		t.Errorf("Create with nil params succeeded")
-	}
-
-	thing = NewThing(nil, &cfg)
-	if thing != nil {
-		t.Errorf("Create with nil thinger succeeded")
-	}
-
-	thing = NewThing(&thinger, nil)
-	if thing != nil {
-		t.Errorf("Create with nil cfg succeeded")
-	}
 }
 
 func TestBogusRun(t *testing.T) {
