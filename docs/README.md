@@ -323,6 +323,7 @@ This is the first principle of Merle:
 
 ## Step 4: Thing on the Internet
 
-Now that Thing is blinking the LED on hardware and in the browser, the next step is to run Thing on the Internet.  Actually, we're going to run Thing Prime (Thing') on the Internet and Thing' will synchronize with Thing.  Thing' is a proxy for Thing.  Here's a picture.
+Now that Thing is blinking the LED on hardware and in the local browser over localhost:8080, the next step is to run Thing on the Internet.
+
 
 
