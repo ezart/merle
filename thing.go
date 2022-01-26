@@ -7,6 +7,7 @@ import (
 	"os"
 	"net/http"
 	"path"
+	"regexp"
 	"time"
 )
 
@@ -137,7 +138,7 @@ type Thing struct {
 //
 func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 	if thinger == nil || cfg == nil {
-		return nil
+		log.Fatalf("Missing function inputs")
 	}
 
 	id := cfg.Thing.Id
@@ -151,6 +152,17 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 	}
 
 	prefix := "[" + id + "] "
+
+	re := regexp.MustCompile("^[a-zA-Z0-9_]*$")
+	if !re.MatchString(id) {
+		log.Fatalf("Id must be alphanumeric or underscore characters")
+	}
+	if !re.MatchString(cfg.Thing.Model) {
+		log.Fatalf("Model must be alphanumeric or underscore characters")
+	}
+	if !re.MatchString(cfg.Thing.Name) {
+		log.Fatalf("Name must be alphanumeric or underscore characters")
+	}
 
 	t := &Thing{
 		thinger:     thinger,

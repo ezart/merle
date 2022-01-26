@@ -110,16 +110,16 @@ Then run our Thing:
 
 ```sh
 $ ../go/bin/blinkv1
-2022/01/24 17:57:26 Defaulting ID to 00:16:3e:30:e5:f5
+2022/01/24 17:57:26 Defaulting ID to 00_16_3e_30_e5_f5
 2022/01/24 17:57:26 Skipping private HTTP server; port is zero
 2022/01/24 17:57:26 Skipping public HTTP server; port is zero
 2022/01/24 17:57:26 Skipping tunnel; missing host
-[00:16:3e:30:e5:f5] Not handled: {"Msg":"_CmdRun"}
+[00_16_3e_30_e5_f5] Not handled: {"Msg":"_CmdRun"}
 ```
 
 Ignore the "Skipping..." log messages for now.  Those are features we'll enable
 in future steps.  The first thing to notice is the Thing was assigned an ID of
-00:16:3e:30:e5:f5.  If that looks like a MAC address, you're right.  Every
+00\_16\_3e\_30\_e5\_f5.  If that looks like a MAC address, you're right.  Every
 Thing has an ID and since one wasn't given in the program, a default is
 assigned, made up from a MAC address of one of the network interfaces on your
 system.
@@ -192,11 +192,11 @@ Build and run our Thing (note blinkv2):
 ```sh
 $ go install ./...
 $ ../go/bin/blinkv2
-2022/01/24 20:35:28 Defaulting ID to 00:16:3e:30:e5:f5
+2022/01/24 20:35:28 Defaulting ID to 00_16_3e_30_e5_f5
 2022/01/24 20:35:28 Skipping private HTTP server; port is zero
 2022/01/24 20:35:28 Skipping public HTTP server; port is zero
 2022/01/24 20:35:28 Skipping tunnel; missing host
-[00:16:3e:30:e5:f5] Received: {"Msg":"_CmdRun"}
+[00_16_3e_30_e5_f5] Received: {"Msg":"_CmdRun"}
 ```
 
 Now CmdRun is handled and the LED should be blinking every second.  In the next
@@ -210,7 +210,7 @@ It's updating the LED state on screen when the "update" message is received.
 The Thing will generate new "update" message periodically.  We'll add that code
 in a bit.  The Thing is running a web server listening on port 8080.
 
-```go
+``html`
 const html = `<html lang="en">
 	<body>
 		<img id="LED" style="width: 400px">
@@ -218,7 +218,7 @@ const html = `<html lang="en">
 		<script>
 			image = document.getElementById("LED")
 
-			conn = new WebSocket("ws://localhost:8080/ws/{{.Id}}")
+			conn = new WebSocket("ws://localhost:8080/ws/\{\{.Id\}\}")
 
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
@@ -226,7 +226,7 @@ const html = `<html lang="en">
 
 				switch(msg.Msg) {
 				case "update":
-					image.src = "/{{.Id}}/assets/images/led-" +
+					image.src = "/\{\{.Id\}\}/assets/images/led-" +
 						msg.State + ".png"
 					break
 				}
@@ -234,7 +234,8 @@ const html = `<html lang="en">
 		</script>
 	</body>
 </html>`
-
+```
+```go
 func (b *blink) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
 		Dir: "examples/tutorial/blinkv3/assets",
@@ -292,18 +293,18 @@ Build and run our Thing (note blinkv3):
 ```sh
 $ go install ./...
 $ ../go/bin/blinkv3
-2022/01/24 22:04:41 Defaulting ID to 00:16:3e:30:e5:f5
+2022/01/24 22:04:41 Defaulting ID to 00_16_3e_30_e5_f5
 2022/01/24 22:04:41 Skipping private HTTP server; port is zero
 2022/01/24 22:04:41 Public HTTP server listening on :8080
 2022/01/24 22:04:41 Skipping public HTTPS server; port is zero
 2022/01/24 22:04:41 Skipping tunnel; missing host
-[00:16:3e:30:e5:f5] Received: {"Msg":"_CmdRun"}
-[00:16:3e:30:e5:f5] Broadcast: {"Msg":"update","State":false}
-[00:16:3e:30:e5:f5] Would broadcast: {"Msg":"update","State":false}
-[00:16:3e:30:e5:f5] Broadcast: {"Msg":"update","State":true}
-[00:16:3e:30:e5:f5] Would broadcast: {"Msg":"update","State":true}
-[00:16:3e:30:e5:f5] Broadcast: {"Msg":"update","State":false}
-[00:16:3e:30:e5:f5] Would broadcast: {"Msg":"update","State":false}
+[00_16_3e_30_e5_f5] Received: {"Msg":"_CmdRun"}
+[00_16_3e_30_e5_f5] Broadcast: {"Msg":"update","State":false}
+[00_16_3e_30_e5_f5] Would broadcast: {"Msg":"update","State":false}
+[00_16_3e_30_e5_f5] Broadcast: {"Msg":"update","State":true}
+[00_16_3e_30_e5_f5] Would broadcast: {"Msg":"update","State":true}
+[00_16_3e_30_e5_f5] Broadcast: {"Msg":"update","State":false}
+[00_16_3e_30_e5_f5] Would broadcast: {"Msg":"update","State":false}
 ```
 
 "Would broadcast" log messages mean no one is listening.  Open a web browser on

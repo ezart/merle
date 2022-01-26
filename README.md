@@ -89,12 +89,12 @@ Now run hello_world:
 
 ```sh
 $ go run hello_world.go
-Defaulting ID to 00:16:3e:30:e5:f5
+Defaulting ID to 00_16_3e_30_e5_f5
 Skipping private HTTP server; port is zero
 Public HTTP server listening on :80
 Skipping public HTTPS server; port is zero
 Skipping tunnel; missing host
-[00:16:3e:30:e5:f5] Received: {"Msg":"_CmdRun"}
+[00_16_3e_30_e5_f5] Received: {"Msg":"_CmdRun"}
 ```
 
 In another shell, view the Thing's web output:
