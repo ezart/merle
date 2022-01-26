@@ -210,7 +210,7 @@ It's updating the LED state on screen when the "update" message is received.
 The Thing will generate new "update" message periodically.  We'll add that code
 in a bit.  The Thing is running a web server listening on port 8080.
 
-``html`
+```html
 const html = `<html lang="en">
 	<body>
 		<img id="LED" style="width: 400px">
