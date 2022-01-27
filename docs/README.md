@@ -92,7 +92,7 @@ Subscribers is a list of message handlers for your Thing.  We'll see later in
 this tutorial that **everything** is a message in Merle, and Subscribers is the
 message dispatcher.
 
-Assets are the Thing's web assets, things like HTML and Javascript files.
+Assets are the Thing's web assets, things like HTML and Javascript.
 These assets make up the front-end of your Thing (the side you see with a web
 browser).
 
@@ -323,6 +323,7 @@ This is the first principle of Merle:
 
 ## Step 4: Thing on the Internet
 
-Now that Thing is blinking the LED on hardware and in the browser, the next step is to run Thing on the Internet.  Actually, we're going to run Thing Prime (Thing') on the Internet and Thing' will synchronize with Thing.  Thing' is a proxy for Thing.  Here's a picture.
+Now that our Thing is blinking the LED on hardware and in the local browser over localhost:8080, the next step is to run the Thing on the Internet.
+
 
 
