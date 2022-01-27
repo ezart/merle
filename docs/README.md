@@ -358,7 +358,7 @@ checked against the user's system password.
 
 If the Thing has an IP address on the network 192.168.x.x or 10.x.x.x, and you
 cannot use Dynamic DNS to assign a public routable IP address, then we're stuck
-behind wall where the Thing is not accessable from the outside (from the
+behind a wall where the Thing is not accessable from the outside (from the
 Internet).  The Thing can ping out, but no one can ping in.
 
 If the Thing doesn't have a public routable IP address, then we need to create
