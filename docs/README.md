@@ -33,7 +33,7 @@ $ go get github.com/scottfeldman/merle
 
 This tutorial is broken into multiple steps, each step building on the
 previous.  The goal is to build a working, secure web-app available anywhere on
-the Internet for your Thing.  In this tutorial, your Thing is a Raspberry Pi,
+the Internet for your Thing.  In this tutorial, our Thing is a Raspberry Pi,
 an LED, a resistor, and some wires.  We're going to make the LED blink and show
 and control the LED status with the web-app.
 
@@ -88,12 +88,12 @@ type Thinger interface {
 }
 ```
 
-Subscribers is a list of message handlers for your Thing.  We'll see later in
+Subscribers is a list of message handlers for our Thing.  We'll see later in
 this tutorial that **everything** is a message in Merle, and Subscribers is the
 message dispatcher.
 
-Assets are the Thing's web assets, things like HTML and Javascript.
-These assets make up the front-end of your Thing (the side you see with a web
+Assets are the Thing's web assets, things like HTML and Javascript.  These
+assets make up the front-end of our Thing (the side you see with a web
 browser).
 
 In our minimalist Thing, we don't (yet) subscribe to any messages and we don't
@@ -323,7 +323,43 @@ This is the first principle of Merle:
 
 ## Step 4: Thing on the Internet
 
-Now that our Thing is blinking the LED on hardware and in the local browser over localhost:8080, the next step is to run the Thing on the Internet.
+Now that our Thing is blinking the LED on hardware and in the local browser
+over localhost:8080, the next step is to run the Thing on the Internet.
 
+### Option 1: We have a Public Routable IP Address
 
+Is the Thing already on the Internet?  Does the Thing have a public routable IP
+address?  If no, proceed to Option 2.  If yes, then we just need to turn on
+HTTPS and optionally HTTP Basic Authentication and now our Thing is accessable
+from the Internet, secure over TLS.
 
+```go
+func main() {
+	var cfg merle.ThingConfig
+
+	cfg.Thing.PortPublic = 80
+	cfg.Thing.PortPublicTLS = 443
+	cfg.Thing.User = "admin"
+
+	merle.NewThing(&blink{}, &cfg).Run()
+}
+```
+
+PortPublic is now 80 (from 8080), the standard HTTP port.  PortPublicTLS is
+443, the standard HTTPS port.  Both ports should be open in the firewall.  The
+Thing will autocert HTTPS certificates from Let's Encrypt.
+
+Setting User to "admin" forces HTTP Basic Authentication to prompt for user and
+password.  If user entered is not the same as User ("admin" in our example),
+access is denied.  User is a valid user on Thing's system and password is
+checked against the user's system password.
+
+###  Option 2: We're stuck on a LAN or WAN
+
+If the Thing has an IP address on the network 192.168.x.x or 10.x.x.x, and you
+cannot use Dynamic DNS to assign a public routable IP address, then we're stuck
+behind wall where the Thing is not accessable from the outside (from the
+Internet).  The Thing can ping out, but no one can ping in.
+
+If the Thing doesn't have a public routable IP address, then we need to create
+a tunnel to a system on the internet, and run Thing on both ends of the tunnel.
