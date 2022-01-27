@@ -137,9 +137,6 @@ type Thing struct {
 //	}
 //
 func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
-	if thinger == nil || cfg == nil {
-		log.Fatalf("Missing function inputs")
-	}
 
 	id := cfg.Thing.Id
 	isPrime := cfg.Thing.Prime
@@ -152,17 +149,6 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 	}
 
 	prefix := "[" + id + "] "
-
-	re := regexp.MustCompile("^[a-zA-Z0-9_]*$")
-	if !re.MatchString(id) {
-		log.Fatalf("Id must be alphanumeric or underscore characters")
-	}
-	if !re.MatchString(cfg.Thing.Model) {
-		log.Fatalf("Model must be alphanumeric or underscore characters")
-	}
-	if !re.MatchString(cfg.Thing.Name) {
-		log.Fatalf("Name must be alphanumeric or underscore characters")
-	}
 
 	t := &Thing{
 		thinger:     thinger,
@@ -254,6 +240,19 @@ func (t *Thing) run() error {
 }
 
 func (t *Thing) Run() error {
+
+	re := regexp.MustCompile("^[a-zA-Z0-9_]*$")
+
+	if !re.MatchString(t.id) {
+		return fmt.Errorf("Id must contain only alphanumeric or underscore characters")
+	}
+	if !re.MatchString(t.model) {
+		return fmt.Errorf("Model must contain only alphanumeric or underscore characters")
+	}
+	if !re.MatchString(t.name) {
+		return fmt.Errorf("Name must contain only alphanumeric or underscore characters")
+	}
+
 	switch {
 	case t.isPrime:
 		return t.runPrime()
