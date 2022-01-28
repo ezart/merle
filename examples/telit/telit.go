@@ -17,7 +17,7 @@ type Telit struct {
 	modem *serial.Port
 }
 
-func (t Telit) modemCmd(cmd string) (string, error) {
+func (t *Telit) modemCmd(cmd string) (string, error) {
 	var buf = make([]byte, 128)
 	var res []byte
 	var err error
@@ -63,7 +63,7 @@ func (t Telit) modemCmd(cmd string) (string, error) {
 	return response, err
 }
 
-func (t Telit) Init() error {
+func (t *Telit) Init() error {
 	var err error
 
 	usb3 := &serial.Config{Name: "/dev/ttyUSB3", Baud: 115200,
@@ -116,7 +116,7 @@ func parseLatLong(loc string) string {
 	return fmt.Sprintf("%.6f%c", locf, dir)
 }
 
-func (t Telit) Location() string {
+func (t *Telit) Location() string {
 	acp, err := t.modemCmd("AT$GPSACP\r")
 	if err != nil {
 		log.Println(err)

@@ -31,7 +31,7 @@ func (g *gps) run(p *merle.Packet) {
 			p.Marshal(&update).Broadcast()
 			g.last = update.Position
 		}
-		time.Sleep(time.Second)
+		time.Sleep(time.Minute)
 	}
 }
 
