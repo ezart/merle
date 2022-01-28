@@ -6,14 +6,19 @@
 
 package merle
 
-import (
-)
+type ThingAssets struct {
+	Dir string
+	Template string
+	TemplateText string
+}
+
+type Weber interface {
+}
 
 type web struct {
 }
 
-func newWeb(t *Thing, portPublic, portPublicTLS, portPrivate uint,
-	user string, assets *ThingAssets) *web {
+func newWeb(t *Thing, portPublic, portPublicTLS, portPrivate uint, user string) *web {
 	return &web{}
 }
 
@@ -29,7 +34,7 @@ func (w *web) handlePrimePortId() {
 func (w *web) handleBridgePortId() {
 }
 
-func (w *web) staticFiles(dir, path string) {
+func (w *web) staticFiles(t *Thing) {
 }
 
 type webPrivate struct {
@@ -62,9 +67,6 @@ func (w *webPublic) start() {
 }
 
 func (w *webPublic) stop() {
-}
-
-func (w *webPublic) staticFiles(dir, path string) {
 }
 
 func (t *Thing) runOnPort(p *port) error {
