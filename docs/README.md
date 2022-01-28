@@ -67,10 +67,6 @@ func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{}
 }
 
-func (b *blink) Assets() *merle.ThingAssets {
-	return &merle.ThingAssets{}
-}
-
 func main() {
 	var cfg merle.ThingConfig
 
@@ -79,12 +75,11 @@ func main() {
 ```
 
 A Thing in Merle is a Go program which implements and runs the Thinger
-interface.  The Thinger interface has two methods: Subscribers and Assets.
+interface.
 
 ```go
 type Thinger interface {
 	Subscribers() Subscribers
-	Assets() *ThingAssets
 }
 ```
 
@@ -92,12 +87,7 @@ Subscribers is a list of message handlers for our Thing.  We'll see later in
 this tutorial that **everything** is a message in Merle, and Subscribers is the
 message dispatcher.
 
-Assets are the Thing's web assets, things like HTML and Javascript.  These
-assets make up the front-end of our Thing (the side you see with a web
-browser).
-
-In our minimalist Thing, we don't (yet) subscribe to any messages and we don't
-have any web assets.
+In our minimalist Thing, we don't (yet) subscribe to any messages.
 
 Let's run our Thing and see what happens.  First, build Merle at the top level
 to build the tutorial.
@@ -110,15 +100,12 @@ Then run our Thing:
 
 ```sh
 $ ../go/bin/blinkv1
-2022/01/24 17:57:26 Defaulting ID to 00_16_3e_30_e5_f5
-2022/01/24 17:57:26 Skipping private HTTP server; port is zero
-2022/01/24 17:57:26 Skipping public HTTP server; port is zero
-2022/01/24 17:57:26 Skipping tunnel; missing host
+2022/01/27 16:31:28 Defaulting ID to 00_16_3e_30_e5_f5
+2022/01/27 16:31:28 Skipping tunnel; missing host
 [00_16_3e_30_e5_f5] Not handled: {"Msg":"_CmdRun"}
 ```
 
-Ignore the "Skipping..." log messages for now.  Those are features we'll enable
-in future steps.  The first thing to notice is the Thing was assigned an ID of
+The first thing to notice is the Thing was assigned an ID of
 00\_16\_3e\_30\_e5\_f5.  If that looks like a MAC address, you're right.  Every
 Thing has an ID and since one wasn't given in the program, a default is
 assigned, made up from a MAC address of one of the network interfaces on your
@@ -192,11 +179,9 @@ Build and run our Thing (note blinkv2):
 ```sh
 $ go install ./...
 $ ../go/bin/blinkv2
-2022/01/24 20:35:28 Defaulting ID to 00_16_3e_30_e5_f5
-2022/01/24 20:35:28 Skipping private HTTP server; port is zero
-2022/01/24 20:35:28 Skipping public HTTP server; port is zero
-2022/01/24 20:35:28 Skipping tunnel; missing host
-[00_16_3e_30_e5_f5] Received: {"Msg":"_CmdRun"}
+2022/01/24 17:57:26 Defaulting ID to 00_16_3e_30_e5_f5
+2022/01/24 17:57:26 Skipping tunnel; missing host
+[00_16_3e_30_e5_f5] Not handled: {"Msg":"_CmdRun"}
 ```
 
 Now CmdRun is handled and the LED should be blinking every second.  In the next
@@ -235,6 +220,8 @@ const html = `<html lang="en">
 	</body>
 </html>`
 ```
+Next we need to add some assets.
+
 ```go
 func (b *blink) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
@@ -293,11 +280,10 @@ Build and run our Thing (note blinkv3):
 ```sh
 $ go install ./...
 $ ../go/bin/blinkv3
-2022/01/24 22:04:41 Defaulting ID to 00_16_3e_30_e5_f5
-2022/01/24 22:04:41 Skipping private HTTP server; port is zero
-2022/01/24 22:04:41 Public HTTP server listening on :8080
-2022/01/24 22:04:41 Skipping public HTTPS server; port is zero
-2022/01/24 22:04:41 Skipping tunnel; missing host
+2022/01/24 20:35:28 Defaulting ID to 00_16_3e_30_e5_f5
+2022/01/24 20:35:28 Skipping private HTTP server; port is zero
+2022/01/24 20:35:28 Skipping public HTTP server; port is zero
+2022/01/24 20:35:28 Skipping tunnel; missing host
 [00_16_3e_30_e5_f5] Received: {"Msg":"_CmdRun"}
 [00_16_3e_30_e5_f5] Broadcast: {"Msg":"update","State":false}
 [00_16_3e_30_e5_f5] Would broadcast: {"Msg":"update","State":false}

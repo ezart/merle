@@ -6,9 +6,7 @@ package merle
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
-	"net/http"
 	"os"
 )
 
@@ -49,29 +47,25 @@ func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
 	return err
 }
 
-func (t *Thing) getPrimePort(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-
+func (t *Thing) getPrimePort(id string) string {
 	t.primePort.Lock()
 	defer t.primePort.Unlock()
 
 	if t.primePort.tunnelConnected {
-		fmt.Fprintf(w, "port busy")
-		return
+		return "port busy"
 	}
 
 	if t.primeId != "" && t.primeId != id {
-		fmt.Fprintf(w, "no ports available")
-		return
+		return "no ports available"
 	}
 
-	fmt.Fprintf(w, "%d", t.primePort.port)
+	return fmt.Sprintf("%d", t.primePort.port)
 }
 
 func (t *Thing) runPrime() error {
-	t.private.start()
-	t.public.start()
+	if t.isWeber {
+		t.web.start()
+	}
 	t.tunnel.start()
 	return t.primePort.run()
 }

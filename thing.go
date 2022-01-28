@@ -6,30 +6,11 @@ package merle
 
 import (
 	"fmt"
-	"html/template"
 	"log"
 	"os"
-	"net/http"
-	"path"
 	"regexp"
 	"time"
 )
-
-type ThingAssets struct {
-
-	// Directory on file system for Thing's assets (html, css, js, etc)
-	// This is an absolute or relative directory.  If relative, it's
-	// relative to the Thing's executable.
-	Dir string
-
-	// Directory to Thing's HTML template file, relative to
-	// ThingAssets.Dir.
-	Template string
-
-	// TemplateText is text passed in lieu of a template file.
-	// TemplateText takes priority over Template, if both are present.
-	TemplateText string
-}
 
 // All Things implement this interface.
 //
@@ -81,7 +62,6 @@ type ThingAssets struct {
 //		p.Marshal(&spam).Broadcast()
 //	}
 //
-// The Thing's assets are the web assets locations.
 type Thinger interface {
 
 	// Map of Thing's subscribers, keyed by message.  On packet receipt, a
@@ -101,9 +81,6 @@ type Thinger interface {
 	//		}
 	//	}
 	Subscribers() Subscribers
-
-	// Thing's assets, see ThingAssets
-	Assets() *ThingAssets
 }
 
 type Thing struct {
@@ -117,10 +94,8 @@ type Thing struct {
 	startupTime time.Time
 	bus         *bus
 	tunnel      *tunnel
-	private     *webPrivate
-	public      *webPublic
-	templ       *template.Template
-	templErr    error
+	isWeber     bool
+	web         *web
 	isBridge    bool
 	bridge      *bridge
 	isPrime     bool
@@ -157,7 +132,6 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 	t := &Thing{
 		thinger:     thinger,
 		cfg:         cfg,
-		assets:      thinger.Assets(),
 		status:      "online",
 		id:          id,
 		model:       cfg.Thing.Model,
@@ -172,16 +146,12 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 	t.tunnel = newTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
 		cfg.Mother.Key, cfg.Thing.PortPrivate, cfg.Mother.PortPrivate)
 
-	t.private = newWebPrivate(t, cfg.Thing.PortPrivate)
-	t.public = newWebPublic(t, cfg.Thing.PortPublic, cfg.Thing.PortPublicTLS,
-		cfg.Thing.User)
-	t.setAssetsDir(t)
-
-	templ := path.Join(t.assets.Dir, t.assets.Template)
-	t.templ, t.templErr = template.ParseFiles(templ)
-	if t.assets.TemplateText != "" {
-		t.templ, t.templErr =
-			template.New("merle").Parse(t.assets.TemplateText)
+	_, t.isWeber = t.thinger.(Weber)
+	if t.isWeber {
+		t.assets = t.thinger.(Weber).Assets()
+		t.web = newWeb(t, cfg.Thing.PortPublic, cfg.Thing.PortPublicTLS,
+			cfg.Thing.PortPrivate, cfg.Thing.User, t.assets)
+		t.setAssetsDir(t)
 	}
 
 	_, t.isBridge = t.thinger.(Bridger)
@@ -190,7 +160,7 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 	}
 
 	if t.isPrime {
-		t.private.handleFunc("/port/{id}", t.getPrimePort)
+		t.web.handlePrimePortId()
 		t.primePort = newPort(t, cfg.Thing.PortPrime, t.primeAttach)
 	}
 
@@ -219,8 +189,10 @@ func (t *Thing) getChild(id string) *Thing {
 }
 
 func (t *Thing) run() error {
-	t.private.start()
-	t.public.start()
+	if t.isWeber {
+		t.web.start()
+	}
+
 	t.tunnel.start()
 
 	if t.isBridge {
@@ -235,8 +207,10 @@ func (t *Thing) run() error {
 	}
 
 	t.tunnel.stop()
-	t.public.stop()
-	t.private.stop()
+
+	if t.isWeber {
+		t.web.stop()
+	}
 
 	t.bus.close()
 
@@ -296,7 +270,5 @@ func (t *Thing) runOnPort(p *port) error {
 }
 
 func (t *Thing) setAssetsDir(child *Thing) {
-	fs := http.FileServer(http.Dir(child.assets.Dir))
-	t.public.mux.PathPrefix("/" + child.id + "/assets/").
-		Handler(http.StripPrefix("/" + child.id + "/assets/", fs))
+	t.web.staticFiles(child.assets.Dir, "/" + child.id + "/assets/")
 }

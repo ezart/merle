@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
+// +build !tinygo
+
 package merle
 
 import (
@@ -10,15 +12,74 @@ import (
 	"crypto/subtle"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/msteinert/pam"
 	"golang.org/x/crypto/acme/autocert"
+	"html/template"
 	"log"
 	"net/http"
+	"path"
 	"strconv"
 	"sync"
 )
+
+type ThingAssets struct {
+
+	// Directory on file system for Thing's assets (html, css, js, etc)
+	// This is an absolute or relative directory.  If relative, it's
+	// relative to the Thing's executable.
+	Dir string
+
+	// Directory to Thing's HTML template file, relative to
+	// ThingAssets.Dir.
+	Template string
+
+	// TemplateText is text passed in lieu of a template file.
+	// TemplateText takes priority over Template, if both are present.
+	TemplateText string
+}
+
+type Weber interface {
+	Assets() *ThingAssets
+}
+
+type web struct {
+	public  *webPublic
+	private *webPrivate
+}
+
+func newWeb(t *Thing, portPublic, portPublicTLS, portPrivate uint,
+	user string, assets *ThingAssets) *web {
+	return &web{
+		public: newWebPublic(t, portPublic, portPublicTLS, user, assets),
+		private: newWebPrivate(t, portPrivate),
+	}
+}
+
+func (w *web) start() {
+	w.public.start()
+	w.private.start()
+}
+
+func (w *web) stop() {
+	w.private.stop()
+	w.public.stop()
+}
+
+func (w *web) handlePrimePortId() {
+	w.private.mux.HandleFunc("/port/{id}", w.private.getPrimePort)
+}
+
+func (w *web) handleBridgePortId() {
+	w.private.mux.HandleFunc("/port/{id}", w.private.getBridgePort)
+}
+
+func (w *web) staticFiles(dir, path string) {
+	fs := http.FileServer(http.Dir(dir))
+	w.public.mux.PathPrefix(path).Handler(http.StripPrefix(path, fs))
+}
 
 var upgrader = websocket.Upgrader{}
 
@@ -75,7 +136,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	t.bus.unplug(sock)
 }
 
-// Some things to pass into the thing's HTML template
+// Some things to pass into the Thing's HTML template
 func (t *Thing) homeParams(r *http.Request) interface{} {
 	scheme := "wss://"
 	if r.TLS == nil {
@@ -99,7 +160,7 @@ func (t *Thing) homeParams(r *http.Request) interface{} {
 	}
 }
 
-// Open the thing's home page
+// Open the Thing's home page
 func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -109,7 +170,7 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If this thing is a bridge, and the ID matches a child ID, then open
+	// If this Thing is a Bridge, and the ID matches a child ID, then open
 	// the child's home page
 	child := t.getChild(id)
 	if child != nil {
@@ -122,14 +183,14 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if t.templErr == nil {
-		t.templ.Execute(w, t.homeParams(r))
+	if t.web.public.templErr == nil {
+		t.web.public.templ.Execute(w, t.homeParams(r))
 	} else {
-		http.Error(w, t.templErr.Error(), http.StatusNotFound)
+		http.Error(w, t.web.public.templErr.Error(), http.StatusNotFound)
 	}
 }
 
-func (t *Thing) pamValidate(user, passwd string) (bool, error) {
+func (w *webPublic) pamValidate(user, passwd string) (bool, error) {
 	trans, err := pam.StartFunc("", user,
 		func(s pam.Style, msg string) (string, error) {
 			switch s {
@@ -139,24 +200,24 @@ func (t *Thing) pamValidate(user, passwd string) (bool, error) {
 			return "", errors.New("Unrecognized message style")
 		})
 	if err != nil {
-		t.log.Println("PAM Start:", err)
+		w.thing.log.Println("PAM Start:", err)
 		return false, err
 	}
 	err = trans.Authenticate(0)
 	if err != nil {
-		t.log.Printf("Authenticate [%s,%s]: %s", user, passwd, err)
+		w.thing.log.Printf("Authenticate [%s,%s]: %s", user, passwd, err)
 		return false, err
 	}
 
 	return true, nil
 }
 
-func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (w *webPublic) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(writer http.ResponseWriter, r *http.Request) {
 
 		// skip basic authentication if no user
 		if authUser == "" {
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(writer, r)
 			return
 		}
 
@@ -171,78 +232,20 @@ func (t *Thing) basicAuth(authUser string, next http.HandlerFunc) http.HandlerFu
 				expectedUserHash[:]) == 1)
 
 			// Use PAM to validate passwd
-			passwdMatch, _ := t.pamValidate(user, passwd)
+			passwdMatch, _ := w.pamValidate(user, passwd)
 
 			if userMatch && passwdMatch {
-				next.ServeHTTP(w, r)
+				next.ServeHTTP(writer, r)
 				return
 			}
 		}
 
-		w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		writer.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
+		http.Error(writer, "Unauthorized", http.StatusUnauthorized)
 	})
 }
 
-// The thing's private HTTP server
-type webPrivate struct {
-	sync.WaitGroup
-	port   uint
-	mux    *mux.Router
-	server *http.Server
-}
-
-func newWebPrivate(t *Thing, port uint) *webPrivate {
-	addr := ":" + strconv.FormatUint(uint64(port), 10)
-
-	mux := mux.NewRouter()
-	mux.HandleFunc("/ws", t.ws)
-
-	server := &http.Server{
-		Addr:    addr,
-		Handler: mux,
-		// TODO add timeouts
-	}
-
-	return &webPrivate{
-		port:   port,
-		mux:    mux,
-		server: server,
-	}
-}
-
-func (w *webPrivate) start() {
-	if w.port == 0 {
-		log.Println("Skipping private HTTP server; port is zero")
-		return
-	}
-
-	w.Add(2)
-	w.server.RegisterOnShutdown(w.Done)
-
-	log.Println("Private HTTP server listening on", w.server.Addr)
-
-	go func() {
-		if err := w.server.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalln("Private HTTP server failed:", err)
-		}
-		w.Done()
-	}()
-}
-
-func (w *webPrivate) stop() {
-	if w.port != 0 {
-		w.server.Shutdown(context.Background())
-	}
-	w.Wait()
-}
-
-func (w *webPrivate) handleFunc(pattern string,
-	handler func(http.ResponseWriter, *http.Request)) {
-	w.mux.HandleFunc(pattern, handler)
-}
-
-// The thing's public HTTP server
+// The Thing's public HTTP server
 type webPublic struct {
 	thing *Thing
 	sync.WaitGroup
@@ -252,9 +255,11 @@ type webPublic struct {
 	mux       *mux.Router
 	server    *http.Server
 	serverTLS *http.Server
+	templ     *template.Template
+	templErr  error
 }
 
-func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
+func newWebPublic(t *Thing, port, portTLS uint, user string, assets *ThingAssets) *webPublic {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 	addrTLS := ":" + strconv.FormatUint(uint64(portTLS), 10)
 
@@ -264,9 +269,6 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 	}
 
 	mux := mux.NewRouter()
-	mux.HandleFunc("/ws/{id}", t.basicAuth(user, t.ws))
-	mux.HandleFunc("/{id}", t.basicAuth(user, t.home))
-	mux.HandleFunc("/", t.basicAuth(user, t.home))
 
 	server := &http.Server{
 		Addr:    addr,
@@ -287,7 +289,13 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 		},
 	}
 
-	return &webPublic{
+	file := path.Join(assets.Dir, assets.Template)
+	templ, templErr := template.ParseFiles(file)
+	if assets.TemplateText != "" {
+		templ, templErr = template.New("merle").Parse(assets.TemplateText)
+	}
+
+	w := &webPublic{
 		thing:     t,
 		user:      user,
 		port:      port,
@@ -295,7 +303,15 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 		mux:       mux,
 		server:    server,
 		serverTLS: serverTLS,
+		templ:     templ,
+		templErr:  templErr,
 	}
+
+	mux.HandleFunc("/ws/{id}", w.basicAuth(user, t.ws))
+	mux.HandleFunc("/{id}", w.basicAuth(user, t.home))
+	mux.HandleFunc("/", w.basicAuth(user, t.home))
+
+	return w
 }
 
 func (w *webPublic) start() {
@@ -346,4 +362,82 @@ func (w *webPublic) stop() {
 		w.serverTLS.Shutdown(context.Background())
 	}
 	w.Wait()
+}
+
+// The Thing's private HTTP server
+type webPrivate struct {
+	thing *Thing
+	sync.WaitGroup
+	port   uint
+	mux    *mux.Router
+	server *http.Server
+}
+
+func newWebPrivate(t *Thing, port uint) *webPrivate {
+	addr := ":" + strconv.FormatUint(uint64(port), 10)
+
+	mux := mux.NewRouter()
+	mux.HandleFunc("/ws", t.ws)
+
+	server := &http.Server{
+		Addr:    addr,
+		Handler: mux,
+		// TODO add timeouts
+	}
+
+	return &webPrivate{
+		thing:  t,
+		port:   port,
+		mux:    mux,
+		server: server,
+	}
+}
+
+func (w *webPrivate) start() {
+	if w.port == 0 {
+		log.Println("Skipping private HTTP server; port is zero")
+		return
+	}
+
+	w.Add(2)
+	w.server.RegisterOnShutdown(w.Done)
+
+	log.Println("Private HTTP server listening on", w.server.Addr)
+
+	go func() {
+		if err := w.server.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalln("Private HTTP server failed:", err)
+		}
+		w.Done()
+	}()
+}
+
+func (w *webPrivate) stop() {
+	if w.port != 0 {
+		w.server.Shutdown(context.Background())
+	}
+	w.Wait()
+}
+
+func (w *webPrivate) getPrimePort(writer http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	fmt.Fprintf(writer, w.thing.getPrimePort(id))
+}
+
+func (w *webPrivate) getBridgePort(writer http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	port := w.thing.bridge.ports.getPort(id)
+
+	switch port {
+	case -1:
+		fmt.Fprintf(writer, "no ports available")
+	case -2:
+		fmt.Fprintf(writer, "port busy")
+	default:
+		fmt.Fprintf(writer, "%d", port)
+	}
 }

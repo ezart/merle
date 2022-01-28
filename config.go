@@ -5,9 +5,6 @@
 package merle
 
 import (
-	"fmt"
-	"gopkg.in/yaml.v3"
-	"os"
 	"flag"
 )
 
@@ -138,6 +135,7 @@ func FlagBridgeConfig(id, model, name, user string, pbegin, pend uint) *ThingCon
 	return cfg
 }
 
+/*
 func YamlThingConfig(file string) (*ThingConfig, error) {
 	var cfg ThingConfig
 
@@ -155,3 +153,4 @@ func YamlThingConfig(file string) (*ThingConfig, error) {
 
 	return &cfg, nil
 }
+*/

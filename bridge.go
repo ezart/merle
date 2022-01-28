@@ -7,8 +7,6 @@ package merle
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/gorilla/mux"
-	"net/http"
 	"regexp"
 )
 
@@ -65,7 +63,7 @@ func newBridge(thing *Thing) *bridge {
 		thing.cfg.Bridge.PortEnd, b.bridgeAttach)
 
 	b.thing.bus.subscribe(GetChildren, b.getChildren)
-	b.thing.private.handleFunc("/port/{id}", b.getPort)
+	b.thing.web.handleBridgePortId()
 
 	return b
 }
@@ -177,22 +175,6 @@ func (b *bridge) getChildren(p *Packet) {
 			child.model, child.name, child.status})
 	}
 	p.Marshal(&resp).Reply()
-}
-
-func (b *bridge) getPort(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-
-	port := b.ports.getPort(id)
-
-	switch port {
-	case -1:
-		fmt.Fprintf(w, "no ports available")
-	case -2:
-		fmt.Fprintf(w, "port busy")
-	default:
-		fmt.Fprintf(w, "%d", port)
-	}
 }
 
 func (b *bridge) start() {
