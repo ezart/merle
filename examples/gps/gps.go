@@ -6,10 +6,11 @@ import (
 	"github.com/scottfeldman/merle"
 	"github.com/scottfeldman/merle/examples/telit"
 	"time"
+	"log"
 )
 
 type gps struct {
-	telit Telit
+	telit telit.Telit
 	last  string
 }
 
@@ -19,17 +20,16 @@ func (g *gps) run(p *merle.Packet) {
 		Position string
 	}{Msg: "update"}
 
-	err := telit.Init()
+	err := g.telit.Init()
 	if err != nil {
-		log.Println("Telit init failed:", err)
-		return
+		log.Fatalln("Telit init failed:", err)
 	}
 
 	for {
-		update.Position = telit.Location()
-		if update.Position != last {
+		update.Position = g.telit.Location()
+		if update.Position != g.last {
 			p.Marshal(&update).Broadcast()
-			last = update.Position
+			g.last = update.Position
 		}
 		time.Sleep(time.Second)
 	}
@@ -37,7 +37,7 @@ func (g *gps) run(p *merle.Packet) {
 
 func (g *gps) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdRun: b.run,
+		merle.CmdRun: g.run,
 	}
 }
 
