@@ -66,3 +66,7 @@ func (w *webPublic) stop() {
 
 func (w *webPublic) staticFiles(dir, path string) {
 }
+
+func (t *Thing) runOnPort(p *port) error {
+	return nil
+}

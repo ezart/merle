@@ -51,9 +51,9 @@ type web struct {
 }
 
 func newWeb(t *Thing, portPublic, portPublicTLS, portPrivate uint,
-	user string, assets *ThingAssets) *web {
+	user string) *web {
 	return &web{
-		public: newWebPublic(t, portPublic, portPublicTLS, user, assets),
+		public: newWebPublic(t, portPublic, portPublicTLS, user),
 		private: newWebPrivate(t, portPrivate),
 	}
 }
@@ -76,12 +76,46 @@ func (w *web) handleBridgePortId() {
 	w.private.mux.HandleFunc("/port/{id}", w.private.getBridgePort)
 }
 
-func (w *web) staticFiles(dir, path string) {
-	fs := http.FileServer(http.Dir(dir))
-	w.public.mux.PathPrefix(path).Handler(http.StripPrefix(path, fs))
+func (w *web) staticFiles(t *Thing) {
+	if t.isWeber {
+		assets := t.thinger.(Weber).Assets()
+		fs := http.FileServer(http.Dir(assets.Dir))
+		path := "/" + t.id + "/assets/"
+		w.public.mux.PathPrefix(path).Handler(http.StripPrefix(path, fs))
+	}
 }
 
 var upgrader = websocket.Upgrader{}
+
+func (t *Thing) runOnPort(p *port) error {
+	var name = fmt.Sprintf("port:%d", p.port)
+	var sock = newWebSocket(name, p.ws)
+	var pkt = newPacket(t.bus, sock, nil)
+	var err error
+
+	t.log.Printf("Websocket opened [%s]", name)
+
+	t.bus.plugin(sock)
+
+	msg := struct{ Msg string }{Msg: CmdRunPrime}
+	t.bus.receive(pkt.Marshal(&msg))
+
+	for {
+		// new pkt for each rcv
+		var pkt = newPacket(t.bus, sock, nil)
+
+		pkt.msg, err = p.readMessage()
+		if err != nil {
+			t.log.Printf("Websocket closed [%s]", name)
+			break
+		}
+		t.bus.receive(pkt)
+	}
+
+	t.bus.unplug(sock)
+
+	return err
+}
 
 // Open a websocket on the thing
 func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
@@ -259,7 +293,7 @@ type webPublic struct {
 	templErr  error
 }
 
-func newWebPublic(t *Thing, port, portTLS uint, user string, assets *ThingAssets) *webPublic {
+func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 	addrTLS := ":" + strconv.FormatUint(uint64(portTLS), 10)
 
@@ -289,6 +323,7 @@ func newWebPublic(t *Thing, port, portTLS uint, user string, assets *ThingAssets
 		},
 	}
 
+	assets := t.thinger.(Weber).Assets()
 	file := path.Join(assets.Dir, assets.Template)
 	templ, templErr := template.ParseFiles(file)
 	if assets.TemplateText != "" {

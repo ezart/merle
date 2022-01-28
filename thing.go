@@ -86,7 +86,6 @@ type Thinger interface {
 type Thing struct {
 	thinger     Thinger
 	cfg         *ThingConfig
-	assets      *ThingAssets
 	status      string
 	id          string
 	model       string
@@ -148,9 +147,8 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 
 	_, t.isWeber = t.thinger.(Weber)
 	if t.isWeber {
-		t.assets = t.thinger.(Weber).Assets()
 		t.web = newWeb(t, cfg.Thing.PortPublic, cfg.Thing.PortPublicTLS,
-			cfg.Thing.PortPrivate, cfg.Thing.User, t.assets)
+			cfg.Thing.PortPrivate, cfg.Thing.User)
 		t.setAssetsDir(t)
 	}
 
@@ -239,36 +237,6 @@ func (t *Thing) Run() error {
 	}
 }
 
-func (t *Thing) runOnPort(p *port) error {
-	var name = fmt.Sprintf("port:%d", p.port)
-	var sock = newWebSocket(name, p.ws)
-	var pkt = newPacket(t.bus, sock, nil)
-	var err error
-
-	t.log.Printf("Websocket opened [%s]", name)
-
-	t.bus.plugin(sock)
-
-	msg := struct{ Msg string }{Msg: CmdRunPrime}
-	t.bus.receive(pkt.Marshal(&msg))
-
-	for {
-		// new pkt for each rcv
-		var pkt = newPacket(t.bus, sock, nil)
-
-		pkt.msg, err = p.readMessage()
-		if err != nil {
-			t.log.Printf("Websocket closed [%s]", name)
-			break
-		}
-		t.bus.receive(pkt)
-	}
-
-	t.bus.unplug(sock)
-
-	return err
-}
-
 func (t *Thing) setAssetsDir(child *Thing) {
-	t.web.staticFiles(child.assets.Dir, "/" + child.id + "/assets/")
+	t.web.staticFiles(child)
 }
