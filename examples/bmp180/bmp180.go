@@ -56,8 +56,10 @@ const html = `<html lang="en">
 
 				switch(msg.Msg) {
 				case "update":
-					pressure.textContent = msg.Pressure
-					temperature.textContent = msg.Temperature
+					pressure.textContent =
+						"Pressure: " + msg.Pressure
+					temperature.textContent =
+						"Temperature: " + msg.Temperature
 					break
 				}
 			}
