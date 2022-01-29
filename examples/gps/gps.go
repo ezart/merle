@@ -48,7 +48,7 @@ const html = `<html lang="en">
 		<script>
 			position = document.getElementById("position")
 
-			conn = new WebSocket("ws://localhost:8080/ws/{{.Id}}")
+			conn = new WebSocket("{{.Scheme}}{{.Host}}/ws/{{.Id}}")
 
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)

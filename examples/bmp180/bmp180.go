@@ -48,7 +48,7 @@ const html = `<html lang="en">
 			pressure = document.getElementById("pressure")
 			temperature = document.getElementById("temperature")
 
-			conn = new WebSocket("ws://localhost:8080/ws/{{.Id}}")
+			conn = new WebSocket("{{.Scheme}}{{.Host}}/ws/{{.Id}}")
 
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)

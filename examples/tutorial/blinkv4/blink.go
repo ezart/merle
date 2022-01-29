@@ -3,6 +3,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/scottfeldman/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
@@ -74,7 +75,24 @@ func (b *blink) Assets() *merle.ThingAssets {
 func main() {
 	var cfg merle.ThingConfig
 
-	cfg.Thing.PortPublic = 8080
+	prime := flag.Bool("prime", false, "Run Thing-prime")
+	flag.Parse()
+
+	cfg.Thing.PortPublic = 80
+	cfg.Thing.PortPrivate = 8080
+	cfg.Thing.User = "admin"
+
+	if *prime {
+		cfg.Thing.Prime = true
+		cfg.Thing.PortPrime = 8000
+		cfg.Thing.PortPrivate = 9080
+//		cfg.Thing.PortPublicTLS = 443
+	} else {
+		cfg.Mother.Host = "localhost"
+		cfg.Mother.User = "admin"
+		cfg.Mother.Key = "/home/admin/.ssh/id_rsa"
+		cfg.Mother.PortPrivate = 9080
+	}
 
 	merle.NewThing(&blink{}, &cfg).Run()
 }

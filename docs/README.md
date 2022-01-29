@@ -312,12 +312,9 @@ This is the first principle of Merle:
 Now that our Thing is blinking the LED on hardware and in the local browser
 over localhost:8080, the next step is to run the Thing on the Internet.
 
-### Option 1: We have a Public Routable IP Address
-
-Is the Thing already on the Internet?  Does the Thing have a public routable IP
-address?  If no, proceed to Option 2.  If yes, then we just need to turn on
-HTTPS and optionally HTTP Basic Authentication and now our Thing is accessable
-from the Internet, secure over TLS.
+Does the Thing have a public routable IP address?  If yes, then we just need to
+turn on HTTPS and optionally HTTP Basic Authentication and now our Thing is
+accessable from the Internet, secure over TLS.
 
 ```go
 func main() {
