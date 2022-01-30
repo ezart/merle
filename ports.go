@@ -89,12 +89,17 @@ func (p *port) wsIdentity() error {
 func (p *port) wsReplyIdentity() (resp *MsgIdentity, err error) {
 	var identity MsgIdentity
 
+again:
 	// Wait for response no longer than a second
 	p.ws.SetReadDeadline(time.Now().Add(time.Second))
 
 	err = p.ws.ReadJSON(&identity)
 	if err != nil {
 		return nil, err
+	}
+
+	if identity.Msg != ReplyIdentity {
+		goto again
 	}
 
 	// Clear deadline

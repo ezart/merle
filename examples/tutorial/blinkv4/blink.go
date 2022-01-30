@@ -7,6 +7,7 @@ import (
 	"github.com/scottfeldman/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
+	"sync"
 	"time"
 )
 
@@ -48,7 +49,7 @@ const html = `<html lang="en">
 		<script>
 			image = document.getElementById("LED")
 
-			conn = new WebSocket("{{.Scheme}}{{.Host}}/ws/{{.Id}}")
+			conn = new WebSocket("{{.WebSocket}}")
 
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
@@ -56,7 +57,7 @@ const html = `<html lang="en">
 
 				switch(msg.Msg) {
 				case "update":
-					image.src = "/{{.Id}}/assets/images/led-" +
+					image.src = "/{{.AssetsDir}}/images/led-" +
 						msg.State + ".png"
 					break
 				}
@@ -67,7 +68,7 @@ const html = `<html lang="en">
 
 func (b *blink) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
-		Dir: "examples/tutorial/blinkv3/assets",
+		Dir: "examples/tutorial/blinkv4/assets",
 		TemplateText: html,
 	}
 }
@@ -85,6 +86,7 @@ func main() {
 	if *prime {
 		cfg.Thing.Prime = true
 		cfg.Thing.PortPrime = 8000
+		cfg.Thing.PortPublic = 90
 		cfg.Thing.PortPrivate = 9080
 //		cfg.Thing.PortPublicTLS = 443
 	} else {

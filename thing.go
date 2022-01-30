@@ -94,6 +94,7 @@ type Thing struct {
 	bus         *bus
 	tunnel      *tunnel
 	isWeber     bool
+	assets      *ThingAssets
 	web         *web
 	isBridge    bool
 	bridge      *bridge

@@ -172,26 +172,23 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 }
 
 // Some things to pass into the Thing's HTML template
-func (t *Thing) homeParams(r *http.Request) interface{} {
+func (t *Thing) templateParams(r *http.Request) map[string]interface{} {
 	scheme := "wss://"
 	if r.TLS == nil {
 		scheme = "ws://"
 	}
 
-	return struct {
-		Scheme string
-		Host   string
-		Status string
-		Id     string
-		Model  string
-		Name   string
-	}{
-		Scheme: scheme,
-		Host:   r.Host,
-		Status: t.status,
-		Id:     t.id,
-		Model:  t.model,
-		Name:   t.name,
+	return map[string]interface{}{
+		"Host":      r.Host,
+		"Status":    t.status,
+		"Id":        t.id,
+		"Model":     t.model,
+		"Name":      t.name,
+		// TODO The forward slashes are getting escaped in the output
+		// TODO within <script></script> tags.  So "/" turns into "\/".
+		// TODO Need to figure out why it's doing that or decide if it matters.
+		"AssetsDir": template.JSStr(t.id + "/assets"),
+		"WebSocket": template.JSStr(scheme + r.Host + "/ws/" + t.id),
 	}
 }
 
@@ -219,7 +216,7 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if t.web.public.templErr == nil {
-		t.web.public.templ.Execute(w, t.homeParams(r))
+		t.web.public.templ.Execute(w, t.templateParams(r))
 	} else {
 		http.Error(w, t.web.public.templErr.Error(), http.StatusNotFound)
 	}
@@ -324,13 +321,6 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 		},
 	}
 
-	assets := t.thinger.(Weber).Assets()
-	file := path.Join(assets.Dir, assets.Template)
-	templ, templErr := template.ParseFiles(file)
-	if assets.TemplateText != "" {
-		templ, templErr = template.New("merle").Parse(assets.TemplateText)
-	}
-
 	w := &webPublic{
 		thing:     t,
 		user:      user,
@@ -339,8 +329,13 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 		mux:       mux,
 		server:    server,
 		serverTLS: serverTLS,
-		templ:     templ,
-		templErr:  templErr,
+	}
+
+	t.assets = t.thinger.(Weber).Assets()
+	file := path.Join(t.assets.Dir, t.assets.Template)
+	w.templ, w.templErr = template.ParseFiles(file)
+	if t.assets.TemplateText != "" {
+		w.templ, w.templErr = template.New("").Parse(t.assets.TemplateText)
 	}
 
 	mux.HandleFunc("/ws/{id}", w.basicAuth(user, t.ws))
