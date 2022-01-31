@@ -203,15 +203,19 @@ const html = `<html lang="en">
 		<script>
 			image = document.getElementById("LED")
 
-			conn = new WebSocket("ws://localhost:8080/ws/{{.Id}}")
+			conn = new WebSocket("{{.WebSocket}}")
+
+			conn.onopen = function(evt) {
+				conn.send(JSON.stringify({Msg: "_GetState"}))
+			}
 
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
 				console.log('msg', msg)
 
 				switch(msg.Msg) {
-				case "update":
-					image.src = "/{{.Id}}/assets/images/led-" +
+				case "Update":
+					image.src = "/{{.AssetsDir}}/images/led-" +
 						msg.State + ".png"
 					break
 				}
@@ -220,6 +224,7 @@ const html = `<html lang="en">
 	</body>
 </html>`
 ```
+
 Next we need to add some assets.
 
 ```go
@@ -246,11 +251,13 @@ func main() {
 CmdRun handler will send out "update" message each time the LED state changes.  Here's the new CmdRun handler.
 
 ```go
+type msg struct {
+	Msg   string
+	State bool
+}
+
 func (b *blink) run(p *merle.Packet) {
-	update := struct {
-		Msg   string
-		State bool
-	}{Msg: "update"}
+	msg := &msg{Msg: "Update"}
 
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
@@ -261,8 +268,8 @@ func (b *blink) run(p *merle.Packet) {
 	for {
 		led.Toggle()
 
-		update.State = led.State()
-		p.Marshal(&update).Broadcast()
+		msg.State = led.State()
+		p.Marshal(&msg).Broadcast()
 
 		time.Sleep(time.Second)
 	}
@@ -281,8 +288,9 @@ Build and run our Thing (note blinkv3):
 $ go install ./...
 $ ../go/bin/blinkv3
 2022/01/24 20:35:28 Defaulting ID to 00_16_3e_30_e5_f5
+2022/01/24 20:35:28 Public HTTP server listening on :8080
+2022/01/24 20:35:28 Skipping public HTTPS server; port is zero
 2022/01/24 20:35:28 Skipping private HTTP server; port is zero
-2022/01/24 20:35:28 Skipping public HTTP server; port is zero
 2022/01/24 20:35:28 Skipping tunnel; missing host
 [00_16_3e_30_e5_f5] Received: {"Msg":"_CmdRun"}
 [00_16_3e_30_e5_f5] Broadcast: {"Msg":"update","State":false}
