@@ -5,7 +5,6 @@
 package merle
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -67,6 +66,11 @@ func (b *bus) receive(p *Packet) {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
 
+	if p.src != nil && p.src.Flags()&bcast == 0 && msg.Msg == GetState {
+		// Received GetState: enable broadcasts on socket
+		p.src.SetFlags(p.src.Flags() | bcast)
+	}
+
 	f, match := b.subs[msg.Msg]
 	if match {
 		if f != nil {
@@ -89,33 +93,24 @@ func (b *bus) receive(p *Packet) {
 }
 
 // Reply sends the packet back to the source socket
-func (b *bus) reply(p *Packet) error {
+func (b *bus) reply(p *Packet) {
 	if p.src == nil {
-		return fmt.Errorf("Reply aborted; source is missing")
+		p.bus.thing.log.Println("Reply aborted; source is missing")
+		return
 	}
 
+	p.bus.thing.log.Printf("Reply: %.80s", p.String())
 	p.src.Send(p)
-
-	return nil
 }
 
-// Broadcast sends the packet to each socket on the bus, expect to thexi
+// Broadcast sends the packet to each socket on the bus, expect to the
 // originating socket
-func (b *bus) broadcast(p *Packet) error {
+func (b *bus) broadcast(p *Packet) {
+	sent := 0
 	src := p.src
 
 	b.sockLock.RLock()
 	defer b.sockLock.RUnlock()
-
-	if len(b.sockets) == 0 {
-		return fmt.Errorf("Would broadcast: %.80s", p.String())
-	}
-
-	if len(b.sockets) == 1 && src != nil {
-		if _, ok := b.sockets[src]; ok {
-			return fmt.Errorf("Would broadcast: %.80s", p.String())
-		}
-	}
 
 	// TODO Perf optimization: use websocket.NewPreparedMessage
 	// TODO to prepare msg once, and then send on each connection
@@ -125,10 +120,20 @@ func (b *bus) broadcast(p *Packet) error {
 			// don't send back to src
 			continue
 		}
+		if sock.Flags()&bcast == 0 {
+			// socket not ready for broadcasts
+			continue
+		}
+		if sent == 0 {
+			p.bus.thing.log.Printf("Broadcast: %.80s", p.String())
+			sent++
+		}
 		sock.Send(p)
 	}
 
-	return nil
+	if sent == 0 {
+		p.bus.thing.log.Printf("Would Broadcast: %.80s", p.String())
+	}
 }
 
 // Send the packet to the destination socket

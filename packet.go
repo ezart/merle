@@ -45,26 +45,19 @@ func (p *Packet) String() string {
 	return string(p.msg)
 }
 
-// Reply back to sender of Packet.  Reply is typically used to respond to a
-// request.
+// Reply back to sender of Packet.
 func (p *Packet) Reply() {
-	p.bus.thing.log.Printf("Reply: %.80s", p.String())
-	if err := p.bus.reply(p); err != nil {
-		p.bus.thing.log.Println(err)
-	}
+	p.bus.reply(p)
 }
 
 // Broadcast the Packet to all listeners except for the source of the Packet.
 func (p *Packet) Broadcast() {
-	p.bus.thing.log.Printf("Broadcast: %.80s", p.String())
-	if err := p.bus.broadcast(p); err != nil {
-		p.bus.thing.log.Println(err)
-	}
+	p.bus.broadcast(p)
 }
 
 // Subscriber callback function to broadcast packet.  In this example, any
 // packets received with message Alert are broadcast to all other listeners.
-// Not applicable for CmdRun or CmdRunPrime.
+// Not applicable for CmdRun.
 //
 //	return merle.Subscribers{
 //		{"Alert", merle.Broadcast},
@@ -73,7 +66,7 @@ func (p *Packet) Broadcast() {
 func Broadcast(p *Packet) {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
-	if msg.Msg == CmdRun || msg.Msg == CmdRunPrime {
+	if msg.Msg == CmdRun {
 		return
 	}
 	p.Broadcast()

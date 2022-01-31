@@ -98,8 +98,10 @@ func (t *Thing) runOnPort(p *port) error {
 
 	t.bus.plugin(sock)
 
-	msg := struct{ Msg string }{Msg: CmdRunPrime}
-	t.bus.receive(pkt.Marshal(&msg))
+	msg := struct{ Msg string }{Msg: GetState}
+	t.log.Println("Sending:", msg)
+	sock.Send(pkt.Marshal(&msg))
+//	t.bus.receive(pkt.Marshal(&msg))
 
 	for {
 		// new pkt for each rcv
@@ -474,8 +476,9 @@ func (w *webPrivate) getBridgePort(writer http.ResponseWriter, r *http.Request) 
 }
 
 type webSocket struct {
-	conn *websocket.Conn
-	name string
+	conn  *websocket.Conn
+	name  string
+	flags uint32
 }
 
 func newWebSocket(name string, conn *websocket.Conn) *webSocket {
@@ -492,4 +495,12 @@ func (ws *webSocket) Close() {
 
 func (ws *webSocket) Name() string {
 	return ws.name
+}
+
+func (ws *webSocket) Flags() uint32 {
+	return ws.flags
+}
+
+func (ws *webSocket) SetFlags(flags uint32) {
+	ws.flags = flags
 }

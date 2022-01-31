@@ -13,16 +13,15 @@ const (
 	// All Things must handle CmdRun to do work.  CmdRun should run
 	// forever; it is an error for CmdRun handler to finish.  The callback
 	// merle.RunForever can be used if there is no more work beyond select{}.
-	// CmdRun is not sent to Thing-prime...see CmdRunPrime.
+	// CmdRun is not sent to Thing-prime.
 	CmdRun = "_CmdRun"
-	// CmdRunPrime is sent to Thing-prime rather than CmdRun.  Unlike
-	// CmdRun, CmdRunPrime should not run forever.  CmdRunPrime lets
-	// Thing-prime fetch it's state from Thing.
-	CmdRunPrime = "_CmdRunPrime"
 	// GetIdentity requests Thing's identity
 	GetIdentity = "_GetIdentity"
 	// Reply to GetIdentity with MsgIdentity
 	ReplyIdentity = "_ReplyIdentity"
+	// GetState TODO doc
+	GetState = "_GetState"
+	ReplyState = "_ReplyState"
 	// SpamStatus is sent when Thing's status (online, offline, etc)
 	// changes
 	SpamStatus = "_SpamStatus"

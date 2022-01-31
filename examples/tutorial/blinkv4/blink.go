@@ -12,33 +12,58 @@ import (
 )
 
 type blink struct {
+	sync.Mutex
+	led   *gpio.LedDriver
+	state bool
+}
+
+type msg struct {
+	Msg   string
+	State bool
 }
 
 func (b *blink) run(p *merle.Packet) {
-	update := struct {
-		Msg   string
-		State bool
-	}{Msg: "update"}
+	msg := &msg{Msg: "Update"}
 
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
 
-	led := gpio.NewLedDriver(adaptor, "11")
-	led.Start()
+	b.led = gpio.NewLedDriver(adaptor, "11")
+	b.led.Start()
 
 	for {
-		led.Toggle()
-
-		update.State = led.State()
-		p.Marshal(&update).Broadcast()
+		b.Lock()
+		b.led.Toggle()
+		b.state = b.led.State()
+		msg.State = b.state
+		p.Marshal(&msg).Broadcast()
+		b.Unlock()
 
 		time.Sleep(time.Second)
 	}
 }
 
+func (b *blink) getState(p *merle.Packet) {
+	b.Lock()
+	defer b.Unlock()
+	msg := &msg{Msg: merle.ReplyState, State: b.state}
+	p.Marshal(&msg).Reply()
+}
+
+func (b *blink) saveState(p *merle.Packet) {
+	b.Lock()
+	defer b.Unlock()
+	var msg msg
+	p.Unmarshal(&msg)
+	b.state = msg.State
+}
+
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		merle.CmdRun: b.run,
+		merle.GetState: b.getState,
+		merle.ReplyState: b.saveState,
+		"Update": merle.Broadcast,
 	}
 }
 
@@ -51,12 +76,17 @@ const html = `<html lang="en">
 
 			conn = new WebSocket("{{.WebSocket}}")
 
+			conn.onopen = function(evt) {
+				conn.send(JSON.stringify({Msg: "_GetState"}))
+			}
+
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
 				console.log('msg', msg)
 
 				switch(msg.Msg) {
-				case "update":
+				case "_ReplyState":
+				case "Update":
 					image.src = "/{{.AssetsDir}}/images/led-" +
 						msg.State + ".png"
 					break

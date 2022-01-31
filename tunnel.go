@@ -53,7 +53,7 @@ func (t *tunnel) getPort() string {
 		"localhost:"+privatePort+"/port/"+t.id,
 	}
 
-	log.Printf("Tunnel getting port [ssh %s]...", args)
+	log.Printf("Tunnel getting port [ssh %s]", args)
 
 	cmd := exec.Command("ssh", args...)
 
@@ -98,7 +98,7 @@ func (t *tunnel) tunnel(port string) error {
 		"-R", remote, t.user+"@"+t.host,
 	}
 
-	log.Printf("Creating tunnel [ssh %s]...", args)
+	log.Printf("Creating tunnel [ssh %s]", args)
 
 	cmd := exec.Command("ssh", args...)
 
@@ -128,7 +128,7 @@ func (t *tunnel) create() {
 			goto again
 		}
 
-		log.Println("Tunnel create got port", port)
+		log.Println("Tunnel got port", port)
 
 		err = t.tunnel(port)
 		if err != nil {

@@ -116,7 +116,7 @@ func (b *blink) run(p *merle.Packet) {
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		merle.CmdRun: b.run,
-		merle.CmdRunPrime: b.runPrime,
+//		merle.CmdRunPrime: b.runPrime,
 		"GetPaused": b.sendPaused,
 		"ReplyPaused": b.savePaused,
 		"CmdPause": b.pause,
