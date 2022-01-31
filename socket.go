@@ -4,6 +4,7 @@
 
 package merle
 
+// Socket flags
 const (
     bcast uint32 = 1 << iota
 )

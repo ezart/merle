@@ -55,6 +55,10 @@ func (p *Packet) Broadcast() {
 	p.bus.broadcast(p)
 }
 
+func (p *Packet) Bottom() bool {
+	return p.bus.bottom(p)
+}
+
 // Subscriber callback function to broadcast packet.  In this example, any
 // packets received with message Alert are broadcast to all other listeners.
 // Not applicable for CmdRun.

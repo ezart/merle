@@ -68,6 +68,10 @@ func (p *port) readMessage() (msg []byte, err error) {
 	return msg, err
 }
 
+func (p *port) writeMessage(msg []byte) {
+	p.ws.WriteMessage(websocket.TextMessage, msg)
+}
+
 func (p *port) wsOpen() error {
 	var err error
 

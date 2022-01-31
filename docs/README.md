@@ -191,8 +191,8 @@ step, we'll put the front-end on our Thing.
 
 Let's add some HTML and Javascript to the Assets.  The Javascript opens a
 websocket back to the Thing and listens for new JSON messages from the Thing.
-It's updating the LED state on screen when the "update" message is received.
-The Thing will generate new "update" message periodically.  We'll add that code
+It's updating the LED state on screen when the "Update" message is received.
+The Thing will generate new "Update" message periodically.  We'll add that code
 in a bit.  The Thing is running a web server listening on port 8080.
 
 ```html
@@ -248,7 +248,7 @@ func main() {
 }
 ```
 
-CmdRun handler will send out "update" message each time the LED state changes.  Here's the new CmdRun handler.
+CmdRun handler will send out "Update" message each time the LED state changes.  Here's the new CmdRun handler.
 
 ```go
 type msg struct {
@@ -276,7 +276,7 @@ func (b *blink) run(p *merle.Packet) {
 }
 ```
 
-Each second, the LED is toggled and an "update" message is broadcast to any
+Each second, the LED is toggled and an "Update" message is broadcast to any
 listeners.  The listener we're interested in here is the websocket connection
 from Javascript.  Every web browser browsing to http://localhost:8080 makes
 it's own websocket connection back to the Thing.  The broadcast ensures all
@@ -293,12 +293,12 @@ $ ../go/bin/blinkv3
 2022/01/24 20:35:28 Skipping private HTTP server; port is zero
 2022/01/24 20:35:28 Skipping tunnel; missing host
 [00_16_3e_30_e5_f5] Received: {"Msg":"_CmdRun"}
-[00_16_3e_30_e5_f5] Broadcast: {"Msg":"update","State":false}
-[00_16_3e_30_e5_f5] Would broadcast: {"Msg":"update","State":false}
-[00_16_3e_30_e5_f5] Broadcast: {"Msg":"update","State":true}
-[00_16_3e_30_e5_f5] Would broadcast: {"Msg":"update","State":true}
-[00_16_3e_30_e5_f5] Broadcast: {"Msg":"update","State":false}
-[00_16_3e_30_e5_f5] Would broadcast: {"Msg":"update","State":false}
+[00_16_3e_30_e5_f5] Broadcast: {"Msg":"Update","State":false}
+[00_16_3e_30_e5_f5] Would broadcast: {"Msg":"Update","State":false}
+[00_16_3e_30_e5_f5] Broadcast: {"Msg":"Update","State":true}
+[00_16_3e_30_e5_f5] Would broadcast: {"Msg":"Update","State":true}
+[00_16_3e_30_e5_f5] Broadcast: {"Msg":"Update","State":false}
+[00_16_3e_30_e5_f5] Would broadcast: {"Msg":"Update","State":false}
 ```
 
 "Would broadcast" log messages mean no one is listening.  Open a web browser on

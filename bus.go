@@ -136,10 +136,12 @@ func (b *bus) broadcast(p *Packet) {
 	}
 }
 
-// Send the packet to the destination socket
-func (b *bus) send(p *Packet, dst socketer) error {
-	dst.Send(p)
-	return nil
+func (b *bus) bottom(p *Packet) bool {
+	if b.thing.isPrime {
+		b.thing.primePort.writeMessage(p.msg)
+		return false
+	}
+	return true
 }
 
 func (b *bus) close() {

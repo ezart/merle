@@ -3,6 +3,7 @@
 package main
 
 import (
+	"log"
 	"flag"
 	"github.com/scottfeldman/merle"
 	"gobot.io/x/gobot/drivers/gpio"
