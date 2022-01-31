@@ -12,11 +12,13 @@ import (
 type blink struct {
 }
 
+type msg struct {
+	Msg   string
+	State bool
+}
+
 func (b *blink) run(p *merle.Packet) {
-	update := struct {
-		Msg   string
-		State bool
-	}{Msg: "update"}
+	msg := &msg{Msg: "Update"}
 
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
@@ -27,8 +29,8 @@ func (b *blink) run(p *merle.Packet) {
 	for {
 		led.Toggle()
 
-		update.State = led.State()
-		p.Marshal(&update).Broadcast()
+		msg.State = led.State()
+		p.Marshal(&msg).Broadcast()
 
 		time.Sleep(time.Second)
 	}
@@ -47,15 +49,19 @@ const html = `<html lang="en">
 		<script>
 			image = document.getElementById("LED")
 
-			conn = new WebSocket("{{.Scheme}}{{.Host}}/ws/{{.Id}}")
+			conn = new WebSocket("{{.WebSocket}}")
+
+			conn.onopen = function(evt) {
+				conn.send(JSON.stringify({Msg: "_GetState"}))
+			}
 
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
 				console.log('msg', msg)
 
 				switch(msg.Msg) {
-				case "update":
-					image.src = "/{{.Id}}/assets/images/led-" +
+				case "Update":
+					image.src = "/{{.AssetsDir}}/images/led-" +
 						msg.State + ".png"
 					break
 				}

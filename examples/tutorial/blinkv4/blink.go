@@ -7,12 +7,10 @@ import (
 	"github.com/scottfeldman/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
-	"sync"
 	"time"
 )
 
 type blink struct {
-	sync.Mutex
 	led   *gpio.LedDriver
 	state bool
 }
@@ -32,30 +30,30 @@ func (b *blink) run(p *merle.Packet) {
 	b.led.Start()
 
 	for {
-		b.Lock()
 		b.led.Toggle()
 		b.state = b.led.State()
+
 		msg.State = b.state
 		p.Marshal(&msg).Broadcast()
-		b.Unlock()
 
 		time.Sleep(time.Second)
 	}
 }
 
 func (b *blink) getState(p *merle.Packet) {
-	b.Lock()
-	defer b.Unlock()
 	msg := &msg{Msg: merle.ReplyState, State: b.state}
 	p.Marshal(&msg).Reply()
 }
 
 func (b *blink) saveState(p *merle.Packet) {
-	b.Lock()
-	defer b.Unlock()
 	var msg msg
 	p.Unmarshal(&msg)
 	b.state = msg.State
+}
+
+func (b *blink) update(p *merle.Packet) {
+	b.saveState(p)
+	p.Broadcast()
 }
 
 func (b *blink) Subscribers() merle.Subscribers {
@@ -63,7 +61,7 @@ func (b *blink) Subscribers() merle.Subscribers {
 		merle.CmdRun: b.run,
 		merle.GetState: b.getState,
 		merle.ReplyState: b.saveState,
-		"Update": merle.Broadcast,
+		"Update": b.update,
 	}
 }
 
