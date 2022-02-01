@@ -10,6 +10,7 @@ import (
 )
 
 type blink struct {
+	led   *gpio.LedDriver
 }
 
 type msg struct {
@@ -23,22 +24,28 @@ func (b *blink) run(p *merle.Packet) {
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
 
-	led := gpio.NewLedDriver(adaptor, "11")
-	led.Start()
+	b.led = gpio.NewLedDriver(adaptor, "11")
+	b.led.Start()
 
 	for {
-		led.Toggle()
+		b.led.Toggle()
 
-		msg.State = led.State()
+		msg.State = b.led.State()
 		p.Marshal(&msg).Broadcast()
 
 		time.Sleep(time.Second)
 	}
 }
 
+func (b *blink) getState(p *merle.Packet) {
+	msg := &msg{Msg: merle.ReplyState, State: b.led.State()}
+	p.Marshal(&msg).Reply()
+}
+
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		merle.CmdRun: b.run,
+		merle.GetState: b.getState,
 	}
 }
 
@@ -60,6 +67,7 @@ const html = `<html lang="en">
 				console.log('msg', msg)
 
 				switch(msg.Msg) {
+				case "_ReplyState":
 				case "Update":
 					image.src = "/{{.AssetsDir}}/images/led-" +
 						msg.State + ".png"
@@ -80,7 +88,7 @@ func (b *blink) Assets() *merle.ThingAssets {
 func main() {
 	var cfg merle.ThingConfig
 
-	cfg.Thing.PortPublic = 8080
+	cfg.Thing.PortPublic = 80
 
 	merle.NewThing(&blink{}, &cfg).Run()
 }

@@ -214,6 +214,7 @@ const html = `<html lang="en">
 				console.log('msg', msg)
 
 				switch(msg.Msg) {
+				case "_ReplyState":
 				case "Update":
 					image.src = "/{{.AssetsDir}}/images/led-" +
 						msg.State + ".png"
@@ -236,21 +237,25 @@ func (b *blink) Assets() *merle.ThingAssets {
 }
 ```
 
-To enable the web server on port 8080, set PortPublic in the Thing's config.
+To enable the web server on port 80, set PortPublic in the Thing's config.
 
 ```go
 func main() {
 	var cfg merle.ThingConfig
 
-	cfg.Thing.PortPublic = 8080
+	cfg.Thing.PortPublic = 80
 
 	merle.NewThing(&blink{}, &cfg).Run()
 }
 ```
 
-CmdRun handler will send out "Update" message each time the LED state changes.  Here's the new CmdRun handler.
+CmdRun handler will send out "Update" message each time the LED state changes.  GetState handler will get the hardware state when the web socket opens.
 
 ```go
+type blink struct {
+	led   *gpio.LedDriver
+}
+
 type msg struct {
 	Msg   string
 	State bool
@@ -262,33 +267,46 @@ func (b *blink) run(p *merle.Packet) {
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
 
-	led := gpio.NewLedDriver(adaptor, "11")
-	led.Start()
+	b.led = gpio.NewLedDriver(adaptor, "11")
+	b.led.Start()
 
 	for {
-		led.Toggle()
+		b.led.Toggle()
 
-		msg.State = led.State()
+		msg.State = b.led.State()
 		p.Marshal(&msg).Broadcast()
 
 		time.Sleep(time.Second)
 	}
 }
+
+func (b *blink) getState(p *merle.Packet) {
+	msg := &msg{Msg: merle.ReplyState, State: b.led.State()}
+	p.Marshal(&msg).Reply()
+}
+
+func (b *blink) Subscribers() merle.Subscribers {
+	return merle.Subscribers{
+		merle.CmdRun: b.run,
+		merle.GetState: b.getState,
+	}
+}
+
 ```
 
 Each second, the LED is toggled and an "Update" message is broadcast to any
 listeners.  The listener we're interested in here is the websocket connection
-from Javascript.  Every web browser browsing to http://localhost:8080 makes
+from Javascript.  Every web browser browsing to http://localhost makes
 it's own websocket connection back to the Thing.  The broadcast ensures all
 listeners get the same update when hardware changes.
 
-Build and run our Thing (note blinkv3):
+Build and run our Thing (note blinkv3).
 
 ```sh
 $ go install ./...
-$ ../go/bin/blinkv3
+$ sudo ../go/bin/blinkv3
 2022/01/24 20:35:28 Defaulting ID to 00_16_3e_30_e5_f5
-2022/01/24 20:35:28 Public HTTP server listening on :8080
+2022/01/24 20:35:28 Public HTTP server listening on :80
 2022/01/24 20:35:28 Skipping public HTTPS server; port is zero
 2022/01/24 20:35:28 Skipping private HTTP server; port is zero
 2022/01/24 20:35:28 Skipping tunnel; missing host
@@ -308,7 +326,7 @@ http://localhost:8080.  The LED state in the browser should be blinking.
 
 Notice the LED state is always synced between the hardware LED and the
 LED shown in the browser.  Open another browser window to
-http://localhost:8080.  Now both browsers and the hardware LEDs are synced.
+http://localhost.  Now both browsers and the hardware LEDs are synced.
 This is the first principle of Merle:
 
 ### Principle #1: The Thing is the truth and all views of the Thing hold this truth.
@@ -318,7 +336,7 @@ This is the first principle of Merle:
 ## Step 4: Thing on the Internet
 
 Now that our Thing is blinking the LED on hardware and in the local browser
-over localhost:8080, the next step is to run the Thing on the Internet.
+over localhost, the next step is to run the Thing on the Internet.
 
 Does the Thing have a public routable IP address?  If yes, then we just need to
 turn on HTTPS and optionally HTTP Basic Authentication and now our Thing is
@@ -336,9 +354,8 @@ func main() {
 }
 ```
 
-PortPublic is now 80 (from 8080), the standard HTTP port.  PortPublicTLS is
-443, the standard HTTPS port.  Both ports should be open in the firewall.  The
-Thing will autocert HTTPS certificates from Let's Encrypt.
+PortPublicTLS is 443, the standard HTTPS port.  Both ports should be open in
+the firewall.  The Thing will autocert HTTPS certificates from Let's Encrypt.
 
 Setting User to "admin" forces HTTP Basic Authentication to prompt for user and
 password.  If user entered is not the same as User ("admin" in our example),
