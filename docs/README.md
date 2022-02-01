@@ -193,7 +193,7 @@ Let's add some HTML and Javascript to the Assets.  The Javascript opens a
 websocket back to the Thing and listens for new JSON messages from the Thing.
 It's updating the LED state on screen when the "Update" message is received.
 The Thing will generate new "Update" message periodically.  We'll add that code
-in a bit.  The Thing is running a web server listening on port 8080.
+in a bit.  The Thing is running a web server listening on port 80.
 
 ```html
 const html = `<html lang="en">
@@ -320,7 +320,7 @@ $ sudo ../go/bin/blinkv3
 ```
 
 "Would broadcast" log messages mean no one is listening.  Open a web browser on
-http://localhost:8080.  The LED state in the browser should be blinking.
+http://localhost.  The LED state in the browser should be blinking.
 
 ![LED blinker](assets/images/led-blink.gif)
 
