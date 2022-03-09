@@ -1,5 +1,3 @@
-# Merle
-
 [Merle](https://merliot.org) is a framework for building secure web-apps for your IoT project.
 
 Put your **Thing** on the **Internet** with Merle.
