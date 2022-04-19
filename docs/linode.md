@@ -24,3 +24,11 @@ go version go1.17 linux/amd64
 ```
 sudo apt install gcc libpam0g-dev -y
 ```
+
+## Build Merle
+
+```
+$ cd merle
+$ go install ./...
+```
+
