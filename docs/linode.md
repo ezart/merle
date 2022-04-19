@@ -6,8 +6,24 @@ On linode.com, create a new Nanode 1G share machine installing Ubuntu 21.10
 
 ## Enable SSH key
 
-TODO
+Copy the id_rsa.pub key to server:
 
+```
+$ ssh-copy-id <user>@<server>
+```
+
+Verify you can log into <user>@<server> without password:
+
+```
+ssh <user>@<server>
+```
+  
+Verify you can log into <user>@<server> as sudo using key without password:
+
+```
+ssh -i ~/.ssh/id_rsa <user>@<server>
+```
+  
 ## Install Go lang
 
 ```
@@ -19,7 +35,7 @@ $ go version
 go version go1.17 linux/amd64
 ```
 
-### Install additional libs for build
+## Install additional libs for build
 
 ```
 sudo apt install gcc libpam0g-dev -y
