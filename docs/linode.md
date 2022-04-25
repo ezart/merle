@@ -12,19 +12,19 @@ Copy the id_rsa.pub key to server:
 $ ssh-copy-id <user>@<server>
 ```
 
-Verify you can log into <user>@<server> without password:
+Verify you can log into server without password:
 
 ```
 ssh <user>@<server>
 ```
   
-Verify you can log into <user>@<server> as sudo using key without password:
+Verify you can log into server as sudo using key without password:
 
 ```
 ssh -i ~/.ssh/id_rsa <user>@<server>
 ```
   
-## Install Go lang
+## Install Go language
 
 ```
 $ sudo apt install golang-go -y
