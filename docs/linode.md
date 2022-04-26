@@ -23,7 +23,13 @@ Verify you can log into server as sudo using key without password:
 ```
 ssh -i ~/.ssh/id_rsa <user>@<server>
 ```
-  
+
+## Update system
+
+```
+$ sudo apt update
+```
+
 ## Install Go language
 
 ```
