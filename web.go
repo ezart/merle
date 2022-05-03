@@ -380,6 +380,12 @@ func (w *webPublic) start() {
 	log.Println("Public HTTPS server listening on", w.serverTLS.Addr)
 
 	go func() {
+		// TODO Consider passing in optional certificate and key to
+		// TODO ListenAndServeTLS to self-sign server.  See 
+		// TODO https://www.vultr.com/ja/docs/secure-a-golang-web-server-with-a-selfsigned-or-lets-encrypt-ssl-certificate/#2__Secure_the_Server_with_a_Self_Signed_Certificate
+		// TODO Note: self-signing is needed if server is accessed with IP rather
+		// TODO than DNS because Let's Encrypt wants a server name (DNS name),
+		// TODO and not an IP addr.
 		if err := w.serverTLS.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
 			log.Fatalln("Public HTTPS server failed:", err)
 		}
