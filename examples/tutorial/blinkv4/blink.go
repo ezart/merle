@@ -31,7 +31,8 @@ func (b *blink) run(p *merle.Packet) {
 
 	for {
 		b.led.Toggle()
-		b.state = b.led.State()
+	//	b.state = b.led.State()
+		b.state = !b.state
 
 		msg.State = b.state
 		p.Marshal(&msg).Broadcast()
@@ -109,19 +110,18 @@ func main() {
 
 	cfg.Thing.PortPublic = 80
 	cfg.Thing.PortPrivate = 8080
-	cfg.Thing.User = "admin"
+	cfg.Thing.User = "merle"
 
 	if *prime {
 		cfg.Thing.Prime = true
 		cfg.Thing.PortPrime = 8000
-		cfg.Thing.PortPublic = 90
-		cfg.Thing.PortPrivate = 9080
+		cfg.Thing.PortPublic = 80
+		cfg.Thing.PortPrivate = 8080
 //		cfg.Thing.PortPublicTLS = 443
 	} else {
-		cfg.Mother.Host = "localhost"
-		cfg.Mother.User = "admin"
-		cfg.Mother.Key = "/home/admin/.ssh/id_rsa"
-		cfg.Mother.PortPrivate = 9080
+		cfg.Mother.Host = "linode.merliot.org"
+		cfg.Mother.User = "merle"
+		cfg.Mother.PortPrivate = 8080
 	}
 
 	merle.NewThing(&blink{}, &cfg).Run()

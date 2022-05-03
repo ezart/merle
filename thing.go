@@ -144,7 +144,7 @@ func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
 	t.bus = newBus(t, 10, thinger.Subscribers())
 
 	t.tunnel = newTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
-		cfg.Mother.Key, cfg.Thing.PortPrivate, cfg.Mother.PortPrivate)
+		cfg.Thing.PortPrivate, cfg.Mother.PortPrivate)
 
 	_, t.isWeber = t.thinger.(Weber)
 	if t.isWeber {

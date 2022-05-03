@@ -57,15 +57,10 @@ type ThingConfig struct {
 	// Things, with a Thing having a Mother, a GrandMother, a Great
 	// GrandMother, etc.
 	Mother struct {
-		// Mother's Host address.  Host, User and Key are used to
-		// connect this Thing to it's Mother using a SSH connection.
-		// For example: ssh -i <Key> <User>@<Host>.
+		// Mother's Host address
 		Host string `yaml:"Host"`
-		// User on Host associated with Key
+		// User on Host
 		User string `yaml:"User"`
-		// Key is the file path of the SSH identity key.  See ssh -i
-		// option for more information.
-		Key string `yaml:"Key"`
 		// Port on Host for Mother's private HTTP server
 		PortPrivate uint `yaml:"PortPrivate"`
 	} `yaml:"Mother"`
@@ -118,8 +113,6 @@ func FlagThingConfig(id, model, name, user string) *ThingConfig {
 		"Remote host name or IP address")
 	flag.StringVar(&cfg.Mother.User, "ruser", user,
 		"Remote user")
-	flag.StringVar(&cfg.Mother.Key, "rkey",
-		"/home/" + user + "/.ssh/id_rsa", "Remote SSH identity key")
 	flag.UintVar(&cfg.Mother.PortPrivate, "rport", 8080,
 		"Remote private HTTP listening port")
 

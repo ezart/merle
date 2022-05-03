@@ -19,17 +19,15 @@ type tunnel struct {
 	id          string
 	host        string
 	user        string
-	key         string
 	portPrivate uint
 	portRemote  uint
 }
 
-func newTunnel(id, host, user, key string, portPrivate, portRemote uint) *tunnel {
+func newTunnel(id, host, user string, portPrivate, portRemote uint) *tunnel {
 	return &tunnel{
 		id:          id,
 		host:        host,
 		user:        user,
-		key:         key,
 		portPrivate: portPrivate,
 		portRemote:  portRemote,
 	}
@@ -42,12 +40,11 @@ func newTunnel(id, host, user, key string, portPrivate, portRemote uint) *tunnel
 
 func (t *tunnel) getPort() string {
 
-	// ssh -i <key> <user>@<host> curl -s localhost:<privatePort>/port/<id>
+	// ssh <user>@<host> curl -s localhost:<privatePort>/port/<id>
 
 	privatePort := strconv.FormatUint(uint64(t.portRemote), 10)
 
 	args := []string{
-		"-i", t.key,
 		t.user+"@"+t.host,
 		"curl", "-s",
 		"localhost:"+privatePort+"/port/"+t.id,
@@ -84,7 +81,7 @@ func (t *tunnel) getPort() string {
 
 func (t *tunnel) tunnel(port string) error {
 
-	// ssh -o ExitOnForwardFailure=yes -CNT -i <key> -R 8081:localhost:8080 <hub>
+	// ssh -o ExitOnForwardFailure=yes -CNT -R 8081:localhost:8080 <hub>
 	//
 	//  (The ExitOnForwardFailure=yes is to exit ssh if the remote port forwarding fails,
 	//   most likely from port already being in-use on the server side).
@@ -93,7 +90,6 @@ func (t *tunnel) tunnel(port string) error {
 
 	args := []string{
 		"-CNT",
-		"-i", t.key,
 		"-o", "ExitOnForwardFailure=yes",
 		"-R", remote, t.user+"@"+t.host,
 	}
@@ -160,11 +156,6 @@ func (t *tunnel) start() {
 
 	if t.user == "" {
 		log.Println("Skipping tunnel; missing user")
-		return
-	}
-
-	if t.key == "" {
-		log.Println("Skipping tunnel; missing key")
 		return
 	}
 
