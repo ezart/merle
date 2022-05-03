@@ -31,8 +31,7 @@ func (b *blink) run(p *merle.Packet) {
 
 	for {
 		b.led.Toggle()
-	//	b.state = b.led.State()
-		b.state = !b.state
+		b.state = b.led.State()
 
 		msg.State = b.state
 		p.Marshal(&msg).Broadcast()
@@ -115,9 +114,7 @@ func main() {
 	if *prime {
 		cfg.Thing.Prime = true
 		cfg.Thing.PortPrime = 8000
-		cfg.Thing.PortPublic = 80
-		cfg.Thing.PortPrivate = 8080
-//		cfg.Thing.PortPublicTLS = 443
+		cfg.Thing.PortPublicTLS = 443
 	} else {
 		cfg.Mother.Host = "linode.merliot.org"
 		cfg.Mother.User = "merle"
