@@ -18,12 +18,6 @@ Verify you can log into server without password:
 ssh <user>@<server>
 ```
   
-Verify you can log into server as sudo using key without password:
-
-```
-ssh -i ~/.ssh/id_rsa <user>@<server>
-```
-
 ## Update system
 
 ```
