@@ -242,6 +242,11 @@ func (w *webPublic) pamValidate(user, passwd string) (bool, error) {
 		w.thing.log.Printf("Authenticate [%s,%s]: %s", user, passwd, err)
 		return false, err
 	}
+	err = trans.AcctMgmt(0)
+	if err != nil {
+		w.thing.log.Printf("Authenticate [%s,%s]: %s", user, passwd, err)
+		return false, err
+	}
 
 	return true, nil
 }
