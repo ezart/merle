@@ -8,13 +8,12 @@ require (
 	github.com/msteinert/pam v1.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
-	gobot.io/x/gobot v1.15.0
-	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
+	gobot.io/x/gobot v1.16.0
+	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 )
 
 require (
-	github.com/gobuffalo/uuid v2.0.5+incompatible // indirect
-	github.com/gofrs/uuid v3.2.0+incompatible // indirect
+	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.0.0 // indirect
 	github.com/sigurn/crc8 v0.0.0-20160107002456-e55481d6f45c // indirect
