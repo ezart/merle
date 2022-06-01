@@ -91,17 +91,11 @@ var upgrader = websocket.Upgrader{}
 func (t *Thing) runOnPort(p *port) error {
 	var name = fmt.Sprintf("port:%d", p.port)
 	var sock = newWebSocket(name, p.ws)
-	var pkt = newPacket(t.bus, sock, nil)
 	var err error
 
 	t.log.Printf("Websocket opened [%s]", name)
 
 	t.bus.plugin(sock)
-
-	msg := struct{ Msg string }{Msg: GetState}
-	t.log.Println("Sending:", msg)
-	sock.Send(pkt.Marshal(&msg))
-//	t.bus.receive(pkt.Marshal(&msg))
 
 	for {
 		// new pkt for each rcv
@@ -120,15 +114,15 @@ func (t *Thing) runOnPort(p *port) error {
 	return err
 }
 
-// Open a websocket on the thing
+// Open a WebSocket on Thing
 func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	// If this thing is a bridge, and the ID matches a child ID, then hand
-	// the websocket request to the child.
+	// If this Thing is a bridge, and the ID matches a child ID, then hand
+	// the WebSocket request to the child.
 	child := t.getChild(id)
 	if child != nil {
 		child.ws(w, r)
@@ -152,8 +146,12 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 	t.log.Printf("Websocket opened [%s]", name)
 
-	// Plug the websocket into the thing's bus
+	// Plug the websocket into Thing's bus
 	t.bus.plugin(sock)
+
+	// On websocket connect, force receipt of GetState msg
+	msg := struct{ Msg string }{Msg: GetState}
+	t.bus.receive(newPacket(t.bus, sock, &msg))
 
 	for {
 		// New pkt for each rcv
@@ -169,7 +167,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 		t.bus.receive(pkt)
 	}
 
-	// Unplug the websocket from the thing's bus
+	// Unplug the websocket from Thing's bus
 	t.bus.unplug(sock)
 }
 
@@ -408,7 +406,7 @@ func (w *webPublic) stop() {
 	w.Wait()
 }
 
-// The Thing's private HTTP server
+// Thing's private HTTP server
 type webPrivate struct {
 	thing *Thing
 	sync.WaitGroup

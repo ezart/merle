@@ -68,6 +68,9 @@ func (t *tunnel) getPort() string {
 	port := string(stdoutStderr)
 
 	switch port {
+	case "404 page not found\n":
+		log.Println("Tunnel weirdness; Thing trying to be its own Mother?; trying again")
+		return ""
 	case "no ports available":
 		log.Println("Tunnel no ports available; trying again")
 		return ""

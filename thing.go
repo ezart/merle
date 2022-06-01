@@ -198,8 +198,12 @@ func (t *Thing) run() error {
 		t.bridge.start()
 	}
 
+	// Force receipt of CmdRun msg
 	msg := struct{ Msg string }{Msg: CmdRun}
 	t.bus.receive(newPacket(t.bus, nil, &msg))
+
+	// Thing should wait forever in CmdRun handler, but just
+	// in case CmdRun handler exits, tear stuff down
 
 	if t.isBridge {
 		t.bridge.stop()

@@ -31,7 +31,8 @@ func (b *blink) run(p *merle.Packet) {
 
 	for {
 		b.led.Toggle()
-		b.state = b.led.State()
+//		b.state = b.led.State()
+		b.state = !b.state
 
 		msg.State = b.state
 		p.Marshal(&msg).Broadcast()
@@ -74,10 +75,6 @@ const html = `<html lang="en">
 
 			conn = new WebSocket("{{.WebSocket}}")
 
-			conn.onopen = function(evt) {
-				conn.send(JSON.stringify({Msg: "_GetState"}))
-			}
-
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
 				console.log('msg', msg)
@@ -113,12 +110,14 @@ func main() {
 
 	if *prime {
 		cfg.Thing.Prime = true
+		cfg.Thing.PortPublic = 90
+		cfg.Thing.PortPrivate = 9080
 		cfg.Thing.PortPrime = 8000
-		cfg.Thing.PortPublicTLS = 443
+//		cfg.Thing.PortPublicTLS = 443
 	} else {
-		cfg.Mother.Host = "linode.merliot.org"
+		cfg.Mother.Host = "localhost"
 		cfg.Mother.User = "merle"
-		cfg.Mother.PortPrivate = 8080
+		cfg.Mother.PortPrivate = 9080
 	}
 
 	merle.NewThing(&blink{}, &cfg).Run()
