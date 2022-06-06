@@ -93,7 +93,7 @@ type ThingConfig struct {
 func FlagThingConfig(id, model, name, user string) *ThingConfig {
 	var cfg ThingConfig
 
-	flag.BoolVar(&cfg.Thing.Prime, "prime", false, "Run as Thing-prime")
+	flag.BoolVar(&cfg.Thing.Prime, "prime", false, "Run as Thing Prime")
 	flag.UintVar(&cfg.Thing.PortPrime, "pport", 0, "Prime Port")
 
 	flag.StringVar(&cfg.Thing.Id, "id", id, "Thing ID")

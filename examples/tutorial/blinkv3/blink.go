@@ -6,11 +6,11 @@ import (
 	"github.com/scottfeldman/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
+	"log"
 	"time"
 )
 
 type blink struct {
-	led   *gpio.LedDriver
 }
 
 type msg struct {
@@ -24,28 +24,22 @@ func (b *blink) run(p *merle.Packet) {
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
 
-	b.led = gpio.NewLedDriver(adaptor, "11")
-	b.led.Start()
+	led := gpio.NewLedDriver(adaptor, "11")
+	led.Start()
 
 	for {
-		b.led.Toggle()
+		led.Toggle()
 
-		msg.State = b.led.State()
+		msg.State = led.State()
 		p.Marshal(&msg).Broadcast()
 
 		time.Sleep(time.Second)
 	}
 }
 
-func (b *blink) getState(p *merle.Packet) {
-	msg := &msg{Msg: merle.ReplyState, State: b.led.State()}
-	p.Marshal(&msg).Reply()
-}
-
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		merle.CmdRun: b.run,
-		merle.GetState: b.getState,
 	}
 }
 
@@ -63,7 +57,6 @@ const html = `<html lang="en">
 				console.log('msg', msg)
 
 				switch(msg.Msg) {
-				case "_ReplyState":
 				case "Update":
 					image.src = "/{{.AssetsDir}}/images/led-" +
 						msg.State + ".png"
@@ -86,5 +79,6 @@ func main() {
 
 	cfg.Thing.PortPublic = 80
 
-	merle.NewThing(&blink{}, &cfg).Run()
+	thing := merle.NewThing(&blink{}, &cfg)
+	log.Fatalln(thing.Run())
 }

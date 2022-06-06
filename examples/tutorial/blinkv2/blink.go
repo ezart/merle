@@ -6,6 +6,7 @@ import (
 	"github.com/scottfeldman/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
+	"log"
 	"time"
 )
 
@@ -34,5 +35,6 @@ func (b *blink) Subscribers() merle.Subscribers {
 func main() {
 	var cfg merle.ThingConfig
 
-	merle.NewThing(&blink{}, &cfg).Run()
+	thing := merle.NewThing(&blink{}, &cfg)
+	log.Fatalln(thing.Run())
 }

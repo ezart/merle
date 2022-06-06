@@ -66,11 +66,6 @@ func (b *bus) receive(p *Packet) {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
 
-	if p.src != nil && p.src.Flags()&bcast == 0 && msg.Msg == GetState {
-		// Received GetState: enable broadcasts on socket
-		p.src.SetFlags(p.src.Flags() | bcast)
-	}
-
 	f, match := b.subs[msg.Msg]
 	if match {
 		if f != nil {
@@ -118,10 +113,6 @@ func (b *bus) broadcast(p *Packet) {
 	for sock := range b.sockets {
 		if sock == src {
 			// don't send back to src
-			continue
-		}
-		if sock.Flags()&bcast == 0 {
-			// socket not ready for broadcasts
 			continue
 		}
 		if sent == 0 {

@@ -3,15 +3,16 @@
 package main
 
 import (
-	"flag"
 	"github.com/scottfeldman/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
+	"log"
 	"time"
+	"sync"
 )
 
 type blink struct {
-	led   *gpio.LedDriver
+	sync.RWMutex
 	state bool
 }
 
@@ -26,15 +27,18 @@ func (b *blink) run(p *merle.Packet) {
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
 
-	b.led = gpio.NewLedDriver(adaptor, "11")
-	b.led.Start()
+	led := gpio.NewLedDriver(adaptor, "11")
+	led.Start()
 
 	for {
-		b.led.Toggle()
+		led.Toggle()
+
+		b.Lock()
 //		b.state = b.led.State()
 		b.state = !b.state
-
 		msg.State = b.state
+		b.Unlock()
+
 		p.Marshal(&msg).Broadcast()
 
 		time.Sleep(time.Second)
@@ -42,27 +46,16 @@ func (b *blink) run(p *merle.Packet) {
 }
 
 func (b *blink) getState(p *merle.Packet) {
+	b.RLock()
+	defer b.RUnlock()
 	msg := &msg{Msg: merle.ReplyState, State: b.state}
 	p.Marshal(&msg).Reply()
-}
-
-func (b *blink) saveState(p *merle.Packet) {
-	var msg msg
-	p.Unmarshal(&msg)
-	b.state = msg.State
-}
-
-func (b *blink) update(p *merle.Packet) {
-	b.saveState(p)
-	p.Broadcast()
 }
 
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		merle.CmdRun: b.run,
 		merle.GetState: b.getState,
-		merle.ReplyState: b.saveState,
-		"Update": b.update,
 	}
 }
 
@@ -101,24 +94,8 @@ func (b *blink) Assets() *merle.ThingAssets {
 func main() {
 	var cfg merle.ThingConfig
 
-	prime := flag.Bool("prime", false, "Run Thing-prime")
-	flag.Parse()
-
 	cfg.Thing.PortPublic = 80
-	cfg.Thing.PortPrivate = 8080
-	cfg.Thing.User = "merle"
 
-	if *prime {
-		cfg.Thing.Prime = true
-		cfg.Thing.PortPublic = 90
-		cfg.Thing.PortPrivate = 9080
-		cfg.Thing.PortPrime = 8000
-//		cfg.Thing.PortPublicTLS = 443
-	} else {
-		cfg.Mother.Host = "localhost"
-		cfg.Mother.User = "merle"
-		cfg.Mother.PortPrivate = 9080
-	}
-
-	merle.NewThing(&blink{}, &cfg).Run()
+	thing := merle.NewThing(&blink{}, &cfg)
+	log.Fatalln(thing.Run())
 }

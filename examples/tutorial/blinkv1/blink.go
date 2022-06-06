@@ -4,6 +4,7 @@ package main
 
 import (
 	"github.com/scottfeldman/merle"
+	"log"
 )
 
 type blink struct {
@@ -16,5 +17,6 @@ func (b *blink) Subscribers() merle.Subscribers {
 func main() {
 	var cfg merle.ThingConfig
 
-	merle.NewThing(&blink{}, &cfg).Run()
+	thing := merle.NewThing(&blink{}, &cfg)
+	log.Fatalln(thing.Run())
 }
