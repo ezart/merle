@@ -66,7 +66,7 @@ func (p *Packet) Bottom() bool {
 //	return merle.Subscribers{
 //		{"Alert", merle.Broadcast},
 //	}
-//	
+//
 func Broadcast(p *Packet) {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
@@ -82,7 +82,7 @@ func Broadcast(p *Packet) {
 //	return merle.Subscribers{
 //		{CmdRun, merle.RunForver},
 //	}
-//	
+//
 func RunForever(p *Packet) {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)

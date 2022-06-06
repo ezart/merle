@@ -6,8 +6,8 @@ package merle
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 	"net/url"
 	"os/exec"
 	"strconv"
@@ -26,8 +26,8 @@ type port struct {
 	tunnelTryingUntil time.Time
 	tunnelConnected   bool
 	ws                *websocket.Conn
-	done     chan bool
-	attachCb portAttachCb
+	done              chan bool
+	attachCb          portAttachCb
 }
 
 func newPort(thing *Thing, p uint, attachCb portAttachCb) *port {

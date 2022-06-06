@@ -122,7 +122,7 @@ func testDone(t *testing.T, thing *Thing, httpPort uint) {
 	}
 
 	// Send msg to shutdown device
-	var msg = struct { Msg string }{Msg: "quit"}
+	var msg = struct{ Msg string }{Msg: "quit"}
 
 	err = p.ws.WriteJSON(msg)
 	if err != nil {
@@ -167,7 +167,7 @@ func TestRun(t *testing.T) {
 	var thinger simple
 
 	cfg.Thing.Id = testId
-	cfg.Thing.Model  = testModel
+	cfg.Thing.Model = testModel
 	cfg.Thing.Name = testName
 
 	cfg.Thing.PortPublic = 8080
@@ -185,5 +185,3 @@ func TestRun(t *testing.T) {
 		t.Errorf("Run should have errored out")
 	}
 }
-
-

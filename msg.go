@@ -20,7 +20,7 @@ const (
 	// Reply to GetIdentity with MsgIdentity
 	ReplyIdentity = "_ReplyIdentity"
 	// GetState TODO doc
-	GetState = "_GetState"
+	GetState   = "_GetState"
 	ReplyState = "_ReplyState"
 	// SpamStatus is sent when Thing's status (online, offline, etc)
 	// changes

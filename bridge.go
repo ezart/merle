@@ -12,7 +12,7 @@ import (
 
 // BridgeThingers is a map of functions which can generate Thingers, keyed by a
 // regular expression (re) of the form: id:model:name specifying which Things
-// can attach to the bridge. 
+// can attach to the bridge.
 type BridgeThingers map[string]func() Thinger
 
 // A Thing implementing the Bridger interface is a Bridge

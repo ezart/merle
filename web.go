@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
+//go:build !tinygo
 // +build !tinygo
 
 package merle
@@ -54,7 +55,7 @@ type web struct {
 func newWeb(t *Thing, portPublic, portPublicTLS, portPrivate uint,
 	user string) *web {
 	return &web{
-		public: newWebPublic(t, portPublic, portPublicTLS, user),
+		public:  newWebPublic(t, portPublic, portPublicTLS, user),
 		private: newWebPrivate(t, portPrivate),
 	}
 }
@@ -179,11 +180,11 @@ func (t *Thing) templateParams(r *http.Request) map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		"Host":      r.Host,
-		"Status":    t.status,
-		"Id":        t.id,
-		"Model":     t.model,
-		"Name":      t.name,
+		"Host":   r.Host,
+		"Status": t.status,
+		"Id":     t.id,
+		"Model":  t.model,
+		"Name":   t.name,
 		// TODO The forward slashes are getting escaped in the output
 		// TODO within <script></script> tags.  So "/" turns into "\/".
 		// TODO Need to figure out why it's doing that or decide if it matters.
@@ -384,7 +385,7 @@ func (w *webPublic) start() {
 
 	go func() {
 		// TODO Consider passing in optional certificate and key to
-		// TODO ListenAndServeTLS to self-sign server.  See 
+		// TODO ListenAndServeTLS to self-sign server.  See
 		// TODO https://www.vultr.com/ja/docs/secure-a-golang-web-server-with-a-selfsigned-or-lets-encrypt-ssl-certificate/#2__Secure_the_Server_with_a_Self_Signed_Certificate
 		// TODO Note: self-signing is needed if server is accessed with IP rather
 		// TODO than DNS because Let's Encrypt wants a server name (DNS name),

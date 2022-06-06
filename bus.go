@@ -23,7 +23,7 @@ type bus struct {
 	sockets  sockets
 	socketQ  socketQ
 	// message subscribers
-	subs    Subscribers
+	subs Subscribers
 }
 
 func newBus(thing *Thing, socketsMax uint, subs Subscribers) *bus {

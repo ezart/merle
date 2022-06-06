@@ -45,9 +45,9 @@ func (t *tunnel) getPort() string {
 	privatePort := strconv.FormatUint(uint64(t.portRemote), 10)
 
 	args := []string{
-		t.user+"@"+t.host,
+		t.user + "@" + t.host,
 		"curl", "-s",
-		"localhost:"+privatePort+"/port/"+t.id,
+		"localhost:" + privatePort + "/port/" + t.id,
 	}
 
 	log.Printf("Tunnel getting port [ssh %s]", args)
@@ -94,7 +94,7 @@ func (t *tunnel) tunnel(port string) error {
 	args := []string{
 		"-CNT",
 		"-o", "ExitOnForwardFailure=yes",
-		"-R", remote, t.user+"@"+t.host,
+		"-R", remote, t.user + "@" + t.host,
 	}
 
 	log.Printf("Creating tunnel [ssh %s]", args)

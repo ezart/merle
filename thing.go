@@ -31,17 +31,17 @@ import (
 //
 //		t.adaptor = raspi.NewAdaptor()
 //		t.adaptor.Connect()
-//	
+//
 //		t.led = gpio.NewLedDriver(t.adaptor, "11")
 //		t.led.Start()
-//	
+//
 //		// Every second update hardware and send
 //		// notifications
 //
 //		ticker := time.NewTicker(time.Second)
-//	
+//
 //		t.sendLedState(p)
-//	
+//
 //		for {
 //			select {
 //			case <-ticker.C:
@@ -108,10 +108,10 @@ type Thing struct {
 //
 //	func main() {
 //		var cfg merle.ThingConfig
-//	
+//
 //		fooer := foo.NewFooer()
 //		thing := merle.NewThing(fooer, &cfg)
-//	
+//
 //		log.Fatalln(thing.Run())
 //	}
 //
