@@ -1,7 +1,7 @@
 # Merle
 
-[![Go Reference](https://pkg.go.dev/badge/pkg.dev.go/github.com/scottfeldman/merle.svg)](https://pkg.go.dev/github.com/scottfeldman/merle)
-[![Go Report Card](https://goreportcard.com/badge/github.com/scottfeldman/merle)](https://goreportcard.com/report/github.com/scottfeldman/merle)
+[![Go Reference](https://pkg.go.dev/badge/pkg.dev.go/github.com/merliot/merle.svg)](https://pkg.go.dev/github.com/merliot/merle)
+[![Go Report Card](https://goreportcard.com/badge/github.com/merliot/merle)](https://goreportcard.com/report/github.com/merliot/merle)
 
 [Merle](https://merliot.org) is a framework for building secure web-apps for your IoT project.
 
