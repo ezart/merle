@@ -14,7 +14,7 @@ type ThingConfig struct {
 	// The section describes a Thing.
 	Thing struct {
 		// [Optional] Thing's Id.  Ids are unique within an application
-		// to differenciate one Thing from another.  Id is optional; if
+		// to differentiate one Thing from another.  Id is optional; if
 		// Id is not given, a system-wide unique Id is assigned.
 		Id string `yaml:"Id"`
 		// Thing's Model.

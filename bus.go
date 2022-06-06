@@ -37,7 +37,7 @@ func newBus(thing *Thing, socketsMax uint, subs Subscribers) *bus {
 
 // Plug a socket into the bus
 func (b *bus) plugin(s socketer) {
-	// Queue any plugin attemps beyond socketsMax
+	// Queue any plugin attempts beyond socketsMax
 	b.socketQ <- true
 
 	b.sockLock.Lock()
