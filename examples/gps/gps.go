@@ -31,8 +31,6 @@ func (g *gps) run(p *merle.Packet) {
 		return
 	}
 
-	g.lastPosition = "Unknown"
-
 	for {
 		msg.Position = telit.Location()
 
