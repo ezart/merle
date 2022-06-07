@@ -5,8 +5,8 @@ package main
 import (
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/telit"
-	"time"
 	"log"
+	"time"
 )
 
 type gps struct {

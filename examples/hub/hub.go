@@ -32,7 +32,7 @@ func (h *hub) Subscribers() merle.Subscribers {
 
 func (h *hub) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
-		Dir: "examples/hub/assets",
+		Dir:      "examples/hub/assets",
 		Template: "templates/hub.html",
 	}
 }

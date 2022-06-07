@@ -69,7 +69,7 @@ const html = `<html lang="en">
 
 func (b *blink) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
-		Dir: "examples/tutorial/blinkv3/assets",
+		Dir:          "examples/tutorial/blinkv3/assets",
 		TemplateText: html,
 	}
 }

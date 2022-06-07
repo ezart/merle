@@ -116,18 +116,18 @@ func (b *blink) run(p *merle.Packet) {
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		merle.CmdRun: b.run,
-//		merle.CmdRunPrime: b.runPrime,
-		"GetPaused": b.sendPaused,
-		"ReplyPaused": b.savePaused,
-		"CmdPause": b.pause,
-		"CmdResume": b.resume,
+		//		merle.CmdRunPrime: b.runPrime,
+		"GetPaused":    b.sendPaused,
+		"ReplyPaused":  b.savePaused,
+		"CmdPause":     b.pause,
+		"CmdResume":    b.resume,
 		"SpamLedState": b.ledState,
 	}
 }
 
 func (b *blink) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
-		Dir: "examples/blink/assets",
+		Dir:      "examples/blink/assets",
 		Template: "templates/blink.html",
 	}
 }

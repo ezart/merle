@@ -14,8 +14,8 @@ type bmp180 struct {
 
 func (b *bmp180) run(p *merle.Packet) {
 	update := struct {
-		Msg   string
-		Pressure float32
+		Msg         string
+		Pressure    float32
 		Temperature float32
 	}{Msg: "update"}
 

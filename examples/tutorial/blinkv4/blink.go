@@ -7,8 +7,8 @@ import (
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
 	"log"
-	"time"
 	"sync"
+	"time"
 )
 
 type blink struct {
@@ -35,7 +35,7 @@ func (b *blink) run(p *merle.Packet) {
 
 		b.Lock()
 		b.state = led.State()
-//		b.state = !b.state
+		//		b.state = !b.state
 		msg.State = b.state
 		b.Unlock()
 
@@ -54,7 +54,7 @@ func (b *blink) getState(p *merle.Packet) {
 
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdRun: b.run,
+		merle.CmdRun:   b.run,
 		merle.GetState: b.getState,
 	}
 }
@@ -86,7 +86,7 @@ const html = `<html lang="en">
 
 func (b *blink) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
-		Dir: "examples/tutorial/blinkv4/assets",
+		Dir:          "examples/tutorial/blinkv4/assets",
 		TemplateText: html,
 	}
 }
