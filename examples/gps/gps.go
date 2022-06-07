@@ -3,6 +3,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/telit"
 	"log"
@@ -71,9 +72,9 @@ func (g *gps) Assets() *merle.ThingAssets {
 }
 
 func main() {
-	var cfg merle.ThingConfig
+	cfg := merle.FlagThingConfig("", "gps", "gpsy", "merle")
+	flag.Parse()
 
-	cfg.Thing.PortPublic = 8080
-
-	merle.NewThing(&gps{}, &cfg).Run()
+	thing := merle.NewThing(&gps{}, cfg)
+	log.Fatalln(thing.Run())
 }
