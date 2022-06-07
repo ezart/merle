@@ -90,8 +90,18 @@ func (b *bus) receive(p *Packet) {
 // Reply sends the packet back to the source socket
 func (b *bus) reply(p *Packet) {
 	if p.src == nil {
-		p.bus.thing.log.Println("Reply aborted; source is missing")
+		p.bus.thing.log.Println("REPLY ABORTED; source is missing")
 		return
+	}
+
+	msg := struct{ Msg string }{}
+	p.Unmarshal(&msg)
+
+	// Sending ReplyState is a special case.  The socket is disabled
+	// for broadcasts until ReplyState is sent.  This ensures other end
+	// doesn't receive unsolicited message before ReplyState.
+	if msg.Msg == ReplyState {
+		p.src.SetFlags(p.src.Flags() | bcast)
 	}
 
 	p.bus.thing.log.Printf("Reply: %.80s", p.String())
@@ -113,6 +123,12 @@ func (b *bus) broadcast(p *Packet) {
 	for sock := range b.sockets {
 		if sock == src {
 			// don't send back to src
+			continue
+		}
+		if sock.Flags()&bcast == 0 {
+			// Socket not ready for broadcasts.  Once a ReplyState
+			// message has been sent, the socket will be enabled
+			// for broadcasts.
 			continue
 		}
 		if sent == 0 {

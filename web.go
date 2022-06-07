@@ -92,11 +92,16 @@ var upgrader = websocket.Upgrader{}
 func (t *Thing) runOnPort(p *port) error {
 	var name = fmt.Sprintf("port:%d", p.port)
 	var sock = newWebSocket(name, p.ws)
+	var pkt = newPacket(t.bus, sock, nil)
 	var err error
 
 	t.log.Printf("Websocket opened [%s]", name)
 
 	t.bus.plugin(sock)
+
+	msg := struct{ Msg string }{Msg: GetState}
+	t.log.Println("Sending:", msg)
+	sock.Send(pkt.Marshal(&msg))
 
 	for {
 		// new pkt for each rcv
@@ -149,10 +154,6 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 	// Plug the websocket into Thing's bus
 	t.bus.plugin(sock)
-
-	// On websocket connect, force receipt of GetState msg
-	msg := struct{ Msg string }{Msg: GetState}
-	t.bus.receive(newPacket(t.bus, sock, &msg))
 
 	for {
 		// New pkt for each rcv

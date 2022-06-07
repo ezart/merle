@@ -4,6 +4,11 @@
 
 package merle
 
+// Socket flags
+const (
+	bcast uint32 = 1 << iota
+)
+
 // Socketer is an interface to a socket.  A socket plugs into a bus.
 type socketer interface {
 	// Send the packet on bus the socket is connected to
@@ -12,6 +17,8 @@ type socketer interface {
 	Close()
 	// Name of the socket
 	Name() string
+	Flags() uint32
+	SetFlags(uint32)
 }
 
 // Wire socket
@@ -36,4 +43,12 @@ func (s *wireSocket) Close() {
 
 func (s *wireSocket) Name() string {
 	return s.name
+}
+
+func (s *wireSocket) Flags() uint32 {
+	return s.flags
+}
+
+func (s *wireSocket) SetFlags(flags uint32) {
+	s.flags = flags
 }
