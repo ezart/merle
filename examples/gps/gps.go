@@ -83,6 +83,10 @@ const html = `<html lang="en">
 
 			conn = new WebSocket("{{.WebSocket}}")
 
+			conn.onopen = function(evt) {
+				conn.send(JSON.stringify({Msg: "_GetState"}))
+			}
+
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
 				console.log('msg', msg)
