@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"github.com/scottfeldman/merle"
-	"github.com/scottfeldman/merle/examples/blink"
+	"github.com/merliot/merle"
+	"github.com/merliot/merle/examples/blink"
 	"log"
 	"os"
 )

@@ -1,7 +1,7 @@
 package blink
 
 import (
-	"github.com/scottfeldman/merle"
+	"github.com/merliot/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
 	"time"

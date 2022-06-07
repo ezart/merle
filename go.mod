@@ -1,4 +1,4 @@
-module github.com/scottfeldman/merle
+module github.com/merliot/merle
 
 go 1.17
 

@@ -1,8 +1,8 @@
 package hub
 
 import (
-	"github.com/scottfeldman/merle"
-	"github.com/scottfeldman/merle/examples/blink"
+	"github.com/merliot/merle"
+	"github.com/merliot/merle/examples/blink"
 )
 
 type hub struct {

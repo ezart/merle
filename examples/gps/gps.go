@@ -3,8 +3,8 @@
 package main
 
 import (
-	"github.com/scottfeldman/merle"
-	"github.com/scottfeldman/merle/examples/telit"
+	"github.com/merliot/merle"
+	"github.com/merliot/merle/examples/telit"
 	"time"
 	"log"
 )

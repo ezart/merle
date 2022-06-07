@@ -3,7 +3,7 @@
 package main
 
 import (
-	"github.com/scottfeldman/merle"
+	"github.com/merliot/merle"
 	"log"
 )
 
