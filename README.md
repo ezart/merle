@@ -12,6 +12,7 @@ Merle uses the Go programming language.
 ## TODO
 
  - Thing-wide setting for a websocket ping/pong messages to close half-open sockets
+ 	(send ping from Thing side of websocket)
 
 ## Set Up Your Environment
 
