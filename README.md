@@ -9,6 +9,10 @@ Put your **Thing** on the **Internet** with Merle.
 
 Merle uses the Go programming language.
 
+## TODO
+
+ - Thing-wide setting for a websocket ping/pong messages to close half-open sockets
+
 ## Set Up Your Environment
 
 ### Installing Go
