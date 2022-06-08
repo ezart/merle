@@ -85,20 +85,25 @@ const html = `<html lang="en">
 		integrity="sha512-hoalWLoI8r4UszCkZ5kL8vayOGVae1oxXe/2A4AO6J9+580uKHDO3JdHb7NzwwzK5xr/Fs0W40kiNHxM9vyTtQ=="
 		crossorigin=""/>
 
-		<!-- Leaflet's JavaScript-->
+		<!-- Leaflet's JavaScript -->
 		<script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"
 		integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
 		crossorigin=""></script>
 	</head>
 	<body>
-		<div id="map" style="height:400px"></div>
+		<div id="map" style="height:100%"></div>
 
 		<script>
+			<!-- Create a Leaflet map using OpenStreetMap -->
 			map = L.map('map').setZoom(13)
 			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 			    maxZoom: 19,
 			    attribution: '© OpenStreetMap'
 			}).addTo(map)
+
+			<!-- Create a map marker with popup that has [Id, Model, Name] -- !>
+			popup = "ID: {{.Id}}<br>Model: {{.Model}}<br>Name: {{.Name}}"
+			marker = L.marker([0, 0]).addTo(map).bindPopup(popup);
 
 			conn = new WebSocket("{{.WebSocket}}")
 
@@ -113,6 +118,7 @@ const html = `<html lang="en">
 				switch(msg.Msg) {
 				case "_ReplyState":
 				case "Update":
+					marker.setLatLng([msg.Lat, msg.Long])
 					map.panTo([msg.Lat, msg.Long])
 					break
 				}
