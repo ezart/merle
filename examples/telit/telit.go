@@ -97,10 +97,10 @@ func (t *Telit) Init() error {
 	return err
 }
 
-func parseLatLong(loc string) string {
+func parseLatLong(loc string) float64 {
 	dot := strings.Index(loc, ".")
 	if dot == -1 {
-		return ""
+		return 0.0
 	}
 
 	// TODO warning: probably fragile code below
@@ -113,22 +113,26 @@ func parseLatLong(loc string) string {
 
 	locf := degf + minf/60.0
 
-	return fmt.Sprintf("%.6f%c", locf, dir)
+	if dir == 'S' || dir == 'W' {
+		locf = -locf
+	}
+
+	return locf
 }
 
-func (t *Telit) Location() string {
+func (t *Telit) Location() (float64, float64) {
 	acp, err := t.modemCmd("AT$GPSACP\r")
 	if err != nil {
 		log.Println(err)
-		return "unknown"
+		return 0, 0
 	}
 	loc := strings.Split(acp, ",")
 	if len(loc) == 12 {
 		lat := parseLatLong(loc[1])
 		long := parseLatLong(loc[2])
-		if lat != "" {
-			return lat + "," + long
+		if lat != 0.0 {
+			return lat, long
 		}
 	}
-	return "unknown"
+	return 0, 0
 }

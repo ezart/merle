@@ -13,12 +13,14 @@ import (
 
 type gps struct {
 	sync.RWMutex
-	lastPosition string
+	lastLat  float64
+	lastLong float64
 }
 
 type msg struct {
-	Msg      string
-	Position string
+	Msg  string
+	Lat  float64
+	Long float64
 }
 
 func (g *gps) run(p *merle.Packet) {
@@ -32,12 +34,13 @@ func (g *gps) run(p *merle.Packet) {
 	}
 
 	for {
-		msg.Position = telit.Location()
+		msg.Lat, msg.Long = telit.Location()
 
 		g.Lock()
-		if msg.Position != g.lastPosition {
+		if msg.Lat != g.lastLat || msg.Long != g.lastLong {
+			g.lastLat = msg.Lat
+			g.lastLong = msg.Long
 			p.Marshal(&msg).Broadcast()
-			g.lastPosition = msg.Position
 		}
 		g.Unlock()
 
@@ -48,16 +51,17 @@ func (g *gps) run(p *merle.Packet) {
 func (g *gps) getState(p *merle.Packet) {
 	g.RLock()
 	defer g.RUnlock()
-	msg := &msg{Msg: merle.ReplyState, Position: g.lastPosition}
+	msg := &msg{Msg: merle.ReplyState, Lat: g.lastLat, Long: g.lastLong}
 	p.Marshal(&msg).Reply()
 }
 
 func (g *gps) saveState(p *merle.Packet) {
+	g.Lock()
+	defer g.Unlock()
 	var msg msg
 	p.Unmarshal(&msg)
-	g.Lock()
-	g.lastPosition = msg.Position
-	g.Unlock()
+	g.lastLat = msg.Lat
+	g.lastLong = msg.Long
 }
 
 func (g *gps) update(p *merle.Packet) {
@@ -75,11 +79,26 @@ func (g *gps) Subscribers() merle.Subscribers {
 }
 
 const html = `<html lang="en">
+	<head>
+		<!-- Leaflet's CSS -->
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css"
+		integrity="sha512-hoalWLoI8r4UszCkZ5kL8vayOGVae1oxXe/2A4AO6J9+580uKHDO3JdHb7NzwwzK5xr/Fs0W40kiNHxM9vyTtQ=="
+		crossorigin=""/>
+
+		<!-- Leaflet's JavaScript-->
+		<script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"
+		integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
+		crossorigin=""></script>
+	</head>
 	<body>
-		<pre id="position">Position:</pre>
+		<div id="map" style="height:400px"></div>
 
 		<script>
-			position = document.getElementById("position")
+			map = L.map('map').setZoom(13)
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			    maxZoom: 19,
+			    attribution: '© OpenStreetMap'
+			}).addTo(map)
 
 			conn = new WebSocket("{{.WebSocket}}")
 
@@ -94,7 +113,7 @@ const html = `<html lang="en">
 				switch(msg.Msg) {
 				case "_ReplyState":
 				case "Update":
-					position.textContent = "Position: " + msg.Position
+					map.panTo([msg.Lat, msg.Long])
 					break
 				}
 			}
