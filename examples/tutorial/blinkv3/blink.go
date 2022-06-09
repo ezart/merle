@@ -75,10 +75,6 @@ func (b *blink) Assets() *merle.ThingAssets {
 }
 
 func main() {
-	var cfg merle.ThingConfig
-
-	cfg.Thing.PortPublic = 80
-
-	thing := merle.NewThing(&blink{}, &cfg)
+	thing := merle.NewThing(&blink{})
 	log.Fatalln(thing.Run())
 }

@@ -3,7 +3,6 @@
 package main
 
 import (
-	"flag"
 	"github.com/merliot/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
@@ -108,9 +107,11 @@ func (b *blink) Assets() *merle.ThingAssets {
 }
 
 func main() {
-	cfg := merle.FlagThingConfig("", "blink", "blinky", "merle")
-	flag.Parse()
+	thing := merle.NewThing(&blink{})
 
-	thing := merle.NewThing(&blink{}, cfg)
+	thing.Cfg.Model = "blink"
+	thing.Cfg.Name = "blinky"
+	thing.Cfg.User = "merle"
+
 	log.Fatalln(thing.Run())
 }

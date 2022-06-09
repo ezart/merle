@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/merliot/merle"
+	"log"
 )
 
 type hello struct {
@@ -20,9 +21,6 @@ func (h *hello) Assets() *merle.ThingAssets {
 }
 
 func main() {
-	var cfg merle.ThingConfig
-
-	cfg.Thing.PortPublic = 8080
-
-	merle.NewThing(&hello{}, &cfg).Run()
+	thing := merle.NewThing(&hello{})
+	log.Fatalln(thing.Run())
 }

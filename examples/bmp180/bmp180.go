@@ -6,6 +6,7 @@ import (
 	"github.com/merliot/merle"
 	"gobot.io/x/gobot/drivers/i2c"
 	"gobot.io/x/gobot/platforms/raspi"
+	"log"
 	"time"
 )
 
@@ -74,9 +75,6 @@ func (b *bmp180) Assets() *merle.ThingAssets {
 }
 
 func main() {
-	var cfg merle.ThingConfig
-
-	cfg.Thing.PortPublic = 8080
-
-	merle.NewThing(&bmp180{}, &cfg).Run()
+	thing := merle.NewThing(&bmp180{})
+	log.Fatalln(thing.Run())
 }

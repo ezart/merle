@@ -15,8 +15,6 @@ func (b *blink) Subscribers() merle.Subscribers {
 }
 
 func main() {
-	var cfg merle.ThingConfig
-
-	thing := merle.NewThing(&blink{}, &cfg)
+	thing := merle.NewThing(&blink{})
 	log.Fatalln(thing.Run())
 }
