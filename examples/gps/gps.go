@@ -3,7 +3,6 @@
 package main
 
 import (
-	"flag"
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/telit"
 	"log"
@@ -134,9 +133,11 @@ func (g *gps) Assets() *merle.ThingAssets {
 }
 
 func main() {
-	cfg := merle.FlagThingConfig("", "gps", "gypsy", "merle")
-	flag.Parse()
+	thing := merle.NewThing(&gps{})
 
-	thing := merle.NewThing(&gps{}, cfg)
+	thing.Cfg.Model = "gps"
+	thing.Cfg.Name = "gypsy"
+	thing.Cfg.User = "merle"
+
 	log.Fatalln(thing.Run())
 }

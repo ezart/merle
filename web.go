@@ -19,7 +19,6 @@ import (
 	"github.com/msteinert/pam"
 	"golang.org/x/crypto/acme/autocert"
 	"html/template"
-	"log"
 	"net/http"
 	"path"
 	"strconv"
@@ -354,35 +353,36 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 
 func (w *webPublic) start() {
 	if w.port == 0 {
-		log.Println("Skipping public HTTP server; port is zero")
+		w.thing.log.Println("Skipping public HTTP server; port is zero")
 		return
 	}
 
 	if w.user != "" {
-		log.Println("Basic Authencation enabled for user", w.user)
+		w.thing.log.Printf("Basic HTTP Authentication enabled for user \"%s\"",
+			w.user)
 	}
 
 	w.Add(2)
 	w.server.RegisterOnShutdown(w.Done)
 
-	log.Println("Public HTTP server listening on", w.server.Addr)
+	w.thing.log.Println("Public HTTP server listening on port", w.server.Addr)
 
 	go func() {
 		if err := w.server.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalln("Public HTTP server failed:", err)
+			w.thing.log.Fatalln("Public HTTP server failed:", err)
 		}
 		w.Done()
 	}()
 
 	if w.portTLS == 0 {
-		log.Println("Skipping public HTTPS server; port is zero")
+		w.thing.log.Println("Skipping public HTTPS server; port is zero")
 		return
 	}
 
 	w.Add(2)
 	w.serverTLS.RegisterOnShutdown(w.Done)
 
-	log.Println("Public HTTPS server listening on", w.serverTLS.Addr)
+	w.thing.log.Println("Public HTTPS server listening on port", w.serverTLS.Addr)
 
 	go func() {
 		// TODO Consider passing in optional certificate and key to
@@ -392,7 +392,7 @@ func (w *webPublic) start() {
 		// TODO than DNS because Let's Encrypt wants a server name (DNS name),
 		// TODO and not an IP addr.
 		if err := w.serverTLS.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
-			log.Fatalln("Public HTTPS server failed:", err)
+			w.thing.log.Fatalln("Public HTTPS server failed:", err)
 		}
 		w.Done()
 	}()
@@ -439,18 +439,18 @@ func newWebPrivate(t *Thing, port uint) *webPrivate {
 
 func (w *webPrivate) start() {
 	if w.port == 0 {
-		log.Println("Skipping private HTTP server; port is zero")
+		w.thing.log.Println("Skipping private HTTP server; port is zero")
 		return
 	}
 
 	w.Add(2)
 	w.server.RegisterOnShutdown(w.Done)
 
-	log.Println("Private HTTP server listening on", w.server.Addr)
+	w.thing.log.Println("Private HTTP server listening on port", w.server.Addr)
 
 	go func() {
 		if err := w.server.ListenAndServe(); err != http.ErrServerClosed {
-			log.Fatalln("Private HTTP server failed:", err)
+			w.thing.log.Fatalln("Private HTTP server failed:", err)
 		}
 		w.Done()
 	}()

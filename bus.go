@@ -90,7 +90,7 @@ func (b *bus) receive(p *Packet) {
 // Reply sends the packet back to the source socket
 func (b *bus) reply(p *Packet) {
 	if p.src == nil {
-		p.bus.thing.log.Println("REPLY ABORTED; source is missing")
+		b.thing.log.Println("REPLY ABORTED; source is missing")
 		return
 	}
 
@@ -104,7 +104,7 @@ func (b *bus) reply(p *Packet) {
 		p.src.SetFlags(p.src.Flags() | bcast)
 	}
 
-	p.bus.thing.log.Printf("Reply: %.80s", p.String())
+	b.thing.log.Printf("Reply: %.80s", p.String())
 	p.src.Send(p)
 }
 
@@ -132,14 +132,14 @@ func (b *bus) broadcast(p *Packet) {
 			continue
 		}
 		if sent == 0 {
-			p.bus.thing.log.Printf("Broadcast: %.80s", p.String())
+			b.thing.log.Printf("Broadcast: %.80s", p.String())
 			sent++
 		}
 		sock.Send(p)
 	}
 
 	if sent == 0 {
-		p.bus.thing.log.Printf("Would Broadcast: %.80s", p.String())
+		b.thing.log.Printf("Would Broadcast: %.80s", p.String())
 	}
 }
 

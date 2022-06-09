@@ -24,9 +24,9 @@ func (t *Thing) changeStatus(status string) {
 }
 
 func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
-	if msg.Model != t.cfg.Thing.Model {
+	if msg.Model != t.Cfg.Model {
 		return fmt.Errorf("Model mis-match: want %s, got %s",
-			t.cfg.Thing.Model, msg.Model)
+			t.Cfg.Model, msg.Model)
 	}
 
 	t.id = msg.Id

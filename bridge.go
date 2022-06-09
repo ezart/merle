@@ -49,7 +49,7 @@ type bridge struct {
 	ports    *ports
 }
 
-func newBridge(thing *Thing) *bridge {
+func newBridge(thing *Thing, portBegin, portEnd uint) *bridge {
 	bridger := thing.thinger.(Bridger)
 
 	b := &bridge{
@@ -59,9 +59,7 @@ func newBridge(thing *Thing) *bridge {
 		bus:      newBus(thing, 10, bridger.BridgeSubscribers()),
 	}
 
-	b.ports = newPorts(thing, thing.cfg.Bridge.PortBegin,
-		thing.cfg.Bridge.PortEnd, b.bridgeAttach)
-
+	b.ports = newPorts(thing, portBegin, portEnd, b.bridgeAttach)
 	b.thing.bus.subscribe(GetChildren, b.getChildren)
 	b.thing.web.handleBridgePortId()
 
@@ -104,9 +102,9 @@ func (b *bridge) runChild(p *port, child *Thing) {
 
 func (b *bridge) newChild(id, model, name string) (*Thing, error) {
 	var thinger Thinger
-	var cfg ThingConfig
 
 	// TODO think about if it makes sense to allow you to be your own Mother?
+	// TODO (Probably not)
 	if b.thing.id == id {
 		return nil, fmt.Errorf("Sorry, you can't be your own Mother")
 	}
@@ -130,11 +128,11 @@ func (b *bridge) newChild(id, model, name string) (*Thing, error) {
 		return nil, fmt.Errorf("No Thinger matched [%s], not attaching", spec)
 	}
 
-	cfg.Thing.Id = id
-	cfg.Thing.Model = model
-	cfg.Thing.Name = name
+	child := NewThing(thinger)
 
-	child := NewThing(thinger, &cfg)
+	child.Cfg.Id = id
+	child.Cfg.Model = model
+	child.Cfg.Name = name
 
 	b.thing.setAssetsDir(child)
 

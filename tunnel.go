@@ -21,15 +21,18 @@ type tunnel struct {
 	user        string
 	portPrivate uint
 	portRemote  uint
+	log         *log.Logger
 }
 
-func newTunnel(id, host, user string, portPrivate, portRemote uint) *tunnel {
+func newTunnel(log *log.Logger, id, host, user string,
+	portPrivate, portRemote uint) *tunnel {
 	return &tunnel{
 		id:          id,
 		host:        host,
 		user:        user,
 		portPrivate: portPrivate,
 		portRemote:  portRemote,
+		log: log,
 	}
 }
 
@@ -50,7 +53,7 @@ func (t *tunnel) getPort() string {
 		"localhost:" + privatePort + "/port/" + t.id,
 	}
 
-	log.Printf("Tunnel getting port [ssh %s]", args)
+	t.log.Printf("Tunnel getting port [ssh %s]", args)
 
 	cmd := exec.Command("ssh", args...)
 
@@ -61,7 +64,7 @@ func (t *tunnel) getPort() string {
 
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("Tunnel get port failed: %s, err %v", stdoutStderr, err)
+		t.log.Printf("Tunnel get port failed: %s, err %v", stdoutStderr, err)
 		return ""
 	}
 
@@ -69,13 +72,13 @@ func (t *tunnel) getPort() string {
 
 	switch port {
 	case "404 page not found\n":
-		log.Println("Tunnel weirdness; Thing trying to be its own Mother?; trying again")
+		t.log.Println("Tunnel weirdness; Thing trying to be its own Mother?; trying again")
 		return ""
 	case "no ports available":
-		log.Println("Tunnel no ports available; trying again")
+		t.log.Println("Tunnel no ports available; trying again")
 		return ""
 	case "port busy":
-		log.Println("Tunnel port is busy; trying again")
+		t.log.Println("Tunnel port is busy; trying again")
 		return ""
 	}
 
@@ -97,7 +100,7 @@ func (t *tunnel) tunnel(port string) error {
 		"-R", remote, t.user + "@" + t.host,
 	}
 
-	log.Printf("Creating tunnel [ssh %s]", args)
+	t.log.Printf("Creating tunnel [ssh %s]", args)
 
 	cmd := exec.Command("ssh", args...)
 
@@ -108,7 +111,7 @@ func (t *tunnel) tunnel(port string) error {
 
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("Create tunnel failed: %s, err %v", stdoutStderr, err)
+		t.log.Printf("Create tunnel failed: %s, err %v", stdoutStderr, err)
 	}
 
 	return err
@@ -127,14 +130,14 @@ func (t *tunnel) create() {
 			goto again
 		}
 
-		log.Println("Tunnel got port", port)
+		t.log.Println("Tunnel got port", port)
 
 		err = t.tunnel(port)
 		if err != nil {
 			goto again
 		}
 
-		log.Println("Tunnel disconnected")
+		t.log.Println("Tunnel disconnected")
 
 	again:
 		// TODO maybe try some exponential back-off aglo ala TCP
@@ -146,24 +149,24 @@ func (t *tunnel) create() {
 		// avoid port contention.
 
 		f := rand.Float32() * 10
-		log.Printf("Tunnel create sleeping for %f seconds", f)
+		t.log.Printf("Tunnel create sleeping for %f seconds", f)
 		time.Sleep(time.Duration(f*1000) * time.Millisecond)
 	}
 }
 
 func (t *tunnel) start() {
 	if t.host == "" {
-		log.Println("Skipping tunnel; missing host")
+		t.log.Println("Skipping tunnel; missing host")
 		return
 	}
 
 	if t.user == "" {
-		log.Println("Skipping tunnel; missing user")
+		t.log.Println("Skipping tunnel; missing user")
 		return
 	}
 
 	if t.portRemote == 0 {
-		log.Println("Skipping tunnel; missing remote port")
+		t.log.Println("Skipping tunnel; missing remote port")
 		return
 	}
 

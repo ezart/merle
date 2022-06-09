@@ -84,8 +84,8 @@ type Thinger interface {
 }
 
 type Thing struct {
+	Cfg         ThingConfig
 	thinger     Thinger
-	cfg         *ThingConfig
 	status      string
 	id          string
 	model       string
@@ -104,68 +104,13 @@ type Thing struct {
 	log         *log.Logger
 }
 
-// NewThing will return a Thing built from a Thinger and a ThingConfig.  E.g.
-//
-//	func main() {
-//		var cfg merle.ThingConfig
-//
-//		fooer := foo.NewFooer()
-//		thing := merle.NewThing(fooer, &cfg)
-//
-//		log.Fatalln(thing.Run())
-//	}
-//
-func NewThing(thinger Thinger, cfg *ThingConfig) *Thing {
+// NewThing returns a Thing built from a Thinger.
+func NewThing(thinger Thinger) *Thing {
 
-	id := cfg.Thing.Id
-	isPrime := cfg.Thing.Prime
+	thing := &Thing{thinger: thinger}
+	thing.Cfg = defaultCfg
 
-	if !isPrime {
-		if id == "" {
-			id = defaultId()
-			log.Println("Defaulting ID to", id)
-		}
-	}
-
-	prefix := "[" + id + "] "
-
-	t := &Thing{
-		thinger:     thinger,
-		cfg:         cfg,
-		status:      "online",
-		id:          id,
-		model:       cfg.Thing.Model,
-		name:        cfg.Thing.Name,
-		startupTime: time.Now(),
-		isPrime:     isPrime,
-		log:         log.New(os.Stderr, prefix, 0),
-	}
-
-	t.bus = newBus(t, 10, thinger.Subscribers())
-
-	t.tunnel = newTunnel(t.id, cfg.Mother.Host, cfg.Mother.User,
-		cfg.Thing.PortPrivate, cfg.Mother.PortPrivate)
-
-	_, t.isWeber = t.thinger.(Weber)
-	if t.isWeber {
-		t.web = newWeb(t, cfg.Thing.PortPublic, cfg.Thing.PortPublicTLS,
-			cfg.Thing.PortPrivate, cfg.Thing.User)
-		t.setAssetsDir(t)
-	}
-
-	_, t.isBridge = t.thinger.(Bridger)
-	if t.isBridge {
-		t.bridge = newBridge(t)
-	}
-
-	if t.isPrime {
-		t.web.handlePrimePortId()
-		t.primePort = newPort(t, cfg.Thing.PortPrime, t.primeAttach)
-	}
-
-	t.bus.subscribe(GetIdentity, t.getIdentity)
-
-	return t
+	return thing
 }
 
 func (t *Thing) getIdentity(p *Packet) {
@@ -224,15 +169,60 @@ func (t *Thing) Run() error {
 
 	re := regexp.MustCompile("^[a-zA-Z0-9_]*$")
 
-	if !re.MatchString(t.id) {
+	if !re.MatchString(t.Cfg.Id) {
 		return fmt.Errorf("Id must contain only alphanumeric or underscore characters")
 	}
-	if !re.MatchString(t.model) {
+	if !re.MatchString(t.Cfg.Model) {
 		return fmt.Errorf("Model must contain only alphanumeric or underscore characters")
 	}
-	if !re.MatchString(t.name) {
+	if !re.MatchString(t.Cfg.Name) {
 		return fmt.Errorf("Name must contain only alphanumeric or underscore characters")
 	}
+
+	id := t.Cfg.Id
+	if !t.Cfg.IsPrime {
+		if id == "" {
+			id = defaultId()
+		}
+	}
+
+	prefix := "[" + id + "] "
+	t.log = log.New(os.Stderr, prefix, 0)
+
+	t.status = "online"
+	t.id = id
+	t.model = t.Cfg.Model
+	t.name = t.Cfg.Name
+	t.isPrime = t.Cfg.IsPrime
+
+	t.log.Printf("Model: \"%s\", Name: \"%s\"", t.model, t.name)
+
+	t.bus = newBus(t, t.Cfg.MaxConnections, t.thinger.Subscribers())
+
+	t.tunnel = newTunnel(t.log, t.id, t.Cfg.MotherHost, t.Cfg.MotherUser,
+		t.Cfg.PortPrivate, t.Cfg.MotherPortPrivate)
+
+	_, t.isWeber = t.thinger.(Weber)
+	if t.isWeber {
+		t.web = newWeb(t, t.Cfg.PortPublic, t.Cfg.PortPublicTLS,
+			t.Cfg.PortPrivate, t.Cfg.User)
+		t.setAssetsDir(t)
+	}
+
+	_, t.isBridge = t.thinger.(Bridger)
+	if t.isBridge {
+		t.bridge = newBridge(t, t.Cfg.BridgePortBegin,
+			t.Cfg.BridgePortEnd)
+	}
+
+	if t.isPrime {
+		t.web.handlePrimePortId()
+		t.primePort = newPort(t, t.Cfg.PortPrime, t.primeAttach)
+	}
+
+	t.bus.subscribe(GetIdentity, t.getIdentity)
+
+	t.startupTime = time.Now()
 
 	switch {
 	case t.isPrime:
