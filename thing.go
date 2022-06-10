@@ -195,8 +195,6 @@ func (t *Thing) Run() error {
 	t.name = t.Cfg.Name
 	t.isPrime = t.Cfg.IsPrime
 
-	t.log.Printf("Model: \"%s\", Name: \"%s\"", t.model, t.name)
-
 	t.bus = newBus(t, t.Cfg.MaxConnections, t.thinger.Subscribers())
 
 	t.tunnel = newTunnel(t.log, t.id, t.Cfg.MotherHost, t.Cfg.MotherUser,
@@ -223,6 +221,8 @@ func (t *Thing) Run() error {
 	t.bus.subscribe(GetIdentity, t.getIdentity)
 
 	t.startupTime = time.Now()
+
+	t.log.Printf("Model: \"%s\", Name: \"%s\"", t.model, t.name)
 
 	switch {
 	case t.isPrime:

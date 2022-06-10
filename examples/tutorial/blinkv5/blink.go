@@ -3,6 +3,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/merliot/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
@@ -83,6 +84,10 @@ const html = `<html lang="en">
 
 			conn = new WebSocket("{{.WebSocket}}")
 
+			conn.onopen = function(evt) {
+				conn.send(JSON.stringify({Msg: "_GetState"}))
+			}
+
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
 				console.log('msg', msg)
@@ -101,7 +106,7 @@ const html = `<html lang="en">
 
 func (b *blink) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
-		Dir:          "examples/tutorial/blinkv4/assets",
+		Dir:          "examples/tutorial/blinkv5/assets",
 		TemplateText: html,
 	}
 }
@@ -112,6 +117,9 @@ func main() {
 	thing.Cfg.Model = "blink"
 	thing.Cfg.Name = "blinky"
 	thing.Cfg.User = "merle"
+
+	flag.BoolVar(&thing.Cfg.IsPrime, "prime", false, "Run as Thing Prime")
+	flag.Parse()
 
 	log.Fatalln(thing.Run())
 }

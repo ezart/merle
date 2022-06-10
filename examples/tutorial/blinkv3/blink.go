@@ -11,6 +11,7 @@ import (
 )
 
 type blink struct {
+	state bool
 }
 
 type msg struct {
@@ -29,17 +30,24 @@ func (b *blink) run(p *merle.Packet) {
 
 	for {
 		led.Toggle()
+		b.state = led.State()
 
-		msg.State = led.State()
+		msg.State = b.state
 		p.Marshal(&msg).Broadcast()
 
 		time.Sleep(time.Second)
 	}
 }
 
+func (b *blink) getState(p *merle.Packet) {
+	msg := &msg{Msg: merle.ReplyState, State: b.state}
+	p.Marshal(&msg).Reply()
+}
+
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdRun: b.run,
+		merle.CmdRun:   b.run,
+		merle.GetState: b.getState,
 	}
 }
 
@@ -52,11 +60,16 @@ const html = `<html lang="en">
 
 			conn = new WebSocket("{{.WebSocket}}")
 
+			conn.onopen = function(evt) {
+				conn.send(JSON.stringify({Msg: "_GetState"}))
+			}
+
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
 				console.log('msg', msg)
 
 				switch(msg.Msg) {
+				case "_ReplyState":
 				case "Update":
 					image.src = "/{{.AssetsDir}}/images/led-" +
 						msg.State + ".png"
