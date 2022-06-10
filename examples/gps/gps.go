@@ -3,6 +3,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/telit"
 	"log"
@@ -138,6 +139,12 @@ func main() {
 	thing.Cfg.Model = "gps"
 	thing.Cfg.Name = "gypsy"
 	thing.Cfg.User = "merle"
+
+	flag.StringVar(&thing.Cfg.MotherHost, "host", "", "Remote host")
+	flag.BoolVar(&thing.Cfg.IsPrime, "prime", false, "Run as Thing Prime")
+	flag.UintVar(&thing.Cfg.PortPublicTLS, "TLS", 443, "TLS port")
+
+	flag.Parse()
 
 	log.Fatalln(thing.Run())
 }
