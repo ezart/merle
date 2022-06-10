@@ -222,7 +222,12 @@ func (t *Thing) Run() error {
 
 	t.startupTime = time.Now()
 
-	t.log.Printf("Model: \"%s\", Name: \"%s\"", t.model, t.name)
+	prime := ""
+	if t.isPrime {
+		prime = "[Thing Prime] "
+	}
+
+	t.log.Printf("%sModel: \"%s\", Name: \"%s\"", prime, t.model, t.name)
 
 	switch {
 	case t.isPrime:
