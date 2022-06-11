@@ -13,6 +13,7 @@ Merle uses the Go programming language.
 
  - Thing-wide setting for a websocket ping/pong messages to close half-open sockets
  	(send ping from Thing side of websocket)
+ - Can we use something smaller like a container to run Thing Prime rather than a full VM?
 
 ## Set Up Your Environment
 
