@@ -39,7 +39,8 @@ func (x *xmas) run(p *merle.Packet) {
 
 	for _, relay := range x.relays {
 		relay.driver.Start()
-		relay.state = relay.driver.State()
+		relay.driver.Off()
+		relay.state = false
 	}
 
 	select{}
@@ -53,7 +54,6 @@ func (x *xmas) getState(p *merle.Packet) {
 	for i, relay := range x.relays {
 		msg.State[i] = relay.state
 	}
-	msg.State[3] = true
 
 	p.Marshal(&msg).Reply()
 }
@@ -70,32 +70,60 @@ func (x *xmas) saveState(p *merle.Packet) {
 	}
 }
 
+type clickMsg struct {
+	Msg   string
+	Relay int
+	State bool
+}
+
+func (x *xmas) click(p *merle.Packet) {
+	x.Lock()
+	defer x.Unlock()
+
+	var msg clickMsg
+	p.Unmarshal(&msg)
+
+	x.relays[msg.Relay].state = msg.State
+
+	if x.IsRealThing() {
+		if msg.State {
+			x.relays[msg.Relay].driver.On()
+		} else {
+			x.relays[msg.Relay].driver.Off()
+		}
+	}
+
+	p.Broadcast()
+}
+
 func (x *xmas) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		merle.CmdRun:     x.run,
 		merle.GetState:   x.getState,
 		merle.ReplyState: x.saveState,
+		"Click":          x.click,
 	}
 }
 
 const html = `<html lang="en">
 	<body>
 		<div>
-			<input type="checkbox" id="relay1">
+			<input type="checkbox" id="relay0" onclick='relayClick(this, 0)'>
+			<label for="relay0"> Relay 0 </label>
+			<input type="checkbox" id="relay1" onclick='relayClick(this, 1)'>
 			<label for="relay1"> Relay 1 </label>
-			<input type="checkbox" id="relay2">
+			<input type="checkbox" id="relay2" onclick='relayClick(this, 2)'>
 			<label for="relay2"> Relay 2 </label>
-			<input type="checkbox" id="relay3">
+			<input type="checkbox" id="relay3" onclick='relayClick(this, 3)'>
 			<label for="relay3"> Relay 3 </label>
-			<input type="checkbox" id="relay4">
-			<label for="relay4"> Relay 4 </label>
 		</div>
 
 		<script>
-			relay1 = document.getElementById("relay1")
-			relay2 = document.getElementById("relay2")
-			relay3 = document.getElementById("relay3")
-			relay4 = document.getElementById("relay4")
+			relay = [4]
+			relay[0] = document.getElementById("relay0")
+			relay[1] = document.getElementById("relay1")
+			relay[2] = document.getElementById("relay2")
+			relay[3] = document.getElementById("relay3")
 
 			conn = new WebSocket("{{.WebSocket}}")
 
@@ -109,12 +137,20 @@ const html = `<html lang="en">
 
 				switch(msg.Msg) {
 				case "_ReplyState":
-					relay1.checked = msg.State[0]
-					relay2.checked = msg.State[1]
-					relay3.checked = msg.State[2]
-					relay4.checked = msg.State[3]
+					relay[0].checked = msg.State[0]
+					relay[1].checked = msg.State[1]
+					relay[2].checked = msg.State[2]
+					relay[3].checked = msg.State[3]
+					break
+				case "Click":
+					relay[msg.Relay].checked = msg.State
 					break
 				}
+			}
+
+			function relayClick(relay, num) {
+				conn.send(JSON.stringify({Msg: "Click", Relay: num,
+					State: relay.checked}))
 			}
 		</script>
 	</body>
