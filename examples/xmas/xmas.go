@@ -53,6 +53,7 @@ func (x *xmas) getState(p *merle.Packet) {
 	for i, relay := range x.relays {
 		msg.State[i] = relay.state
 	}
+	msg.State[3] = true
 
 	p.Marshal(&msg).Reply()
 }
@@ -79,9 +80,23 @@ func (x *xmas) Subscribers() merle.Subscribers {
 
 const html = `<html lang="en">
 	<body>
-		<div id="map" style="height:100%"></div>
+		<div>
+			<input type="checkbox" id="relay1">
+			<label for="relay1"> Relay 1 </label>
+			<input type="checkbox" id="relay2">
+			<label for="relay2"> Relay 2 </label>
+			<input type="checkbox" id="relay3">
+			<label for="relay3"> Relay 3 </label>
+			<input type="checkbox" id="relay4">
+			<label for="relay4"> Relay 4 </label>
+		</div>
 
 		<script>
+			relay1 = document.getElementById("relay1")
+			relay2 = document.getElementById("relay2")
+			relay3 = document.getElementById("relay3")
+			relay4 = document.getElementById("relay4")
+
 			conn = new WebSocket("{{.WebSocket}}")
 
 			conn.onopen = function(evt) {
@@ -94,6 +109,10 @@ const html = `<html lang="en">
 
 				switch(msg.Msg) {
 				case "_ReplyState":
+					relay1.checked = msg.State[0]
+					relay2.checked = msg.State[1]
+					relay3.checked = msg.State[2]
+					relay4.checked = msg.State[3]
 					break
 				}
 			}
