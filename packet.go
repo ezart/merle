@@ -55,8 +55,8 @@ func (p *Packet) Broadcast() {
 	p.bus.broadcast(p)
 }
 
-func (p *Packet) Bottom() bool {
-	return p.bus.bottom(p)
+func (p *Packet) IsThing() bool {
+	return !p.bus.thing.isPrime
 }
 
 // Subscriber callback function to broadcast packet.  In this example, any

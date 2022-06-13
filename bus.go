@@ -143,14 +143,6 @@ func (b *bus) broadcast(p *Packet) {
 	}
 }
 
-func (b *bus) bottom(p *Packet) bool {
-	if b.thing.isPrime {
-		b.thing.primePort.writeMessage(p.msg)
-		return false
-	}
-	return true
-}
-
 func (b *bus) close() {
 	b.sockLock.RLock()
 	defer b.sockLock.RUnlock()

@@ -85,7 +85,7 @@ func (x *xmas) click(p *merle.Packet) {
 
 	x.relays[msg.Relay].state = msg.State
 
-	if x.IsRealThing() {
+	if p.IsThing() {
 		if msg.State {
 			x.relays[msg.Relay].driver.On()
 		} else {
