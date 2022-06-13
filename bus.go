@@ -66,6 +66,13 @@ func (b *bus) receive(p *Packet) {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
 
+	// Receiving ReplyState is a special case.  The socket is disabled
+	// for broadcasts until ReplyState is received.  This ensures other end
+	// doesn't receive unsolicited message before ReplyState.
+	if msg.Msg == ReplyState {
+		p.src.SetFlags(p.src.Flags() | bcast)
+	}
+
 	f, match := b.subs[msg.Msg]
 	if match {
 		if f != nil {
