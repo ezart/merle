@@ -58,6 +58,10 @@ func (c *can) Subscribers() merle.Subscribers {
 	}
 }
 
+func (c *can) Assets() *merle.ThingAssets {
+	return &merle.ThingAssets{}
+}
+
 func main() {
 	thing := merle.NewThing(&can{})
 
