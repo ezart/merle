@@ -1,4 +1,4 @@
-// file: examples/xmas/xmas.go
+// file: examples/relays/relays.go
 
 package main
 
@@ -16,7 +16,7 @@ type relay struct {
 	state bool
 }
 
-type xmas struct {
+type thing struct {
 	sync.RWMutex
 	relays [4]relay
 }
@@ -26,47 +26,47 @@ type msg struct {
 	State [4]bool
 }
 
-func (x *xmas) run(p *merle.Packet) {
+func (t *thing) run(p *merle.Packet) {
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
 
-	x.relays = [4]relay{
+	t.relays = [4]relay{
 		{driver: gpio.NewRelayDriver(adaptor, "31")}, // GPIO 6
 		{driver: gpio.NewRelayDriver(adaptor, "33")}, // GPIO 13
 		{driver: gpio.NewRelayDriver(adaptor, "35")}, // GPIO 19
 		{driver: gpio.NewRelayDriver(adaptor, "37")}, // GPIO 26
 	}
 
-	for i, _ := range x.relays {
-		x.relays[i].driver.Start()
-		x.relays[i].driver.Off()
-		x.relays[i].state = false
+	for i, _ := range t.relays {
+		t.relays[i].driver.Start()
+		t.relays[i].driver.Off()
+		t.relays[i].state = false
 	}
 
 	select{}
 }
 
-func (x *xmas) getState(p *merle.Packet) {
-	x.RLock()
-	defer x.RUnlock()
+func (t *thing) getState(p *merle.Packet) {
+	t.RLock()
+	defer t.RUnlock()
 
 	msg := &msg{Msg: merle.ReplyState}
-	for i, _ := range x.relays {
-		msg.State[i] = x.relays[i].state
+	for i, _ := range t.relays {
+		msg.State[i] = t.relays[i].state
 	}
 
 	p.Marshal(&msg).Reply()
 }
 
-func (x *xmas) saveState(p *merle.Packet) {
-	x.Lock()
-	defer x.Unlock()
+func (t *thing) saveState(p *merle.Packet) {
+	t.Lock()
+	defer t.Unlock()
 
 	var msg msg
 	p.Unmarshal(&msg)
 
-	for i, _ := range x.relays {
-		x.relays[i].state = msg.State[i]
+	for i, _ := range t.relays {
+		t.relays[i].state = msg.State[i]
 	}
 }
 
@@ -76,32 +76,32 @@ type clickMsg struct {
 	State bool
 }
 
-func (x *xmas) click(p *merle.Packet) {
-	x.Lock()
-	defer x.Unlock()
+func (t *thing) click(p *merle.Packet) {
+	t.Lock()
+	defer t.Unlock()
 
 	var msg clickMsg
 	p.Unmarshal(&msg)
 
-	x.relays[msg.Relay].state = msg.State
+	t.relays[msg.Relay].state = msg.State
 
 	if p.IsThing() {
 		if msg.State {
-			x.relays[msg.Relay].driver.On()
+			t.relays[msg.Relay].driver.On()
 		} else {
-			x.relays[msg.Relay].driver.Off()
+			t.relays[msg.Relay].driver.Off()
 		}
 	}
 
 	p.Broadcast()
 }
 
-func (x *xmas) Subscribers() merle.Subscribers {
+func (t *thing) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdRun:     x.run,
-		merle.GetState:   x.getState,
-		merle.ReplyState: x.saveState,
-		"Click":          x.click,
+		merle.CmdRun:     t.run,
+		merle.GetState:   t.getState,
+		merle.ReplyState: t.saveState,
+		"Click":          t.click,
 	}
 }
 
@@ -159,17 +159,17 @@ const html = `<html lang="en">
 	</body>
 </html>`
 
-func (x *xmas) Assets() *merle.ThingAssets {
+func (t *thing) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
 		TemplateText: html,
 	}
 }
 
 func main() {
-	thing := merle.NewThing(&xmas{})
+	thing := merle.NewThing(&thing{})
 
-	thing.Cfg.Model = "xmas"
-	thing.Cfg.Name = "xmas0"
+	thing.Cfg.Model = "relays"
+	thing.Cfg.Name = "relayforhope"
 	thing.Cfg.User = "merle"
 
 	flag.StringVar(&thing.Cfg.MotherHost, "rhost", "", "Remote host")
