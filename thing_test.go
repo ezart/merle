@@ -30,15 +30,14 @@ func (s *sparse) Assets() *ThingAssets {
 }
 
 func TestBogusRun(t *testing.T) {
-	var cfg ThingConfig
 	var thinger sparse
 
-	cfg.Thing.Id = testId
-
-	thing := NewThing(&thinger, &cfg)
+	thing := NewThing(&thinger)
 	if thing == nil {
 		t.Errorf("Create with non-nil thinger/cfg failed")
 	}
+
+	thing.Cfg.Id = testId
 
 	err := thing.Run()
 	if err == nil {
@@ -163,22 +162,21 @@ func testSimple(t *testing.T, thing *Thing, publicPort, privatePort uint) {
 }
 
 func TestRun(t *testing.T) {
-	var cfg ThingConfig
 	var thinger simple
 
-	cfg.Thing.Id = testId
-	cfg.Thing.Model = testModel
-	cfg.Thing.Name = testName
-
-	cfg.Thing.PortPublic = 8080
-	cfg.Thing.PortPrivate = 8081
-
-	thing := NewThing(&thinger, &cfg)
+	thing := NewThing(&thinger)
 	if thing == nil {
 		t.Errorf("Create with non-nil thinger/cfg failed")
 	}
 
-	go testSimple(t, thing, cfg.Thing.PortPublic, cfg.Thing.PortPrivate)
+	thing.Cfg.Id = testId
+	thing.Cfg.Model = testModel
+	thing.Cfg.Name = testName
+
+	thing.Cfg.PortPublic = 8080
+	thing.Cfg.PortPrivate = 8081
+
+	go testSimple(t, thing, thing.Cfg.PortPublic, thing.Cfg.PortPrivate)
 
 	err := thing.Run()
 	if err == nil {
