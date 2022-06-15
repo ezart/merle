@@ -15,6 +15,7 @@ func (t *thing) Subscribers() merle.Subscribers {
 
 func main() {
 	thing := merle.NewThing(&thing{})
+	thing.Cfg.PortPublic = 80
 	thing.Cfg.HtmlTemplateText = "Hello!\n"
 	thing.Run()
 }

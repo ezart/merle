@@ -14,6 +14,8 @@ func main() {
 	thing.Cfg.Name = "hubby"
 	thing.Cfg.User = "merle"
 
+	thing.Cfg.PortPublic = 80
+
 	thing.Cfg.AssetsDir = "examples/hub/assets"
 	thing.Cfg.HtmlTemplate = "templates/hub.html"
 

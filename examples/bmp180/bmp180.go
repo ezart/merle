@@ -70,6 +70,7 @@ const html = `<html lang="en">
 
 func main() {
 	thing := merle.NewThing(&bmp180{})
+	thing.Cfg.PortPublic = 80
 	thing.Cfg.HtmlTemplateText = html
 	log.Fatalln(thing.Run())
 }

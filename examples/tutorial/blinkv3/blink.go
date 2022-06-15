@@ -82,7 +82,10 @@ const html = `<html lang="en">
 
 func main() {
 	thing := merle.NewThing(&blink{})
+
+	thing.Cfg.PortPublic = 80
 	thing.Cfg.AssetsDir = "examples/tutorial/blinkv3/assets"
 	thing.Cfg.HtmlTemplateText = html
+
 	log.Fatalln(thing.Run())
 }
