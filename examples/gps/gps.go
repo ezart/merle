@@ -127,18 +127,13 @@ const html = `<html lang="en">
 	</body>
 </html>`
 
-func (g *gps) Assets() *merle.ThingAssets {
-	return &merle.ThingAssets{
-		TemplateText: html,
-	}
-}
-
 func main() {
 	thing := merle.NewThing(&gps{})
 
 	thing.Cfg.Model = "gps"
 	thing.Cfg.Name = "gypsy"
 	thing.Cfg.User = "merle"
+	thing.Cfg.HtmlTemplateText = html
 
 	flag.StringVar(&thing.Cfg.MotherHost, "rhost", "", "Remote host")
 	flag.StringVar(&thing.Cfg.MotherUser, "ruser", "merle", "Remote user")

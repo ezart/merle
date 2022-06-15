@@ -63,9 +63,7 @@ func (t *Thing) getPrimePort(id string) string {
 }
 
 func (t *Thing) runPrime() error {
-	if t.isWeber {
-		t.web.start()
-	}
+	t.web.start()
 	t.tunnel.start()
 	return t.primePort.run()
 }

@@ -13,13 +13,8 @@ func (t *thing) Subscribers() merle.Subscribers {
 	}
 }
 
-func (t *thing) Assets() *merle.ThingAssets {
-	return &merle.ThingAssets{
-		TemplateText: "Hello!\n",
-	}
-}
-
 func main() {
 	thing := merle.NewThing(&thing{})
+	thing.Cfg.HtmlTemplateText = "Hello!\n"
 	thing.Run()
 }

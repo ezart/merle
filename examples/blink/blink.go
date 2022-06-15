@@ -124,10 +124,3 @@ func (b *blink) Subscribers() merle.Subscribers {
 		"SpamLedState": b.ledState,
 	}
 }
-
-func (b *blink) Assets() *merle.ThingAssets {
-	return &merle.ThingAssets{
-		Dir:      "examples/blink/assets",
-		Template: "templates/blink.html",
-	}
-}

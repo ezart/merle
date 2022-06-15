@@ -62,7 +62,3 @@ func (c *can) Subscribers() merle.Subscribers {
 		"CAN":            merle.Broadcast,
 	}
 }
-
-func (c *can) Assets() *merle.ThingAssets {
-	return &merle.ThingAssets{}
-}

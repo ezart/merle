@@ -104,19 +104,15 @@ const html = `<html lang="en">
 	</body>
 </html>`
 
-func (b *blink) Assets() *merle.ThingAssets {
-	return &merle.ThingAssets{
-		Dir:          "examples/tutorial/blinkv5/assets",
-		TemplateText: html,
-	}
-}
-
 func main() {
 	thing := merle.NewThing(&blink{})
 
 	thing.Cfg.Model = "blink"
 	thing.Cfg.Name = "blinky"
 	thing.Cfg.User = "merle"
+
+	thing.Cfg.AssetsDir = "examples/tutorial/blinkv3/assets"
+	thing.Cfg.HtmlTemplateText = html
 
 	flag.BoolVar(&thing.Cfg.IsPrime, "prime", false, "Run as Thing Prime")
 	flag.Parse()

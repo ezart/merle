@@ -29,10 +29,3 @@ func (h *hub) Subscribers() merle.Subscribers {
 		"_CmdRun": merle.RunForever,
 	}
 }
-
-func (h *hub) Assets() *merle.ThingAssets {
-	return &merle.ThingAssets{
-		Dir:      "examples/hub/assets",
-		Template: "templates/hub.html",
-	}
-}

@@ -13,9 +13,6 @@ type ThingAssets struct {
 	TemplateText string
 }
 
-type Weber interface {
-}
-
 type web struct {
 }
 

@@ -93,8 +93,6 @@ type Thing struct {
 	startupTime time.Time
 	bus         *bus
 	tunnel      *tunnel
-	isWeber     bool
-	assets      *ThingAssets
 	web         *web
 	isBridge    bool
 	bridge      *bridge
@@ -133,10 +131,7 @@ func (t *Thing) getChild(id string) *Thing {
 }
 
 func (t *Thing) run() error {
-	if t.isWeber {
-		t.web.start()
-	}
-
+	t.web.start()
 	t.tunnel.start()
 
 	if t.isBridge {
@@ -155,10 +150,7 @@ func (t *Thing) run() error {
 	}
 
 	t.tunnel.stop()
-
-	if t.isWeber {
-		t.web.stop()
-	}
+	t.web.stop()
 
 	t.bus.close()
 
@@ -200,12 +192,9 @@ func (t *Thing) build() error {
 	t.tunnel = newTunnel(t.log, t.id, t.Cfg.MotherHost, t.Cfg.MotherUser,
 		t.Cfg.PortPrivate, t.Cfg.MotherPortPrivate)
 
-	_, t.isWeber = t.thinger.(Weber)
-	if t.isWeber {
-		t.web = newWeb(t, t.Cfg.PortPublic, t.Cfg.PortPublicTLS,
-			t.Cfg.PortPrivate, t.Cfg.User)
-		t.setAssetsDir(t)
-	}
+	t.web = newWeb(t, t.Cfg.PortPublic, t.Cfg.PortPublicTLS,
+		t.Cfg.PortPrivate, t.Cfg.User)
+	t.setAssetsDir(t)
 
 	_, t.isBridge = t.thinger.(Bridger)
 	if t.isBridge {

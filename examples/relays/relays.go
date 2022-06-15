@@ -159,18 +159,13 @@ const html = `<html lang="en">
 	</body>
 </html>`
 
-func (t *thing) Assets() *merle.ThingAssets {
-	return &merle.ThingAssets{
-		TemplateText: html,
-	}
-}
-
 func main() {
 	thing := merle.NewThing(&thing{})
 
 	thing.Cfg.Model = "relays"
 	thing.Cfg.Name = "relayforhope"
 	thing.Cfg.User = "merle"
+	thing.Cfg.HtmlTemplateText = html
 
 	flag.StringVar(&thing.Cfg.MotherHost, "rhost", "", "Remote host")
 	flag.StringVar(&thing.Cfg.MotherUser, "ruser", "merle", "Remote user")

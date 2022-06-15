@@ -26,26 +26,6 @@ import (
 	"time"
 )
 
-type ThingAssets struct {
-
-	// Directory on file system for Thing's assets (html, css, js, etc)
-	// This is an absolute or relative directory.  If relative, it's
-	// relative to the Thing's executable.
-	Dir string
-
-	// Directory to Thing's HTML template file, relative to
-	// ThingAssets.Dir.
-	Template string
-
-	// TemplateText is text passed in lieu of a template file.
-	// TemplateText takes priority over Template, if both are present.
-	TemplateText string
-}
-
-type Weber interface {
-	Assets() *ThingAssets
-}
-
 type web struct {
 	public  *webPublic
 	private *webPrivate
@@ -78,12 +58,9 @@ func (w *web) handleBridgePortId() {
 }
 
 func (w *web) staticFiles(t *Thing) {
-	if t.isWeber {
-		assets := t.thinger.(Weber).Assets()
-		fs := http.FileServer(http.Dir(assets.Dir))
-		path := "/" + t.id + "/assets/"
-		w.public.mux.PathPrefix(path).Handler(http.StripPrefix(path, fs))
-	}
+	fs := http.FileServer(http.Dir(t.Cfg.AssetsDir))
+	path := "/" + t.id + "/assets/"
+	w.public.mux.PathPrefix(path).Handler(http.StripPrefix(path, fs))
 }
 
 var upgrader = websocket.Upgrader{}
@@ -216,10 +193,10 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if t.web.public.templErr == nil {
-		t.web.public.templ.Execute(w, t.templateParams(r))
-	} else {
+	if t.web.public.templ == nil {
 		http.Error(w, t.web.public.templErr.Error(), http.StatusNotFound)
+	} else {
+		t.web.public.templ.Execute(w, t.templateParams(r))
 	}
 }
 
@@ -337,11 +314,19 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 		serverTLS: serverTLS,
 	}
 
-	t.assets = t.thinger.(Weber).Assets()
-	file := path.Join(t.assets.Dir, t.assets.Template)
-	w.templ, w.templErr = template.ParseFiles(file)
-	if t.assets.TemplateText != "" {
-		w.templ, w.templErr = template.New("").Parse(t.assets.TemplateText)
+	if t.Cfg.HtmlTemplateText != "" {
+		w.templ, w.templErr = template.New("").Parse(t.Cfg.HtmlTemplateText)
+		if w.templErr != nil {
+			t.log.Println("Error parsing HtmlTemplateText:", w.templErr)
+		}
+	} else {
+		if t.Cfg.HtmlTemplate != "" {
+			file := path.Join(t.Cfg.AssetsDir, t.Cfg.HtmlTemplate)
+			w.templ, w.templErr = template.ParseFiles(file)
+			if w.templErr != nil {
+				t.log.Println("Error parsing HtmlTemplate:", w.templErr)
+			}
+		}
 	}
 
 	mux.HandleFunc("/ws/{id}", w.basicAuth(user, t.ws))
