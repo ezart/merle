@@ -56,7 +56,8 @@ func newBridge(thing *Thing, portBegin, portEnd uint) *bridge {
 		thing:    thing,
 		thingers: bridger.BridgeThingers(),
 		children: make(children),
-		bus:      newBus(thing, 10, bridger.BridgeSubscribers()),
+		bus:      newBus(thing, thing.Cfg.MaxConnections,
+			bridger.BridgeSubscribers()),
 	}
 
 	b.ports = newPorts(thing, portBegin, portEnd, b.bridgeAttach)
@@ -133,6 +134,11 @@ func (b *bridge) newChild(id, model, name string) (*Thing, error) {
 	child.Cfg.Id = id
 	child.Cfg.Model = model
 	child.Cfg.Name = name
+
+	err := child.build()
+	if err != nil {
+		return nil, err
+	}
 
 	b.thing.setAssetsDir(child)
 

@@ -165,7 +165,7 @@ func (t *Thing) run() error {
 	return fmt.Errorf("CmdRun didn't run forever")
 }
 
-func (t *Thing) Run() error {
+func (t *Thing) build() error {
 
 	re := regexp.MustCompile("^[a-zA-Z0-9_]*$")
 
@@ -228,6 +228,15 @@ func (t *Thing) Run() error {
 	}
 
 	t.log.Printf("%sModel: \"%s\", Name: \"%s\"", prime, t.model, t.name)
+
+	return nil
+}
+
+func (t *Thing) Run() error {
+	err := t.build()
+	if err != nil {
+		return err
+	}
 
 	switch {
 	case t.isPrime:
