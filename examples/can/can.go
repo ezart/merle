@@ -59,6 +59,7 @@ func (c *can) Subscribers() merle.Subscribers {
 		merle.CmdRun:     c.run,
 		merle.GetState:   c.getState,
 		merle.ReplyState: nil,
+		"CAN":            merle.Broadcast,
 	}
 }
 
