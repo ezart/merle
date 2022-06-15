@@ -1,15 +1,21 @@
 // file: examples/can/can.go
 
-package main
+package can
 
 import (
-	"flag"
 	"github.com/go-daq/canbus"
 	"github.com/merliot/merle"
 	"log"
 )
 
 type can struct {
+	Iface string
+}
+
+func NewCan() *can {
+	return &can{
+		Iface: "can0",
+	}
 }
 
 type canMsg struct {
@@ -25,11 +31,9 @@ func (c *can) run(p *merle.Packet) {
 		return
 	}
 
-	iface := "can0"
-
-	err = sock.Bind(iface)
+	err = sock.Bind(c.Iface)
 	if err != nil {
-		log.Printf("Binding to %s failed: %s", iface, err)
+		log.Printf("Binding to %s failed: %s", c.Iface, err)
 		return
 	}
 
@@ -60,21 +64,4 @@ func (c *can) Subscribers() merle.Subscribers {
 
 func (c *can) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{}
-}
-
-func main() {
-	thing := merle.NewThing(&can{})
-
-	thing.Cfg.Model = "can"
-	thing.Cfg.Name = "can0"
-	thing.Cfg.User = "merle"
-
-	flag.StringVar(&thing.Cfg.MotherHost, "rhost", "", "Remote host")
-	flag.StringVar(&thing.Cfg.MotherUser, "ruser", "merle", "Remote user")
-	flag.BoolVar(&thing.Cfg.IsPrime, "prime", false, "Run as Thing Prime")
-	flag.UintVar(&thing.Cfg.PortPublicTLS, "TLS", 0, "TLS port")
-
-	flag.Parse()
-
-	log.Fatalln(thing.Run())
 }
