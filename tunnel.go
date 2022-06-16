@@ -156,17 +156,22 @@ func (t *tunnel) create() {
 
 func (t *tunnel) start() {
 	if t.host == "" {
-		t.log.Println("Skipping tunnel; missing host")
+		t.log.Println("Skipping tunnel to mother; missing host")
 		return
 	}
 
 	if t.user == "" {
-		t.log.Println("Skipping tunnel; missing user")
+		t.log.Println("Skipping tunnel to mother; missing user")
 		return
 	}
 
 	if t.portRemote == 0 {
-		t.log.Println("Skipping tunnel; missing remote port")
+		t.log.Println("Skipping tunnel to mother; missing remote port")
+		return
+	}
+
+	if t.portPrivate == 0 {
+		t.log.Println("Skipping tunnel to mother; missing private port")
 		return
 	}
 
