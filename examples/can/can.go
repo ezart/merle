@@ -54,11 +54,18 @@ func (c *can) getState(p *merle.Packet) {
 	p.Marshal(&msg).Reply()
 }
 
+func (c *can) can(p *merle.Packet) {
+	if p.IsThing() {
+		log.Println("Save CAN msg")
+	}
+	p.Broadcast()
+}
+
 func (c *can) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdRun:     c.run,
+		merle.CmdRun:     merle.RunForever,
 		merle.GetState:   c.getState,
 		merle.ReplyState: nil,
-		"CAN":            merle.Broadcast,
+		"CAN":            c.can,
 	}
 }
