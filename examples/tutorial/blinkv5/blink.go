@@ -113,6 +113,7 @@ func main() {
 	thing.Cfg.User = "merle"
 
 	thing.Cfg.PortPublic = 80
+	thing.Cfg.PortPrivate = 8080
 	thing.Cfg.AssetsDir = "examples/tutorial/blinkv3/assets"
 	thing.Cfg.HtmlTemplateText = html
 
