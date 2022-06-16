@@ -80,7 +80,7 @@ func (b *bridge) changeStatus(child *Thing, sock *wireSocket, status string) {
 		Name:   child.name,
 		Status: child.status,
 	}
-	newPacket(b.thing.bus, nil, &spam).Broadcast()
+	//newPacket(b.thing.bus, nil, &spam).Broadcast()
 	b.bus.receive(newPacket(b.bus, sock, &spam))
 }
 

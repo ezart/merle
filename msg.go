@@ -10,6 +10,7 @@ import (
 
 // System messages.  System messages are prefixed with '_'.
 const (
+	CmdInit = "_CmdInit"
 	// All Things must handle CmdRun to do work.  CmdRun should run
 	// forever; it is an error for CmdRun handler to finish.  The callback
 	// merle.RunForever can be used if there is no more work beyond select{}.

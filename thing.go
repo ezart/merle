@@ -138,8 +138,14 @@ func (t *Thing) run() error {
 		t.bridge.start()
 	}
 
+	// Force receipt of CmdInit msg
+	msg := struct{ Msg string }{Msg: CmdInit}
+	t.bus.receive(newPacket(t.bus, nil, &msg))
+
+	t.web.public.activate()
+
 	// Force receipt of CmdRun msg
-	msg := struct{ Msg string }{Msg: CmdRun}
+	msg = struct{ Msg string }{Msg: CmdRun}
 	t.bus.receive(newPacket(t.bus, nil, &msg))
 
 	// Thing should wait forever in CmdRun handler, but just

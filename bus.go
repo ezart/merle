@@ -68,7 +68,7 @@ func (b *bus) receive(p *Packet) {
 
 	// Receiving ReplyState is a special case.  The socket is disabled
 	// for broadcasts until ReplyState is received.  This ensures other end
-	// doesn't receive unsolicited message before ReplyState.
+	// doesn't receive unsolicited messages before ReplyState.
 	if msg.Msg == ReplyState {
 		p.src.SetFlags(p.src.Flags() | bcast)
 	}
@@ -130,12 +130,14 @@ func (b *bus) broadcast(p *Packet) {
 	for sock := range b.sockets {
 		if sock == src {
 			// don't send back to src
+			b.thing.log.Println("SKIPPING SELF:", sock.Name())
 			continue
 		}
 		if sock.Flags()&bcast == 0 {
 			// Socket not ready for broadcasts.  Once a ReplyState
 			// message has been sent, the socket will be enabled
 			// for broadcasts.
+			b.thing.log.Println("SKIPPING BCAST NOT SET:", sock.Name())
 			continue
 		}
 		if sent == 0 {

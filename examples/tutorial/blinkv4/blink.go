@@ -54,6 +54,7 @@ func (b *blink) getState(p *merle.Packet) {
 
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
+		merle.CmdInit:  nil,
 		merle.CmdRun:   b.run,
 		merle.GetState: b.getState,
 	}

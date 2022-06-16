@@ -329,11 +329,19 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 		}
 	}
 
+/*
 	mux.HandleFunc("/ws/{id}", w.basicAuth(user, t.ws))
 	mux.HandleFunc("/{id}", w.basicAuth(user, t.home))
 	mux.HandleFunc("/", w.basicAuth(user, t.home))
+*/
 
 	return w
+}
+
+func (w *webPublic) activate() {
+	w.mux.HandleFunc("/ws/{id}", w.basicAuth(w.user, w.thing.ws))
+	w.mux.HandleFunc("/{id}", w.basicAuth(w.user, w.thing.home))
+	w.mux.HandleFunc("/", w.basicAuth(w.user, w.thing.home))
 }
 
 func (w *webPublic) start() {
