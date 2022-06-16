@@ -61,7 +61,6 @@ func newBridge(thing *Thing, portBegin, portEnd uint) *bridge {
 	}
 
 	b.ports = newPorts(thing, portBegin, portEnd, b.bridgeAttach)
-	b.thing.bus.subscribe(GetChildren, b.getChildren)
 	b.thing.web.handleBridgePortId()
 
 	return b
@@ -170,15 +169,6 @@ func (b *bridge) bridgeAttach(p *port, msg *MsgIdentity) error {
 	b.runChild(p, child)
 
 	return nil
-}
-
-func (b *bridge) getChildren(p *Packet) {
-	resp := MsgChildren{Msg: ReplyChildren}
-	for _, child := range b.children {
-		resp.Children = append(resp.Children, MsgChild{"", child.id,
-			child.model, child.name, child.status})
-	}
-	p.Marshal(&resp).Reply()
 }
 
 func (b *bridge) start() {

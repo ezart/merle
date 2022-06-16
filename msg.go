@@ -25,10 +25,6 @@ const (
 	// SpamStatus is sent when Thing's status (online, offline, etc)
 	// changes
 	SpamStatus = "_SpamStatus"
-	// GetChildren requests Bridge's children
-	GetChildren = "_GetChildren"
-	// Reply to GetChildren with MsgChildren
-	ReplyChildren = "_ReplyChildren"
 )
 
 // ReplyIdentity returns MsgIdentity response
@@ -49,20 +45,4 @@ type MsgSpamStatus struct {
 	Model  string
 	Name   string
 	Status string
-}
-
-// A Bridge child
-type MsgChild struct {
-	Msg    string
-	Id     string
-	Model  string
-	Name   string
-	Status string
-}
-
-// ReplyChildren returns MsgChildren, a list of the Bridge's children
-// (MsgChild)
-type MsgChildren struct {
-	Msg      string
-	Children []MsgChild
 }
