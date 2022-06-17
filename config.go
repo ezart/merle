@@ -4,47 +4,6 @@
 
 package merle
 
-// Thing base configuration
-type BaseConfig struct {
-	// [Optional] Thing's Id.  Ids are unique within an application
-	// to differentiate one Thing from another.  Id is optional; if
-	// Id is not given, a system-wide unique Id is assigned.
-	Id string
-	// Thing's Model.
-	Model string
-	// Thing's Name
-	Name string
-	// [Optional] system User.  If a User is given, any browser
-	// views of the Thing's home page  will prompt for user/passwd.
-	// HTTP Basic Authentication is used and the user/passwd given
-	// must match the system creditials for the User.  If no User
-	// is given, HTTP Basic Authentication is skipped; anyone can
-	// view the home page.
-	User string
-	// [Optional] If PortPublic is given, an HTTP web server is
-	// started on port PortPublic.  PortPublic is typically set to
-	// 80.  The HTTP web server runs the Thing's home page.
-	PortPublic uint
-	// [Optional] If PortPublicTLS is given, an HTTPS web server is
-	// started on port PortPublicTLS.  PortPublicTLS is typically
-	// set to 443.  The HTTPS web server will self-certify using a
-	// certificate from Let's Encrypt.  The public HTTPS server
-	// will securely run the Thing's home page.  If PortPublicTLS
-	// is given, PortPublic must be given.
-	PortPublicTLS uint
-	// [Optional] If PortPrivate is given, a HTTP server is
-	// started on port PortPrivate.  This HTTP server does not
-	// server up the Thing's home page but rather connects to
-	// Thing's Mother using a websocket over HTTP.
-	PortPrivate uint
-	// [Optional] Run as Thing-prime.
-	Prime bool
-	// [Required, if Prime] PortPrime port is used to create a
-	// tunnel from Thing to Thing-prime.  The port should be a
-	// reserved port in ip_local_reserved_ports.
-	PortPrime uint
-}
-
 // Thing configuration.  All Things share this configuration.
 type ThingConfig struct {
 	// [Optional] Thing's Id.  Ids are unique within an application
