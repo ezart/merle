@@ -66,7 +66,7 @@ func (t *Thing) runOnPort(p *port) error {
 		}
 	}
 
-	sock.SetFlags(sock.Flags() & ~bcast)
+	sock.SetFlags(sock.Flags() & ^bcast)
 	t.web.public.deactivate()
 
 	t.bus.unplug(sock)
