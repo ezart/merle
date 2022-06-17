@@ -10,6 +10,70 @@ import (
 	"os"
 )
 
+func (t *Thing) getPrimePort(id string) string {
+	t.primePort.Lock()
+	defer t.primePort.Unlock()
+
+	if t.primePort.tunnelConnected {
+		return "port busy"
+	}
+
+	if t.primeId != "" && t.primeId != id {
+		return "no ports available"
+	}
+
+	return fmt.Sprintf("%d", t.primePort.port)
+}
+
+func (t *Thing) runOnPort(p *port) error {
+	var name = fmt.Sprintf("port:%d", p.port)
+	var sock = newWebSocket(name, p.ws)
+	var pkt = newPacket(t.bus, sock, nil)
+	var msg = Msg{Msg: GetState}
+	var err error
+
+	t.log.Printf("Websocket opened [%s]", name)
+
+	t.bus.plugin(sock)
+
+	// Send GetState msg to Thing
+	t.log.Println("Sending:", msg)
+	sock.Send(pkt.Marshal(&msg))
+
+	for {
+		// new pkt for each rcv
+		var pkt = newPacket(t.bus, sock, nil)
+
+		pkt.msg, err = p.readMessage()
+		if err != nil {
+			t.log.Printf("Websocket closed [%s]", name)
+			break
+		}
+
+		pkt.Unmarshal(&msg)
+
+		t.bus.receive(pkt)
+
+		// Receiving ReplyState is a special case.  The socket is
+		// disabled for broadcasts until ReplyState is received.  This
+		// ensures the other end doesn't receive unsolicited broadcast
+		// messages before ReplyState. Also, It's safe now to handle
+		// html and ws requests on Thing Prime.
+
+		if msg.Msg == ReplyState {
+			sock.SetFlags(sock.Flags() | bcast)
+			t.web.public.activate()
+		}
+	}
+
+	sock.SetFlags(sock.Flags() & ~bcast)
+	t.web.public.deactivate()
+
+	t.bus.unplug(sock)
+
+	return err
+}
+
 func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
 	if msg.Model != t.Cfg.Model {
 		return fmt.Errorf("Model mis-match: want %s, got %s",
@@ -28,21 +92,6 @@ func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
 	t.setAssetsDir(t)
 
 	return t.runOnPort(p)
-}
-
-func (t *Thing) getPrimePort(id string) string {
-	t.primePort.Lock()
-	defer t.primePort.Unlock()
-
-	if t.primePort.tunnelConnected {
-		return "port busy"
-	}
-
-	if t.primeId != "" && t.primeId != id {
-		return "no ports available"
-	}
-
-	return fmt.Sprintf("%d", t.primePort.port)
 }
 
 func (t *Thing) runPrime() error {

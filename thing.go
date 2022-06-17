@@ -142,6 +142,9 @@ func (t *Thing) run() error {
 	msg := struct{ Msg string }{Msg: CmdInit}
 	t.bus.receive(newPacket(t.bus, nil, &msg))
 
+	// After CmdInit, It's safe now to handle html and ws requests.
+	// (CmdInit initialized Thing's state, so it's safe to receive
+	// GetState, even if that happens before CmdRun).
 	t.web.public.activate()
 
 	// Force receipt of CmdRun msg
@@ -149,7 +152,7 @@ func (t *Thing) run() error {
 	t.bus.receive(newPacket(t.bus, nil, &msg))
 
 	// Thing should wait forever in CmdRun handler, but just
-	// in case CmdRun handler exits, tear stuff down
+	// in case CmdRun handler exits, tear stuff down...
 
 	if t.isBridge {
 		t.bridge.stop()

@@ -98,6 +98,9 @@ func (b *bus) reply(p *Packet) {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
 
+	b.thing.log.Printf("Reply: %.80s", p.String())
+	p.src.Send(p)
+
 	// Sending ReplyState is a special case.  The socket is disabled for
 	// broadcasts until ReplyState is sent.  This ensures other end doesn't
 	// receive unsolicited broadcast messages before ReplyState.
@@ -105,9 +108,6 @@ func (b *bus) reply(p *Packet) {
 	if msg.Msg == ReplyState {
 		p.src.SetFlags(p.src.Flags() | bcast)
 	}
-
-	b.thing.log.Printf("Reply: %.80s", p.String())
-	p.src.Send(p)
 }
 
 // Broadcast sends the packet to each socket on the bus, expect to the

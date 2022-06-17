@@ -65,37 +65,6 @@ func (w *web) staticFiles(t *Thing) {
 
 var upgrader = websocket.Upgrader{}
 
-func (t *Thing) runOnPort(p *port) error {
-	var name = fmt.Sprintf("port:%d", p.port)
-	var sock = newWebSocket(name, p.ws)
-	var pkt = newPacket(t.bus, sock, nil)
-	var err error
-
-	t.log.Printf("Websocket opened [%s]", name)
-
-	t.bus.plugin(sock)
-
-	msg := struct{ Msg string }{Msg: GetState}
-	t.log.Println("Sending:", msg)
-	sock.Send(pkt.Marshal(&msg))
-
-	for {
-		// new pkt for each rcv
-		var pkt = newPacket(t.bus, sock, nil)
-
-		pkt.msg, err = p.readMessage()
-		if err != nil {
-			t.log.Printf("Websocket closed [%s]", name)
-			break
-		}
-		t.bus.receive(pkt)
-	}
-
-	t.bus.unplug(sock)
-
-	return err
-}
-
 // Open a WebSocket on Thing
 func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	var err error
@@ -329,12 +298,6 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 		}
 	}
 
-/*
-	mux.HandleFunc("/ws/{id}", w.basicAuth(user, t.ws))
-	mux.HandleFunc("/{id}", w.basicAuth(user, t.home))
-	mux.HandleFunc("/", w.basicAuth(user, t.home))
-*/
-
 	return w
 }
 
@@ -342,6 +305,9 @@ func (w *webPublic) activate() {
 	w.mux.HandleFunc("/ws/{id}", w.basicAuth(w.user, w.thing.ws))
 	w.mux.HandleFunc("/{id}", w.basicAuth(w.user, w.thing.home))
 	w.mux.HandleFunc("/", w.basicAuth(w.user, w.thing.home))
+}
+
+func (w *webPublic) deactivate() {
 }
 
 func (w *webPublic) start() {
