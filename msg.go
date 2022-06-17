@@ -28,6 +28,10 @@ const (
 	SpamStatus = "_SpamStatus"
 )
 
+type Msg struct {
+	Msg string
+}
+
 // ReplyIdentity returns MsgIdentity response
 type MsgIdentity struct {
 	Msg         string
@@ -38,6 +42,7 @@ type MsgIdentity struct {
 	StartupTime time.Time
 }
 
+/*
 // MsgSpamStatus is sent when Thing's status (online, offline, etc) changes.
 // Listeners can update their status and forward with p.Broadcast().
 type MsgSpamStatus struct {
@@ -47,3 +52,4 @@ type MsgSpamStatus struct {
 	Name   string
 	Status string
 }
+*/

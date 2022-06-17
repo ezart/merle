@@ -70,20 +70,6 @@ func (b *bridge) getChild(id string) *Thing {
 	return b.children[id]
 }
 
-func (b *bridge) changeStatus(child *Thing, sock *wireSocket, status string) {
-	child.status = status
-
-	spam := MsgSpamStatus{
-		Msg:    SpamStatus,
-		Id:     child.id,
-		Model:  child.model,
-		Name:   child.name,
-		Status: child.status,
-	}
-	//newPacket(b.thing.bus, nil, &spam).Broadcast()
-	b.bus.receive(newPacket(b.bus, sock, &spam))
-}
-
 func (b *bridge) runChild(p *port, child *Thing) {
 	bridgeSock := newWireSocket("bridge sock", b.bus, nil)
 	childSock := newWireSocket("child sock", child.bus, bridgeSock)
@@ -92,9 +78,7 @@ func (b *bridge) runChild(p *port, child *Thing) {
 	b.bus.plugin(childSock)
 	child.bus.plugin(bridgeSock)
 
-	b.changeStatus(child, childSock, "online")
 	child.runOnPort(p)
-	b.changeStatus(child, childSock, "offline")
 
 	child.bus.unplug(bridgeSock)
 	b.bus.unplug(childSock)

@@ -63,15 +63,9 @@ func (b *bus) subscribe(msg string, f func(*Packet)) {
 // received message, the "default" subscriber matches.  If still no matches,
 // the packet is (silently) dropped.
 func (b *bus) receive(p *Packet) {
-	msg := struct{ Msg string }{}
-	p.Unmarshal(&msg)
+	var msg Msg
 
-	// Receiving ReplyState is a special case.  The socket is disabled
-	// for broadcasts until ReplyState is received.  This ensures other end
-	// doesn't receive unsolicited messages before ReplyState.
-	if msg.Msg == ReplyState {
-		p.src.SetFlags(p.src.Flags() | bcast)
-	}
+	p.Unmarshal(&msg)
 
 	f, match := b.subs[msg.Msg]
 	if match {
@@ -104,9 +98,10 @@ func (b *bus) reply(p *Packet) {
 	msg := struct{ Msg string }{}
 	p.Unmarshal(&msg)
 
-	// Sending ReplyState is a special case.  The socket is disabled
-	// for broadcasts until ReplyState is sent.  This ensures other end
-	// doesn't receive unsolicited message before ReplyState.
+	// Sending ReplyState is a special case.  The socket is disabled for
+	// broadcasts until ReplyState is sent.  This ensures other end doesn't
+	// receive unsolicited broadcast messages before ReplyState.
+
 	if msg.Msg == ReplyState {
 		p.src.SetFlags(p.src.Flags() | bcast)
 	}

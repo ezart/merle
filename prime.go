@@ -10,19 +10,6 @@ import (
 	"os"
 )
 
-func (t *Thing) changeStatus(status string) {
-	t.status = status
-
-	spam := MsgSpamStatus{
-		Msg:    SpamStatus,
-		Id:     t.id,
-		Model:  t.model,
-		Name:   t.name,
-		Status: t.status,
-	}
-	newPacket(t.bus, nil, &spam).Broadcast()
-}
-
 func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
 	if msg.Model != t.Cfg.Model {
 		return fmt.Errorf("Model mis-match: want %s, got %s",
@@ -40,11 +27,7 @@ func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
 
 	t.setAssetsDir(t)
 
-	t.changeStatus("online")
-	err := t.runOnPort(p)
-	t.changeStatus("offline")
-
-	return err
+	return t.runOnPort(p)
 }
 
 func (t *Thing) getPrimePort(id string) string {
