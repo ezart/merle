@@ -111,13 +111,13 @@ const html = `<html lang="en">
 	</head>
 	<body>
 		<div>
-			<input type="checkbox" id="relay0" onclick='relayClick(this, 0)'>
+			<input type="checkbox" id="relay0" disabled=true onclick='relayClick(this, 0)'>
 			<label for="relay0"> Relay 0 </label>
-			<input type="checkbox" id="relay1" onclick='relayClick(this, 1)'>
+			<input type="checkbox" id="relay1" disabled=true onclick='relayClick(this, 1)'>
 			<label for="relay1"> Relay 1 </label>
-			<input type="checkbox" id="relay2" onclick='relayClick(this, 2)'>
+			<input type="checkbox" id="relay2" disabled=true onclick='relayClick(this, 2)'>
 			<label for="relay2"> Relay 2 </label>
-			<input type="checkbox" id="relay3" onclick='relayClick(this, 3)'>
+			<input type="checkbox" id="relay3" disabled=true onclick='relayClick(this, 3)'>
 			<label for="relay3"> Relay 3 </label>
 		</div>
 
@@ -128,28 +128,52 @@ const html = `<html lang="en">
 			relay[2] = document.getElementById("relay2")
 			relay[3] = document.getElementById("relay3")
 
-			conn = new WebSocket("{{.WebSocket}}")
+			var conn
 
-			conn.onopen = function(evt) {
-				conn.send(JSON.stringify({Msg: "_GetState"}))
-			}
+			function connect() {
+				conn = new WebSocket("{{.WebSocket}}")
 
-			conn.onmessage = function(evt) {
-				msg = JSON.parse(evt.data)
-				console.log('msg', msg)
+				conn.onopen = function(evt) {
+					conn.send(JSON.stringify({Msg: "_GetState"}))
+				}
 
-				switch(msg.Msg) {
-				case "_ReplyState":
-					relay[0].checked = msg.State[0]
-					relay[1].checked = msg.State[1]
-					relay[2].checked = msg.State[2]
-					relay[3].checked = msg.State[3]
-					break
-				case "Click":
-					relay[msg.Relay].checked = msg.State
-					break
+				conn.onclose = function(evt) {
+					console.log('websocket close', evt.reason)
+					relay[0].disabled = true
+					relay[1].disabled = true
+					relay[2].disabled = true
+					relay[3].disabled = true
+					setTimeout(connect, 1000)
+				}
+
+				conn.onerror = function(err) {
+					console.log('websocket error', err.message)
+					conn.close()
+				}
+
+				conn.onmessage = function(evt) {
+					msg = JSON.parse(evt.data)
+					console.log('msg', msg)
+
+					switch(msg.Msg) {
+					case "_ReplyState":
+						relay[0].checked = msg.State[0]
+						relay[1].checked = msg.State[1]
+						relay[2].checked = msg.State[2]
+						relay[3].checked = msg.State[3]
+						relay[0].disabled = false
+						relay[1].disabled = false
+						relay[2].disabled = false
+						relay[3].disabled = false
+						break
+					case "Click":
+						relay[msg.Relay].checked = msg.State
+						break
+					}
 				}
 			}
+
+			connect()
 
 			function relayClick(relay, num) {
 				conn.send(JSON.stringify({Msg: "Click", Relay: num,
