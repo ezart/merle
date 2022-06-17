@@ -99,6 +99,8 @@ type Thing struct {
 	isPrime     bool
 	primePort   *port
 	primeId     string
+	bridgeSock  *wireSocket
+	childSock   *wireSocket
 	log         *log.Logger
 }
 

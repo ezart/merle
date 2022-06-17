@@ -70,20 +70,6 @@ func (b *bridge) getChild(id string) *Thing {
 	return b.children[id]
 }
 
-func (b *bridge) runChild(p *port, child *Thing) {
-	bridgeSock := newWireSocket("bridge sock", b.bus, nil)
-	childSock := newWireSocket("child sock", child.bus, bridgeSock)
-	bridgeSock.opposite = childSock
-
-	b.bus.plugin(childSock)
-	child.bus.plugin(bridgeSock)
-
-	child.runOnPort(p)
-
-	child.bus.unplug(bridgeSock)
-	b.bus.unplug(childSock)
-}
-
 func (b *bridge) newChild(id, model, name string) (*Thing, error) {
 	var thinger Thinger
 
@@ -128,31 +114,41 @@ func (b *bridge) newChild(id, model, name string) (*Thing, error) {
 	return child, nil
 }
 
+func (b *bridge) bridgeReady(child *Thing) {
+	child.bridgeSock = newWireSocket("bridge sock", b.bus, nil)
+	child.childSock = newWireSocket("child sock", child.bus, child.bridgeSock)
+	child.bridgeSock.opposite = child.childSock
+
+	b.bus.plugin(child.childSock)
+	child.bus.plugin(child.bridgeSock)
+
+	child.web.public.activate()
+}
+
+func (b *bridge) bridgeCleanup(child *Thing) {
+	child.web.public.deactivate()
+	child.bus.unplug(child.bridgeSock)
+	b.bus.unplug(child.childSock)
+}
+
 func (b *bridge) bridgeAttach(p *port, msg *MsgIdentity) error {
 	var err error
 
-	child := b.getChild(msg.Id)
-
-	if child == nil {
-		child, err = b.newChild(msg.Id, msg.Model, msg.Name)
-		if err != nil {
-			return errors.Wrap(err, "Bridge attach creating new child")
-		}
-		b.children[msg.Id] = child
-	} else {
-		if child.model != msg.Model {
-			return fmt.Errorf("Bridge attach model mismatch")
-		}
-		if child.name != msg.Name {
-			return fmt.Errorf("Bridge attach name mismatch")
-		}
+	if _, ok := b.children[msg.Id]; ok {
+		return fmt.Errorf("Child already connected with ID %s; aborting",
+			msg.Id)
 	}
+
+	child, err := b.newChild(msg.Id, msg.Model, msg.Name)
+	if err != nil {
+		return errors.Wrap(err, "Bridge attach creating new child")
+	}
+
+	b.children[msg.Id] = child
 
 	child.startupTime = msg.StartupTime
 
-	b.runChild(p, child)
-
-	return nil
+	return child.runOnPort(p, b.bridgeReady, b.bridgeCleanup)
 }
 
 func (b *bridge) start() {

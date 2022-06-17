@@ -25,7 +25,10 @@ func (t *Thing) getPrimePort(id string) string {
 	return fmt.Sprintf("%d", t.primePort.port)
 }
 
-func (t *Thing) runOnPort(p *port) error {
+type readyCb func(*Thing)
+type cleanupCb func(*Thing)
+
+func (t *Thing) runOnPort(p *port, ready readyCb, cleanup cleanupCb) error {
 	var name = fmt.Sprintf("port:%d", p.port)
 	var sock = newWebSocket(name, p.ws)
 	var pkt = newPacket(t.bus, sock, nil)
@@ -62,16 +65,23 @@ func (t *Thing) runOnPort(p *port) error {
 
 		if msg.Msg == ReplyState {
 			sock.SetFlags(sock.Flags() | bcast)
-			t.web.public.activate()
+			ready(t)
 		}
 	}
 
-	sock.SetFlags(sock.Flags() & ^bcast)
-	t.web.public.deactivate()
+	cleanup(t)
 
 	t.bus.unplug(sock)
 
 	return err
+}
+
+func (t *Thing) primeReady(self *Thing) {
+	t.web.public.activate()
+}
+
+func (t *Thing) primeCleanup(self *Thing) {
+	t.web.public.deactivate()
 }
 
 func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
@@ -91,7 +101,7 @@ func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
 
 	t.setAssetsDir(t)
 
-	return t.runOnPort(p)
+	return t.runOnPort(p, t.primeReady, t.primeCleanup)
 }
 
 func (t *Thing) runPrime() error {
