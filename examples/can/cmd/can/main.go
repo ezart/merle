@@ -15,7 +15,6 @@ func main() {
 	thing.Cfg.Name = "canny"
 	thing.Cfg.User = "merle"
 
-	thing.Cfg.PortPublic = 80
 	thing.Cfg.PortPrivate = 8080
 
 	flag.StringVar(&can.Iface, "iface", "can0", "CAN interface")

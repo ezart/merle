@@ -6,6 +6,7 @@ import (
 	"github.com/go-daq/canbus"
 	"github.com/merliot/merle"
 	"log"
+	"os/exec"
 )
 
 type can struct {
@@ -22,6 +23,14 @@ type canMsg struct {
 	Msg string
 	Id  uint32
 	Data []byte
+}
+
+func (c *can) init(p *merle.Packet) {
+	args := []string{
+		"link", "set", c.Iface, "up",
+		"type", "can", "bitrate", "500000",
+	}
+	exec.Command("/sbin/ip", args...).Run()
 }
 
 func (c *can) run(p *merle.Packet) {
@@ -63,7 +72,8 @@ func (c *can) can(p *merle.Packet) {
 
 func (c *can) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdRun:     merle.RunForever,
+		merle.CmdInit:    c.init,
+		merle.CmdRun:     c.run,
 		merle.GetState:   c.getState,
 		merle.ReplyState: nil,
 		"CAN":            c.can,
