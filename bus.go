@@ -96,7 +96,7 @@ func (b *bus) reply(p *Packet) {
 		return
 	}
 
-	msg := struct{ Msg string }{}
+	msg := Msg{}
 	p.Unmarshal(&msg)
 
 	b.thing.log.Printf("Reply: %.80s", p.String())

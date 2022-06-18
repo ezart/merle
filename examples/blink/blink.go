@@ -52,7 +52,7 @@ func (b *blink) resume(p *merle.Packet) {
 }
 
 func (b *blink) runPrime(p *merle.Packet) {
-	msg := struct{ Msg string }{Msg: "GetPaused"}
+	msg := merle.Msg{Msg: "GetPaused"}
 	p.Marshal(&msg).Reply()
 }
 

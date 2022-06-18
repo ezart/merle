@@ -121,7 +121,7 @@ func testDone(t *testing.T, thing *Thing, httpPort uint) {
 	}
 
 	// Send msg to shutdown device
-	var msg = struct{ Msg string }{Msg: "quit"}
+	var msg = Msg{Msg: "quit"}
 
 	err = p.ws.WriteJSON(msg)
 	if err != nil {

@@ -72,7 +72,7 @@ func (p *Packet) Id() string {
 //	}
 //
 func Broadcast(p *Packet) {
-	msg := struct{ Msg string }{}
+	msg := Msg{}
 	p.Unmarshal(&msg)
 	if msg.Msg == CmdRun {
 		return
@@ -88,7 +88,7 @@ func Broadcast(p *Packet) {
 //	}
 //
 func RunForever(p *Packet) {
-	msg := struct{ Msg string }{}
+	msg := Msg{}
 	p.Unmarshal(&msg)
 	if msg.Msg != CmdRun {
 		return

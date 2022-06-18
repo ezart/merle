@@ -135,7 +135,7 @@ func (t *Thing) getChild(id string) *Thing {
 func (t *Thing) run() error {
 
 	// Force receipt of CmdInit msg
-	msg := struct{ Msg string }{Msg: CmdInit}
+	msg := Msg{Msg: CmdInit}
 	t.bus.receive(newPacket(t.bus, nil, &msg))
 
 	// After CmdInit, It's safe now to handle html and ws requests.
@@ -152,7 +152,7 @@ func (t *Thing) run() error {
 	}
 
 	// Force receipt of CmdRun msg
-	msg = struct{ Msg string }{Msg: CmdRun}
+	msg = Msg{Msg: CmdRun}
 	t.bus.receive(newPacket(t.bus, nil, &msg))
 
 	// Thing should wait forever in CmdRun handler, but just

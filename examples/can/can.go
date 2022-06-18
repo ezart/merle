@@ -50,7 +50,7 @@ func (c *can) run(p *merle.Packet) {
 }
 
 func (c *can) getState(p *merle.Packet) {
-	msg := struct{ Msg string }{Msg: merle.ReplyState}
+	msg := merle.Msg{Msg: merle.ReplyState}
 	p.Marshal(&msg).Reply()
 }
 
