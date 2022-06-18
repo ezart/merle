@@ -130,8 +130,8 @@ func (b *bus) broadcast(p *Packet) {
 		}
 		if sock.Flags()&bcast == 0 {
 			// Socket not ready for broadcasts.  Once a ReplyState
-			// message has been sent, the socket will be enabled
-			// for broadcasts.
+			// message has been processed, the socket will be
+			// enabled for broadcasts.
 			b.thing.log.Println("SKIPPING BCAST NOT SET:", sock.Name())
 			continue
 		}
@@ -148,10 +148,12 @@ func (b *bus) broadcast(p *Packet) {
 }
 
 func (b *bus) close() {
-	b.sockLock.RLock()
-	defer b.sockLock.RUnlock()
+	b.thing.log.Println("CLOSING BUS")
+	b.sockLock.Lock()
+	defer b.sockLock.Unlock()
 
 	for sock := range b.sockets {
 		sock.Close()
+		delete(b.sockets, sock)
 	}
 }

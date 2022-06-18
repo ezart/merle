@@ -28,7 +28,7 @@ func (t *Thing) getPrimePort(id string) string {
 type readyCb func(*Thing)
 type cleanupCb func(*Thing)
 
-func (t *Thing) runOnPort(p *port, ready readyCb, cleanup cleanupCb) error {
+func (t *Thing) runOnPort(p *port, ready readyCb, cleanup cleanupCb) {
 	var name = fmt.Sprintf("port:%d", p.port)
 	var sock = newWebSocket(name, p.ws)
 	var pkt = newPacket(t.bus, sock, nil)
@@ -60,28 +60,28 @@ func (t *Thing) runOnPort(p *port, ready readyCb, cleanup cleanupCb) error {
 		// Receiving ReplyState is a special case.  The socket is
 		// disabled for broadcasts until ReplyState is received.  This
 		// ensures the other end doesn't receive unsolicited broadcast
-		// messages before ReplyState. Also, It's safe now to handle
-		// html and ws requests on Thing Prime.
+		// messages before ReplyState.
 
 		if msg.Msg == ReplyState {
 			sock.SetFlags(sock.Flags() | bcast)
+			t.log.Println("READY")
 			ready(t)
 		}
 	}
 
-	cleanup(t)
-
 	t.bus.unplug(sock)
 
-	return err
+	t.log.Println("CLEANUP")
+	cleanup(t)
 }
 
 func (t *Thing) primeReady(self *Thing) {
-	t.web.public.activate()
+	t.web.public.start()
 }
 
 func (t *Thing) primeCleanup(self *Thing) {
-	t.web.public.deactivate()
+	t.web.public.stop()
+	t.bus.close()
 }
 
 func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
@@ -101,11 +101,12 @@ func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
 
 	t.setAssetsDir(t)
 
-	return t.runOnPort(p, t.primeReady, t.primeCleanup)
+	t.runOnPort(p, t.primeReady, t.primeCleanup)
+
+	return nil
 }
 
-func (t *Thing) runPrime() error {
-	t.web.start()
-	t.tunnel.start()
+func (t *Thing) primeRun() error {
+	t.web.private.start()
 	return t.primePort.run()
 }

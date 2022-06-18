@@ -240,7 +240,7 @@ func (t *Thing) Run() error {
 
 	switch {
 	case t.isPrime:
-		return t.runPrime()
+		return t.primeRun()
 	default:
 		return t.run()
 	}

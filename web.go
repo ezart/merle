@@ -302,12 +302,10 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 }
 
 func (w *webPublic) activate() {
+	w.thing.log.Println("ACTIVATING PUBLIC WEB")
 	w.mux.HandleFunc("/ws/{id}", w.basicAuth(w.user, w.thing.ws))
 	w.mux.HandleFunc("/{id}", w.basicAuth(w.user, w.thing.home))
 	w.mux.HandleFunc("/", w.basicAuth(w.user, w.thing.home))
-}
-
-func (w *webPublic) deactivate() {
 }
 
 func (w *webPublic) start() {
@@ -358,6 +356,7 @@ func (w *webPublic) start() {
 }
 
 func (w *webPublic) stop() {
+	w.thing.log.Println("STOPPING PUBLIC WEB")
 	if w.port != 0 {
 		w.server.Shutdown(context.Background())
 	}
