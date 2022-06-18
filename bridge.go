@@ -131,17 +131,22 @@ func (b *bridge) bridgeCleanup(child *Thing) {
 func (b *bridge) bridgeAttach(p *port, msg *MsgIdentity) error {
 	var err error
 
-	if _, ok := b.children[msg.Id]; ok {
-		return fmt.Errorf("Child already connected with ID %s; aborting",
-			msg.Id)
-	}
+	child := b.getChild(msg.Id)
 
-	child, err := b.newChild(msg.Id, msg.Model, msg.Name)
-	if err != nil {
-		return errors.Wrap(err, "Bridge attach creating new child")
+	if child == nil {
+		child, err = b.newChild(msg.Id, msg.Model, msg.Name)
+		if err != nil {
+			return errors.Wrap(err, "Bridge attach creating new child")
+		}
+		b.children[msg.Id] = child
+	} else {
+		if child.model != msg.Model {
+			return fmt.Errorf("Bridge attach model mismatch")
+		}
+		if child.name != msg.Name {
+			return fmt.Errorf("Bridge attach name mismatch")
+		}
 	}
-
-	b.children[msg.Id] = child
 
 	child.startupTime = msg.StartupTime
 
