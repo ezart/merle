@@ -187,7 +187,7 @@ func main() {
 	thing := merle.NewThing(&thing{})
 
 	thing.Cfg.Model = "relays"
-	thing.Cfg.Name = "relayforhope"
+	thing.Cfg.Name = "relaysforhope"
 	thing.Cfg.User = "merle"
 	thing.Cfg.HtmlTemplateText = html
 

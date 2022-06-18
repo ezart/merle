@@ -167,8 +167,6 @@ func (t *Thing) run() error {
 	t.web.private.stop()
 	t.web.public.stop()
 
-	t.bus.close()
-
 	return fmt.Errorf("CmdRun didn't run forever")
 }
 

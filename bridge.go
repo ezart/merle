@@ -145,9 +145,7 @@ func (b *bridge) bridgeAttach(p *port, msg *MsgIdentity) error {
 
 	child.startupTime = msg.StartupTime
 
-	child.runOnPort(p, b.bridgeReady, b.bridgeCleanup)
-
-	return nil
+	return child.runOnPort(p, b.bridgeReady, b.bridgeCleanup)
 }
 
 func (b *bridge) start() {

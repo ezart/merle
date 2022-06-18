@@ -222,14 +222,17 @@ func (w *webPublic) basicAuth(authUser string, next http.HandlerFunc) http.Handl
 type webPublic struct {
 	thing *Thing
 	sync.WaitGroup
-	user      string
-	port      uint
-	portTLS   uint
-	mux       *mux.Router
-	server    *http.Server
-	serverTLS *http.Server
-	templ     *template.Template
-	templErr  error
+	user        string
+	port        uint
+	portTLS     uint
+	addr        string
+	addrTLS     string
+	mux         *mux.Router
+	server      *http.Server
+	serverTLS   *http.Server
+	certManager autocert.Manager
+	templ       *template.Template
+	templErr    error
 }
 
 func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
@@ -241,36 +244,52 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 		Cache:  autocert.DirCache("./certs"),
 	}
 
-	mux := mux.NewRouter()
+	w := &webPublic{
+		thing:       t,
+		user:        user,
+		port:        port,
+		portTLS:     portTLS,
+		addr:        addr,
+		addrTLS:     addrTLS,
+		certManager: certManager,
+	}
 
-	server := &http.Server{
-		Addr:    addr,
-		Handler: mux,
+	w.newServer()
+
+	w.setHtmlTemplate()
+
+	return w
+}
+
+func (w *webPublic) newServer() {
+	w.mux = mux.NewRouter()
+
+	w.mux.HandleFunc("/ws/{id}", w.basicAuth(w.user, w.thing.ws))
+	w.mux.HandleFunc("/{id}", w.basicAuth(w.user, w.thing.home))
+	w.mux.HandleFunc("/", w.basicAuth(w.user, w.thing.home))
+
+	w.server = &http.Server{
+		Addr:    w.addr,
+		Handler: w.mux,
 		// TODO add timeouts
 	}
 
-	if portTLS != 0 {
-		server.Handler = certManager.HTTPHandler(nil)
+	if w.portTLS != 0 {
+		w.server.Handler = w.certManager.HTTPHandler(nil)
 	}
 
-	serverTLS := &http.Server{
-		Addr:    addrTLS,
-		Handler: mux,
+	w.serverTLS = &http.Server{
+		Addr:    w.addrTLS,
+		Handler: w.mux,
 		// TODO add timeouts
 		TLSConfig: &tls.Config{
-			GetCertificate: certManager.GetCertificate,
+			GetCertificate: w.certManager.GetCertificate,
 		},
 	}
+}
 
-	w := &webPublic{
-		thing:     t,
-		user:      user,
-		port:      port,
-		portTLS:   portTLS,
-		mux:       mux,
-		server:    server,
-		serverTLS: serverTLS,
-	}
+func (w *webPublic) setHtmlTemplate() {
+	t := w.thing
 
 	if t.Cfg.HtmlTemplateText != "" {
 		w.templ, w.templErr = template.New("").Parse(t.Cfg.HtmlTemplateText)
@@ -286,15 +305,17 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 			}
 		}
 	}
+}
 
-	w.mux.HandleFunc("/ws/{id}", w.basicAuth(w.user, w.thing.ws))
-	w.mux.HandleFunc("/{id}", w.basicAuth(w.user, w.thing.home))
-	w.mux.HandleFunc("/", w.basicAuth(w.user, w.thing.home))
-
-	return w
+func (w *webPublic) httpShutdown() {
+	// Close all WebSocket connections on bus
+	w.thing.bus.close()
+	w.Done()
+	w.thing.log.Println("HTTP SHUTDOWN done")
 }
 
 func (w *webPublic) start() {
+	w.thing.log.Println("STARTING public web")
 	if w.port == 0 {
 		w.thing.log.Println("Skipping public HTTP server; port is zero")
 		return
@@ -306,7 +327,7 @@ func (w *webPublic) start() {
 	}
 
 	w.Add(2)
-	w.server.RegisterOnShutdown(w.Done)
+	w.server.RegisterOnShutdown(w.httpShutdown)
 
 	w.thing.log.Println("Public HTTP server listening on port", w.server.Addr)
 
@@ -315,6 +336,7 @@ func (w *webPublic) start() {
 			w.thing.log.Fatalln("Public HTTP server failed:", err)
 		}
 		w.Done()
+		w.thing.log.Println("WAITGROUP HTTP done")
 	}()
 
 	if w.portTLS == 0 {
@@ -338,17 +360,24 @@ func (w *webPublic) start() {
 			w.thing.log.Fatalln("Public HTTPS server failed:", err)
 		}
 		w.Done()
+		w.thing.log.Println("WAITGROUP HTTPS done")
 	}()
 }
 
 func (w *webPublic) stop() {
-	if w.port != 0 {
-		w.server.Shutdown(context.Background())
-	}
 	if w.portTLS != 0 {
 		w.serverTLS.Shutdown(context.Background())
 	}
+	if w.port != 0 {
+		w.server.Shutdown(context.Background())
+	}
+	w.thing.log.Println("STOPPING web public...waiting for waitgroup")
 	w.Wait()
+	w.thing.log.Println("STOPPING web public...waitgroup done")
+
+	// We have to create a new server each time we shut one down.
+	// (You can't restart a server once it's shutdown).
+	w.newServer()
 }
 
 // Thing's private HTTP server
