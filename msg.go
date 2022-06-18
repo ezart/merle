@@ -23,9 +23,8 @@ const (
 	// GetState TODO doc
 	GetState   = "_GetState"
 	ReplyState = "_ReplyState"
-	// SpamStatus is sent when Thing's status (online, offline, etc)
-	// changes
-	SpamStatus = "_SpamStatus"
+	CmdBridgeConnect = "_CmdBridgeConnect"
+	CmdBridgeDisconnect = "_CmdBridgeDisconnect"
 )
 
 type Msg struct {

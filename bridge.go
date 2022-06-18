@@ -121,9 +121,15 @@ func (b *bridge) bridgeReady(child *Thing) {
 
 	b.bus.plugin(child.childSock)
 	child.bus.plugin(child.bridgeSock)
+
+	msg := Msg{Msg: CmdBridgeConnect}
+	b.bus.receive(newPacket(b.bus, child.childSock, &msg))
 }
 
 func (b *bridge) bridgeCleanup(child *Thing) {
+	msg := Msg{Msg: CmdBridgeDisconnect}
+	b.bus.receive(newPacket(b.bus, child.childSock, &msg))
+
 	child.bus.unplug(child.bridgeSock)
 	b.bus.unplug(child.childSock)
 }

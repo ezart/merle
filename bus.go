@@ -59,9 +59,10 @@ func (b *bus) subscribe(msg string, f func(*Packet)) {
 	b.subs[msg] = f
 }
 
-// Receive matches the packet against subscribers.  If no subscribers match the
-// received message, the "default" subscriber matches.  If still no matches,
-// the packet is (silently) dropped.
+// Receive matches the packet against subscribers and calls the matching
+// subscriber handler.  If no subscribers match the received message, the
+// "default" subscriber matches.  If still no matches, the packet is (silently)
+// dropped.
 func (b *bus) receive(p *Packet) {
 	var msg Msg
 

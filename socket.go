@@ -19,6 +19,8 @@ type socketer interface {
 	Name() string
 	Flags() uint32
 	SetFlags(uint32)
+	// Packet src thing ID
+	Id() string
 }
 
 // Wire socket
@@ -51,4 +53,8 @@ func (s *wireSocket) Flags() uint32 {
 
 func (s *wireSocket) SetFlags(flags uint32) {
 	s.flags = flags
+}
+
+func (s *wireSocket) Id() string {
+	return s.bus.thing.id
 }

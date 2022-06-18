@@ -485,3 +485,7 @@ func (ws *webSocket) Flags() uint32 {
 func (ws *webSocket) SetFlags(flags uint32) {
 	ws.flags = flags
 }
+
+func (ws *webSocket) Id() string {
+	return "???"
+}
