@@ -151,9 +151,9 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if t.web.public.templ == nil {
+	if t.web.public.templErr != nil {
 		http.Error(w, t.web.public.templErr.Error(), http.StatusNotFound)
-	} else {
+	} else if t.web.public.templ != nil {
 		t.web.public.templ.Execute(w, t.templateParams(r))
 	}
 }
@@ -296,13 +296,11 @@ func (w *webPublic) setHtmlTemplate() {
 		if w.templErr != nil {
 			t.log.Println("Error parsing HtmlTemplateText:", w.templErr)
 		}
-	} else {
-		if t.Cfg.HtmlTemplate != "" {
-			file := path.Join(t.Cfg.AssetsDir, t.Cfg.HtmlTemplate)
-			w.templ, w.templErr = template.ParseFiles(file)
-			if w.templErr != nil {
-				t.log.Println("Error parsing HtmlTemplate:", w.templErr)
-			}
+	} else if t.Cfg.HtmlTemplate != "" {
+		file := path.Join(t.Cfg.AssetsDir, t.Cfg.HtmlTemplate)
+		w.templ, w.templErr = template.ParseFiles(file)
+		if w.templErr != nil {
+			t.log.Println("Error parsing HtmlTemplate:", w.templErr)
 		}
 	}
 }
