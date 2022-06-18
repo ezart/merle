@@ -23,7 +23,6 @@ import (
 	"path"
 	"strconv"
 	"sync"
-	"time"
 )
 
 type web struct {
@@ -37,16 +36,6 @@ func newWeb(t *Thing, portPublic, portPublicTLS, portPrivate uint,
 		public:  newWebPublic(t, portPublic, portPublicTLS, user),
 		private: newWebPrivate(t, portPrivate),
 	}
-}
-
-func (w *web) start() {
-	w.public.start()
-	w.private.start()
-}
-
-func (w *web) stop() {
-	w.private.stop()
-	w.public.stop()
 }
 
 func (w *web) handlePrimePortId() {
@@ -298,14 +287,11 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 		}
 	}
 
-	return w
-}
-
-func (w *webPublic) activate() {
-	w.thing.log.Println("ACTIVATING PUBLIC WEB")
 	w.mux.HandleFunc("/ws/{id}", w.basicAuth(w.user, w.thing.ws))
 	w.mux.HandleFunc("/{id}", w.basicAuth(w.user, w.thing.home))
 	w.mux.HandleFunc("/", w.basicAuth(w.user, w.thing.home))
+
+	return w
 }
 
 func (w *webPublic) start() {
@@ -356,7 +342,6 @@ func (w *webPublic) start() {
 }
 
 func (w *webPublic) stop() {
-	w.thing.log.Println("STOPPING PUBLIC WEB")
 	if w.port != 0 {
 		w.server.Shutdown(context.Background())
 	}
@@ -459,7 +444,7 @@ func (ws *webSocket) Send(p *Packet) error {
 }
 
 func (ws *webSocket) Close() {
-	ws.conn.WriteControl(websocket.CloseMessage, nil, time.Now())
+	ws.conn.Close()
 }
 
 func (ws *webSocket) Name() string {

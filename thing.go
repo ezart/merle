@@ -133,21 +133,23 @@ func (t *Thing) getChild(id string) *Thing {
 }
 
 func (t *Thing) run() error {
-	t.web.start()
-	t.tunnel.start()
-
-	if t.isBridge {
-		t.bridge.start()
-	}
 
 	// Force receipt of CmdInit msg
 	msg := struct{ Msg string }{Msg: CmdInit}
 	t.bus.receive(newPacket(t.bus, nil, &msg))
 
 	// After CmdInit, It's safe now to handle html and ws requests.
-	// (CmdInit initialized Thing's state, so it's safe to receive
+	// (CmdInit initializes Thing's state, so it's safe to receive
 	// GetState, even if that happens before CmdRun).
-	t.web.public.activate()
+
+	t.web.public.start()
+	t.web.private.start()
+
+	t.tunnel.start()
+
+	if t.isBridge {
+		t.bridge.start()
+	}
 
 	// Force receipt of CmdRun msg
 	msg = struct{ Msg string }{Msg: CmdRun}
@@ -161,7 +163,9 @@ func (t *Thing) run() error {
 	}
 
 	t.tunnel.stop()
-	t.web.stop()
+
+	t.web.private.stop()
+	t.web.public.stop()
 
 	t.bus.close()
 

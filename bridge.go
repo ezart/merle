@@ -121,12 +121,9 @@ func (b *bridge) bridgeReady(child *Thing) {
 
 	b.bus.plugin(child.childSock)
 	child.bus.plugin(child.bridgeSock)
-
-	child.web.public.activate()
 }
 
 func (b *bridge) bridgeCleanup(child *Thing) {
-	child.web.public.deactivate()
 	child.bus.unplug(child.bridgeSock)
 	b.bus.unplug(child.childSock)
 }
