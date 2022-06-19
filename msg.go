@@ -34,21 +34,8 @@ type Msg struct {
 // ReplyIdentity returns MsgIdentity response
 type MsgIdentity struct {
 	Msg         string
-	Status      string
 	Id          string
 	Model       string
 	Name        string
 	StartupTime time.Time
 }
-
-/*
-// MsgSpamStatus is sent when Thing's status (online, offline, etc) changes.
-// Listeners can update their status and forward with p.Broadcast().
-type MsgSpamStatus struct {
-	Msg    string
-	Id     string
-	Model  string
-	Name   string
-	Status string
-}
-*/

@@ -116,7 +116,6 @@ func (t *Thing) templateParams(r *http.Request) map[string]interface{} {
 
 	return map[string]interface{}{
 		"Host":   r.Host,
-		"Status": t.status,
 		"Id":     t.id,
 		"Model":  t.model,
 		"Name":   t.name,

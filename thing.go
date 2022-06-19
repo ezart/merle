@@ -86,7 +86,6 @@ type Thinger interface {
 type Thing struct {
 	Cfg         ThingConfig
 	thinger     Thinger
-	status      string
 	id          string
 	model       string
 	name        string
@@ -116,7 +115,6 @@ func NewThing(thinger Thinger) *Thing {
 func (t *Thing) getIdentity(p *Packet) {
 	resp := MsgIdentity{
 		Msg:         ReplyIdentity,
-		Status:      t.status,
 		Id:          t.id,
 		Model:       t.model,
 		Name:        t.name,
@@ -192,7 +190,6 @@ func (t *Thing) build(full bool) error {
 	prefix := "[" + id + "] "
 	t.log = log.New(os.Stderr, prefix, 0)
 
-	t.status = "online"
 	t.id = id
 	t.model = t.Cfg.Model
 	t.name = t.Cfg.Name
