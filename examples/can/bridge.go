@@ -2,7 +2,6 @@ package can
 
 import (
 	"github.com/merliot/merle"
-	"log"
 )
 
 type bridge struct {
@@ -19,17 +18,19 @@ func (b *bridge) BridgeThingers() merle.BridgeThingers {
 }
 
 func (b *bridge) connect(p *merle.Packet) {
-	log.Println("bridge connected:", p.Id())
+	msg := merle.Msg{Msg: merle.GetState}
+	p.Marshal(&msg).Reply()
 }
 
-func (b *bridge) disconnect(p *merle.Packet) {
-	log.Println("bridge disconnected:", p.Id())
+func (b *bridge) saveState(p *merle.Packet) {
+	msg := merle.Msg{Msg: "foo"}
+	p.Marshal(&msg).Send(p.Src())
 }
 
 func (b *bridge) BridgeSubscribers() merle.Subscribers {
 	return merle.Subscribers{
 		merle.CmdBridgeConnect: b.connect,
-		merle.CmdBridgeDisconnect: b.disconnect,
+		merle.ReplyState: b.saveState,
 		"CAN": merle.Broadcast, // broadcast CAN msgs to everyone
 		"default": nil,         // drop everything else
 	}

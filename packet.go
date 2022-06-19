@@ -45,6 +45,13 @@ func (p *Packet) String() string {
 	return string(p.msg)
 }
 
+func (p *Packet) Src() string {
+	if p.src == nil {
+		return "???"
+	}
+	return p.src.Src()
+}
+
 // Reply back to sender of Packet.
 func (p *Packet) Reply() {
 	p.bus.reply(p)
@@ -55,12 +62,13 @@ func (p *Packet) Broadcast() {
 	p.bus.broadcast(p)
 }
 
-func (p *Packet) IsThing() bool {
-	return !p.bus.thing.isPrime
+// Send Packet to destination
+func (p *Packet) Send(dst string) {
+	p.bus.send(p, dst)
 }
 
-func (p *Packet) Id() string {
-	return p.src.Id()
+func (p *Packet) IsThing() bool {
+	return !p.bus.thing.isPrime
 }
 
 // Subscriber callback function to broadcast packet.  In this example, any

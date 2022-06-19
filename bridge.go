@@ -169,3 +169,39 @@ func (b *bridge) stop() {
 	b.ports.stop()
 	b.bus.close()
 }
+
+// Wire socket
+type wireSocket struct {
+	name     string
+	flags    uint32
+	bus      *bus
+	opposite *wireSocket
+}
+
+func newWireSocket(name string, bus *bus, opposite *wireSocket) *wireSocket {
+	return &wireSocket{name: name, flags: bcast, bus: bus, opposite: opposite}
+}
+
+func (s *wireSocket) Send(p *Packet) error {
+	s.bus.receive(p.clone(s.bus, s.opposite))
+	return nil
+}
+
+func (s *wireSocket) Close() {
+}
+
+func (s *wireSocket) Name() string {
+	return s.name
+}
+
+func (s *wireSocket) Flags() uint32 {
+	return s.flags
+}
+
+func (s *wireSocket) SetFlags(flags uint32) {
+	s.flags = flags
+}
+
+func (s *wireSocket) Src() string {
+	return s.bus.thing.id
+}

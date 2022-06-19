@@ -71,7 +71,7 @@ func (b *bus) receive(p *Packet) {
 	f, match := b.subs[msg.Msg]
 	if match {
 		if f != nil {
-			b.thing.log.Printf("Received: %.80s", p.String())
+			b.thing.log.Printf("Received [%s]: %.80s", p.Src(), p.String())
 			f(p)
 		}
 		return
@@ -80,13 +80,14 @@ func (b *bus) receive(p *Packet) {
 	f, match = b.subs["default"]
 	if match {
 		if f != nil {
-			b.thing.log.Printf("Received by default: %.80s", p.String())
+			b.thing.log.Printf("Received [%s] by default: %.80s",
+				p.Src(), p.String())
 			f(p)
 		}
 		return
 	}
 
-	b.thing.log.Printf("Not handled: %.80s", p.String())
+	b.thing.log.Printf("Not handled [%s]: %.80s", p.Src(), p.String())
 }
 
 // Reply sends the packet back to the source socket
@@ -145,6 +146,26 @@ func (b *bus) broadcast(p *Packet) {
 
 	if sent == 0 {
 		b.thing.log.Printf("Would Broadcast: %.80s", p.String())
+	}
+}
+
+func (b *bus) send(p *Packet, dst string) {
+	sent := false
+
+	b.sockLock.RLock()
+	defer b.sockLock.RUnlock()
+
+	for sock := range b.sockets {
+		if sock.Src() == dst {
+			b.thing.log.Printf("Send to [%s]: %.80s", dst, p.String())
+			sock.Send(p)
+			sent = true
+			break;
+		}
+	}
+
+	if !sent {
+		b.thing.log.Printf("Destination [%s] unknown: %.80s", dst, p.String())
 	}
 }
 

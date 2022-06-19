@@ -27,7 +27,7 @@ func (t *Thing) getPrimePort(id string) string {
 
 func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) error {
 	var name = fmt.Sprintf("port:%d", p.port)
-	var sock = newWebSocket(name, p.ws)
+	var sock = newWebSocket(t, name, p.ws)
 	var pkt = newPacket(t.bus, sock, nil)
 	var msg = Msg{Msg: GetState}
 	var err error

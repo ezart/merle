@@ -82,7 +82,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 
 	name := "ws:" + r.RemoteAddr + r.RequestURI
-	var sock = newWebSocket(name, ws)
+	var sock = newWebSocket(t, name, ws)
 
 	t.log.Printf("Websocket opened [%s]", name)
 
@@ -457,13 +457,14 @@ func (w *webPrivate) getBridgePort(writer http.ResponseWriter, r *http.Request) 
 }
 
 type webSocket struct {
+	thing *Thing
 	conn  *websocket.Conn
 	name  string
 	flags uint32
 }
 
-func newWebSocket(name string, conn *websocket.Conn) *webSocket {
-	return &webSocket{name: name, conn: conn}
+func newWebSocket(thing *Thing, name string, conn *websocket.Conn) *webSocket {
+	return &webSocket{thing: thing, name: name, conn: conn}
 }
 
 func (ws *webSocket) Send(p *Packet) error {
@@ -486,6 +487,6 @@ func (ws *webSocket) SetFlags(flags uint32) {
 	ws.flags = flags
 }
 
-func (ws *webSocket) Id() string {
-	return "???"
+func (ws *webSocket) Src() string {
+	return ws.thing.id
 }
