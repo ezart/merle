@@ -103,8 +103,9 @@ func (b *bridge) newChild(id, model, name string) (*Thing, error) {
 	child.Cfg.Id = id
 	child.Cfg.Model = model
 	child.Cfg.Name = name
+	child.Cfg.IsPrime = true
 
-	err := child.build()
+	err := child.build(false)
 	if err != nil {
 		return nil, err
 	}

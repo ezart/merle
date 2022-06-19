@@ -170,7 +170,7 @@ func (t *Thing) run() error {
 	return fmt.Errorf("CmdRun didn't run forever")
 }
 
-func (t *Thing) build() error {
+func (t *Thing) build(full bool) error {
 
 	re := regexp.MustCompile("^[a-zA-Z0-9_]*$")
 
@@ -185,10 +185,8 @@ func (t *Thing) build() error {
 	}
 
 	id := t.Cfg.Id
-	if !t.Cfg.IsPrime {
-		if id == "" {
-			id = defaultId()
-		}
+	if !t.Cfg.IsPrime && id == "" {
+		id = defaultId()
 	}
 
 	prefix := "[" + id + "] "
@@ -198,31 +196,33 @@ func (t *Thing) build() error {
 	t.id = id
 	t.model = t.Cfg.Model
 	t.name = t.Cfg.Name
+	t.startupTime = time.Now()
 	t.isPrime = t.Cfg.IsPrime
 
 	t.bus = newBus(t, t.Cfg.MaxConnections, t.thinger.Subscribers())
 
-	t.tunnel = newTunnel(t.log, t.id, t.Cfg.MotherHost, t.Cfg.MotherUser,
-		t.Cfg.PortPrivate, t.Cfg.MotherPortPrivate)
-
-	t.web = newWeb(t, t.Cfg.PortPublic, t.Cfg.PortPublicTLS,
-		t.Cfg.PortPrivate, t.Cfg.User)
-	t.setAssetsDir(t)
-
-	_, t.isBridge = t.thinger.(Bridger)
-	if t.isBridge {
-		t.bridge = newBridge(t, t.Cfg.BridgePortBegin,
-			t.Cfg.BridgePortEnd)
-	}
-
-	if t.isPrime {
-		t.web.handlePrimePortId()
-		t.primePort = newPort(t, t.Cfg.PortPrime, t.primeAttach)
-	}
-
 	t.bus.subscribe(GetIdentity, t.getIdentity)
 
-	t.startupTime = time.Now()
+	if full {
+		t.tunnel = newTunnel(t.log, t.id, t.Cfg.MotherHost,
+			t.Cfg.MotherUser, t.Cfg.PortPrivate,
+			t.Cfg.MotherPortPrivate)
+
+		t.web = newWeb(t, t.Cfg.PortPublic, t.Cfg.PortPublicTLS,
+			t.Cfg.PortPrivate, t.Cfg.User)
+		t.setAssetsDir(t)
+
+		_, t.isBridge = t.thinger.(Bridger)
+		if t.isBridge {
+			t.bridge = newBridge(t, t.Cfg.BridgePortBegin,
+				t.Cfg.BridgePortEnd)
+		}
+
+		if t.isPrime {
+			t.web.handlePrimePortId()
+			t.primePort = newPort(t, t.Cfg.PortPrime, t.primeAttach)
+		}
+	}
 
 	prime := ""
 	if t.isPrime {
@@ -235,7 +235,7 @@ func (t *Thing) build() error {
 }
 
 func (t *Thing) Run() error {
-	err := t.build()
+	err := t.build(true)
 	if err != nil {
 		return err
 	}
