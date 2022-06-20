@@ -37,7 +37,7 @@ func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) err
 	t.bus.plugin(sock)
 
 	// Send GetState msg to Thing
-	t.log.Println("Sending:", msg)
+	t.log.Println("PRIME SENDING:", msg)
 	sock.Send(pkt.Marshal(&msg))
 
 	for {
@@ -54,21 +54,15 @@ func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) err
 
 		t.bus.receive(pkt)
 
-		// Receiving ReplyState is a special case.  The socket is
-		// disabled for broadcasts until ReplyState is received.  This
-		// ensures the other end doesn't receive unsolicited broadcast
-		// messages before ReplyState.
-
 		if msg.Msg == ReplyState {
-			sock.SetFlags(sock.Flags() | bcast)
-			t.log.Println("READY")
+			t.log.Println("PRIME READY")
 			ready(t)
 		}
 	}
 
 	t.bus.unplug(sock)
 
-	t.log.Println("CLEANUP")
+	t.log.Println("PRIME CLEANUP")
 	cleanup(t)
 
 	return nil

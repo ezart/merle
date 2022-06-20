@@ -71,23 +71,32 @@ func (b *bus) receive(p *Packet) {
 	f, match := b.subs[msg.Msg]
 	if match {
 		if f != nil {
-			b.thing.log.Printf("Received [%s]: %.80s", p.Src(), p.String())
+			b.thing.log.Printf("Received [%s]: %.80s", p.Src(),
+				p.String())
 			f(p)
 		}
-		return
-	}
-
-	f, match = b.subs["default"]
-	if match {
-		if f != nil {
-			b.thing.log.Printf("Received [%s] by default: %.80s",
-				p.Src(), p.String())
-			f(p)
+	} else {
+		f, match = b.subs["default"]
+		if match {
+			if f != nil {
+				b.thing.log.Printf("Received [%s] by default: %.80s",
+					p.Src(), p.String())
+				f(p)
+			}
+			return
+		} else {
+			b.thing.log.Printf("Not handled [%s]: %.80s", p.Src(),
+				p.String())
 		}
-		return
 	}
 
-	b.thing.log.Printf("Not handled [%s]: %.80s", p.Src(), p.String())
+	// Receiving ReplyState is a special case.  The socket is disabled for
+	// broadcasts until ReplyState is received.
+
+	if msg.Msg == ReplyState {
+		p.src.SetFlags(p.src.Flags() | bcast)
+		b.thing.log.Println("GOT REPLY STATE bcast set", p.src.Name())
+	}
 }
 
 // Reply sends the packet back to the source socket
@@ -109,6 +118,7 @@ func (b *bus) reply(p *Packet) {
 
 	if msg.Msg == ReplyState {
 		p.src.SetFlags(p.src.Flags() | bcast)
+		b.thing.log.Println("SENDING REPLY STATE bcast set", p.src.Name())
 	}
 }
 
