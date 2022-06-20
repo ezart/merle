@@ -83,7 +83,6 @@ func (b *bus) receive(p *Packet) {
 					p.Src(), p.String())
 				f(p)
 			}
-			return
 		} else {
 			b.thing.log.Printf("Not handled [%s]: %.80s", p.Src(),
 				p.String())
