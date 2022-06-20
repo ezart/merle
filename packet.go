@@ -103,3 +103,13 @@ func RunForever(p *Packet) {
 	}
 	select {}
 }
+
+func ReplyStateEmpty(p *Packet) {
+	msg := Msg{Msg: ReplyState}
+	p.Marshal(&msg).Reply()
+}
+
+func ReplyGetState(p *Packet) {
+	msg := Msg{Msg: GetState}
+	p.Marshal(&msg).Reply()
+}
