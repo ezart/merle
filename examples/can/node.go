@@ -1,4 +1,4 @@
-// file: examples/can/can.go
+// file: examples/can/node.go
 
 package can
 
@@ -8,13 +8,13 @@ import (
 	"log"
 )
 
-type can struct {
+type node struct {
 	Iface string
 	sock *canbus.Socket
 }
 
-func NewCan() *can {
-	return &can{Iface: "can0"}
+func NewCan() *node {
+	return &node{Iface: "can0"}
 }
 
 type canMsg struct {
@@ -23,25 +23,25 @@ type canMsg struct {
 	Data []byte
 }
 
-func (c *can) run(p *merle.Packet) {
+func (n *node) run(p *merle.Packet) {
 	var err error
 
-	c.sock, err = canbus.New()
+	n.sock, err = canbus.New()
 	if err != nil {
 		log.Println("Creating CAN bus failed:", err)
 		return
 	}
 
-	err = c.sock.Bind(c.Iface)
+	err = n.sock.Bind(n.Iface)
 	if err != nil {
-		log.Printf("Binding to %s failed: %s", c.Iface, err)
+		log.Printf("Binding to %s failed: %s", n.Iface, err)
 		return
 	}
 
 	msg := &canMsg{Msg: "CAN"}
 
 	for {
-		msg.Id, msg.Data, err = c.sock.Recv()
+		msg.Id, msg.Data, err = n.sock.Recv()
 		if err != nil {
 			log.Println("Error reading CAN socket:", err)
 			return
@@ -50,12 +50,12 @@ func (c *can) run(p *merle.Packet) {
 	}
 }
 
-func (c *can) can(p *merle.Packet) {
+func (n *node) can(p *merle.Packet) {
 	if p.IsThing() {
 		var msg canMsg
 
 		p.Unmarshal(&msg)
-		_, err := c.sock.Send(msg.Id, msg.Data)
+		_, err := n.sock.Send(msg.Id, msg.Data)
 		if err != nil {
 			log.Println("Error writing CAN socket:", err)
 		}
@@ -63,11 +63,11 @@ func (c *can) can(p *merle.Packet) {
 	p.Broadcast()
 }
 
-func (c *can) Subscribers() merle.Subscribers {
+func (n *node) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdRun:     c.run,
+		merle.CmdRun:     n.run,
 		merle.GetState:   merle.ReplyStateEmpty,
 		merle.ReplyState: nil,
-		"CAN":            c.can,
+		"CAN":            n.can,
 	}
 }

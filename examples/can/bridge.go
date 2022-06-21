@@ -1,3 +1,5 @@
+// file: examples/can/bridge.go
+
 package can
 
 import (
