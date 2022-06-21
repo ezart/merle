@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	can := can.NewCan()
-	thing := merle.NewThing(can)
+	node := can.NewNode()
+	thing := merle.NewThing(node)
 
 	thing.Cfg.Model = "can_node"
 	thing.Cfg.Name = "canny"
@@ -17,7 +17,7 @@ func main() {
 
 	thing.Cfg.PortPrivate = 8080
 
-	flag.StringVar(&can.Iface, "iface", "can0", "CAN interface")
+	flag.StringVar(&node.Iface, "iface", "can0", "CAN interface")
 
 	flag.StringVar(&thing.Cfg.MotherHost, "rhost", "", "Remote host")
 	flag.StringVar(&thing.Cfg.MotherUser, "ruser", "merle", "Remote user")
