@@ -11,7 +11,7 @@ func main() {
 	can := can.NewCan()
 	thing := merle.NewThing(can)
 
-	thing.Cfg.Model = "can"
+	thing.Cfg.Model = "can_node"
 	thing.Cfg.Name = "canny"
 	thing.Cfg.User = "merle"
 

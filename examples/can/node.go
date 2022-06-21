@@ -13,7 +13,7 @@ type node struct {
 	sock *canbus.Socket
 }
 
-func NewCan() *node {
+func NewNode() *node {
 	return &node{Iface: "can0"}
 }
 

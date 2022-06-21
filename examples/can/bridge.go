@@ -15,7 +15,7 @@ func NewBridge() merle.Thinger {
 
 func (b *bridge) BridgeThingers() merle.BridgeThingers {
 	return merle.BridgeThingers{
-		".*:can:.*": func() merle.Thinger { return NewCan() },
+		".*:can_node:.*": func() merle.Thinger { return NewNode() },
 	}
 }
 
