@@ -1,6 +1,6 @@
 // file: examples/relays/relays.go
 
-package main
+package relays
 
 import (
 	"flag"
@@ -19,6 +19,10 @@ type relay struct {
 type thing struct {
 	sync.RWMutex
 	relays [4]relay
+}
+
+func NewThing() merle.Thinger {
+	return &thing{}
 }
 
 type msg struct {
@@ -182,6 +186,10 @@ const html = `<html lang="en">
 		</script>
 	</body>
 </html>`
+
+func Html() string {
+	return html
+}
 
 func main() {
 	thing := merle.NewThing(&thing{})

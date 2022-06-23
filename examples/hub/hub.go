@@ -2,7 +2,7 @@ package hub
 
 import (
 	"github.com/merliot/merle"
-	"github.com/merliot/merle/examples/blink"
+	"github.com/merliot/merle/examples/relays"
 )
 
 type hub struct {
@@ -14,18 +14,18 @@ func NewHub() merle.Thinger {
 
 func (h *hub) BridgeThingers() merle.BridgeThingers {
 	return merle.BridgeThingers{
-		".*:blink:.*": func() merle.Thinger { return blink.NewBlinker(false) },
+		".*:relays:.*": func() merle.Thinger { return relays.NewThing() },
 	}
 }
 
 func (h *hub) BridgeSubscribers() merle.Subscribers {
 	return merle.Subscribers{
-		"default": nil, // drop everything
+		"default": nil, // drop everything silently
 	}
 }
 
 func (h *hub) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		"_CmdRun": merle.RunForever,
+		merle.CmdRun: merle.RunForever,
 	}
 }
