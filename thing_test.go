@@ -25,10 +25,6 @@ func (s *sparse) Subscribers() Subscribers {
 	return Subscribers{}
 }
 
-func (s *sparse) Assets() *ThingAssets {
-	return &ThingAssets{}
-}
-
 func TestBogusRun(t *testing.T) {
 	var thinger sparse
 
@@ -68,12 +64,6 @@ func (s *simple) Subscribers() Subscribers {
 	return Subscribers{
 		CmdRun: s.run,
 		"quit": s.quit,
-	}
-}
-
-func (s *simple) Assets() *ThingAssets {
-	return &ThingAssets{
-		TemplateText: helloWorld,
 	}
 }
 
@@ -175,6 +165,8 @@ func TestRun(t *testing.T) {
 
 	thing.Cfg.PortPublic = 8080
 	thing.Cfg.PortPrivate = 8081
+
+	thing.Cfg.HtmlTemplateText = helloWorld
 
 	go testSimple(t, thing, thing.Cfg.PortPublic, thing.Cfg.PortPrivate)
 
