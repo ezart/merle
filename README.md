@@ -15,7 +15,7 @@ Merle uses the Go programming language.
  	(send ping from Thing side of websocket)
  - Can we use something smaller like a container to run Thing Prime rather than a full VM?
  - favicon.ico support?  just add a /favicon.ico file?
- - Investigate if Merle framworke could be written in other languages (Rust?).
+ - Investigate if Merle framework could be written in other languages (Rust?).
    Assests (js/html/etc) wouldn't need to change.  Thing code would be rewritten in new language.
    A Thing written in one language should interoperate with another Thing written in another language.
 
