@@ -89,12 +89,15 @@ const html = `<html lang="en">
 	</body>
 </html>`
 
+func (b *blink) Assets() *merle.ThingAssets {
+	return &merle.ThingAssets{
+		AssetsDir:        "examples/tutorial/blinkv4/assets",
+		HtmlTemplateText: html,
+	}
+}
+
 func main() {
 	thing := merle.NewThing(&blink{})
-
 	thing.Cfg.PortPublic = 80
-	thing.Cfg.AssetsDir = "examples/tutorial/blinkv4/assets"
-	thing.Cfg.HtmlTemplateText = html
-
 	log.Fatalln(thing.Run())
 }

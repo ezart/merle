@@ -47,7 +47,7 @@ func (w *web) handleBridgePortId() {
 }
 
 func (w *web) staticFiles(t *Thing) {
-	fs := http.FileServer(http.Dir(t.Cfg.AssetsDir))
+	fs := http.FileServer(http.Dir(t.assets.AssetsDir))
 	path := "/" + t.id + "/assets/"
 	w.public.mux.PathPrefix(path).Handler(http.StripPrefix(path, fs))
 }
@@ -107,6 +107,22 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	t.bus.unplug(sock)
 }
 
+func (t *Thing) setHtmlTemplate() {
+	a := t.assets
+	if a.HtmlTemplateText != "" {
+		t.templ, t.templErr = template.New("").Parse(a.HtmlTemplateText)
+		if t.templErr != nil {
+			t.log.Println("Error parsing HtmlTemplateText:", t.templErr)
+		}
+	} else if a.HtmlTemplate != "" {
+		file := path.Join(a.AssetsDir, a.HtmlTemplate)
+		t.templ, t.templErr = template.ParseFiles(file)
+		if t.templErr != nil {
+			t.log.Println("Error parsing HtmlTemplate:", t.templErr)
+		}
+	}
+}
+
 // Some things to pass into the Thing's HTML template
 func (t *Thing) templateParams(r *http.Request) map[string]interface{} {
 	scheme := "wss://"
@@ -150,10 +166,10 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if t.web.public.templErr != nil {
-		http.Error(w, t.web.public.templErr.Error(), http.StatusNotFound)
-	} else if t.web.public.templ != nil {
-		t.web.public.templ.Execute(w, t.templateParams(r))
+	if t.templErr != nil {
+		http.Error(w, t.templErr.Error(), http.StatusNotFound)
+	} else if t.templ != nil {
+		t.templ.Execute(w, t.templateParams(r))
 	}
 }
 
@@ -230,8 +246,6 @@ type webPublic struct {
 	server      *http.Server
 	serverTLS   *http.Server
 	certManager autocert.Manager
-	templ       *template.Template
-	templErr    error
 }
 
 func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
@@ -254,8 +268,6 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 	}
 
 	w.newServer()
-
-	w.setHtmlTemplate()
 
 	return w
 }
@@ -284,23 +296,6 @@ func (w *webPublic) newServer() {
 		TLSConfig: &tls.Config{
 			GetCertificate: w.certManager.GetCertificate,
 		},
-	}
-}
-
-func (w *webPublic) setHtmlTemplate() {
-	t := w.thing
-
-	if t.Cfg.HtmlTemplateText != "" {
-		w.templ, w.templErr = template.New("").Parse(t.Cfg.HtmlTemplateText)
-		if w.templErr != nil {
-			t.log.Println("Error parsing HtmlTemplateText:", w.templErr)
-		}
-	} else if t.Cfg.HtmlTemplate != "" {
-		file := path.Join(t.Cfg.AssetsDir, t.Cfg.HtmlTemplate)
-		w.templ, w.templErr = template.ParseFiles(file)
-		if w.templErr != nil {
-			t.log.Println("Error parsing HtmlTemplate:", w.templErr)
-		}
 	}
 }
 

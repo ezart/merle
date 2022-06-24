@@ -127,13 +127,18 @@ const html = `<html lang="en">
 	</body>
 </html>`
 
+func (g *gps) Assets() *merle.ThingAssets {
+	return &merle.ThingAssets{
+		HtmlTemplateText: html,
+	}
+}
+
 func main() {
 	thing := merle.NewThing(&gps{})
 
 	thing.Cfg.Model = "gps"
 	thing.Cfg.Name = "gypsy"
 	thing.Cfg.User = "merle"
-	thing.Cfg.HtmlTemplateText = html
 
 	thing.Cfg.PortPublic = 80
 	thing.Cfg.PortPrivate = 8080

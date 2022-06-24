@@ -68,9 +68,14 @@ const html = `<html lang="en">
 	</body>
 </html>`
 
+func (b *bmp180) Assets() *merle.ThingAssets {
+	return &merle.ThingAssets{
+		HtmlTemplateText: html,
+	}
+}
+
 func main() {
 	thing := merle.NewThing(&bmp180{})
 	thing.Cfg.PortPublic = 80
-	thing.Cfg.HtmlTemplateText = html
 	log.Fatalln(thing.Run())
 }

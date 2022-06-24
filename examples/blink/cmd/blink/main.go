@@ -18,8 +18,5 @@ func main() {
 	thing.Cfg.Name = "blinky"
 	thing.Cfg.User = "merle"
 
-	thing.Cfg.AssetsDir = "examples/blink/assets"
-	thing.Cfg.HtmlTemplate = "templates/blink.html"
-
 	log.Fatalln(thing.Run())
 }

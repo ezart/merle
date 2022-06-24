@@ -3,11 +3,9 @@
 package relays
 
 import (
-	"flag"
 	"github.com/merliot/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
-	"log"
 	"sync"
 )
 
@@ -111,7 +109,7 @@ func (t *thing) Subscribers() merle.Subscribers {
 
 const html = `<html lang="en">
 	<head>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 	</head>
 	<body>
 		<div>
@@ -187,27 +185,8 @@ const html = `<html lang="en">
 	</body>
 </html>`
 
-func Html() string {
-	return html
-}
-
-func main() {
-	thing := merle.NewThing(&thing{})
-
-	thing.Cfg.Model = "relays"
-	thing.Cfg.Name = "relaysforhope"
-	thing.Cfg.User = "merle"
-	thing.Cfg.HtmlTemplateText = html
-
-	thing.Cfg.PortPublic = 80
-	thing.Cfg.PortPrivate = 8080
-
-	flag.StringVar(&thing.Cfg.MotherHost, "rhost", "", "Remote host")
-	flag.StringVar(&thing.Cfg.MotherUser, "ruser", "merle", "Remote user")
-	flag.BoolVar(&thing.Cfg.IsPrime, "prime", false, "Run as Thing Prime")
-	flag.UintVar(&thing.Cfg.PortPublicTLS, "TLS", 0, "TLS port")
-
-	flag.Parse()
-
-	log.Fatalln(thing.Run())
+func (t *thing) Assets() *merle.ThingAssets {
+	return &merle.ThingAssets{
+		HtmlTemplateText: html,
+	}
 }

@@ -113,3 +113,8 @@ func ReplyGetState(p *Packet) {
 	msg := Msg{Msg: GetState}
 	p.Marshal(&msg).Reply()
 }
+
+func ReplyGetIdentity(p *Packet) {
+	msg := Msg{Msg: GetIdentity}
+	p.Marshal(&msg).Reply()
+}

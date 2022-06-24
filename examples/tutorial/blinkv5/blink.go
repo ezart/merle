@@ -105,6 +105,13 @@ const html = `<html lang="en">
 	</body>
 </html>`
 
+func (b *blink) Assets() *merle.ThingAssets {
+	return &merle.ThingAssets{
+		AssetsDir:        "examples/tutorial/blinkv5/assets",
+		HtmlTemplateText: html,
+	}
+}
+
 func main() {
 	thing := merle.NewThing(&blink{})
 
@@ -114,8 +121,6 @@ func main() {
 
 	thing.Cfg.PortPublic = 80
 	thing.Cfg.PortPrivate = 8080
-	thing.Cfg.AssetsDir = "examples/tutorial/blinkv3/assets"
-	thing.Cfg.HtmlTemplateText = html
 
 	flag.StringVar(&thing.Cfg.MotherHost, "rhost", "", "Remote host")
 	flag.StringVar(&thing.Cfg.MotherUser, "ruser", "merle", "Remote user")

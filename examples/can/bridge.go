@@ -32,3 +32,7 @@ func (b *bridge) Subscribers() merle.Subscribers {
 		merle.CmdRun: merle.RunForever,
 	}
 }
+
+func (b *bridge) Assets() *merle.ThingAssets {
+	return &merle.ThingAssets{}
+}

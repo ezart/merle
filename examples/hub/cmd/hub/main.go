@@ -17,8 +17,5 @@ func main() {
 	thing.Cfg.PortPublicTLS = 443
 	thing.Cfg.PortPrivate = 8080
 
-	thing.Cfg.AssetsDir = "examples/hub/assets"
-	thing.Cfg.HtmlTemplate = "templates/hub.html"
-
 	log.Fatalln(thing.Run())
 }

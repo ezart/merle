@@ -4,49 +4,45 @@
 
 var hubId
 
-function sendForChildren() {
-	conn.send(JSON.stringify({Msg: "_GetChildren"}))
-}
-
 function show(id) {
 	var iframe = document.getElementById("child")
 	iframe.src = "/" + encodeURIComponent(id)
 }
 
-function showIcon(msg) {
+function iconName(child) {
+	if (child.Connected) {
+		return "connected"
+	} else {
+		return "disconnected"
+	}
+}
+
+function showIcon(child) {
 	var iframe = document.getElementById("child")
 	var children = document.getElementById("children")
 	var newdiv = document.createElement("div")
 	var newpre = document.createElement("pre")
 	var newimg = document.createElement("img")
 
-	newpre.innerText = msg.Name
-	newpre.id = "pre-" + msg.Id
+	newpre.innerText = child.Name
+	newpre.id = "pre-" + child.Id
 
-	newimg.src = "/" + hubId + "/assets/images/" + msg.Status + ".jpg"
-	newimg.onclick = function (){show(msg.Id);}
-	newimg.id = msg.Id
+	newimg.src = "/" + hubId + "/assets/images/" + iconName(child) + ".jpg"
+	newimg.onclick = function (){show(child.Id);}
+	newimg.id = child.Id
 
 	newdiv.appendChild(newpre)
 	newdiv.appendChild(newimg)
 	children.appendChild(newdiv)
 }
 
-function addChild(msg) {
+function addChild(child) {
 	var iframe = document.getElementById("child")
 
-	showIcon(msg)
+	showIcon(child)
 
 	if (iframe.src == "") {
-		show(msg.Id)
-	}
-}
-
-function saveChildren(msg) {
-	if (msg.Children != null) {
-		for (const child of msg.Children) {
-			addChild(child)
-		}
+		show(child.Id)
 	}
 }
 
@@ -63,32 +59,48 @@ function updateStatus(msg) {
 	}
 }
 
-function Run(scheme, host, id) {
+function saveState(msg) {
+	for (const id in msg.Children) {
+		child = msg.Children[id]
+		addChild(child)
+	}
+}
+
+function Run(ws, id) {
 
 	hubId = id
 
-	conn = new WebSocket(scheme + host + "/ws/" + id)
+	var conn
 
-	conn.onopen = function(evt) {
-		sendForChildren()
-	}
+	function connect() {
+		conn = new WebSocket(ws)
 
-	conn.onclose = function(evt) {
-		location.reload(true)
-	}
+		conn.onopen = function(evt) {
+			conn.send(JSON.stringify({Msg: "_GetState"}))
+		}
 
-	conn.onmessage = function(evt) {
-		var msg = JSON.parse(evt.data)
+		conn.onclose = function(evt) {
+			console.log('websocket close', evt.reason)
+			setTimeout(connect, 1000)
+		}
 
-		console.log('hub msg', msg)
+		conn.onerror = function(err) {
+			console.log('websocket error', err.message)
+			conn.close()
+		}
 
-		switch(msg.Msg) {
-		case "_ReplyChildren":
-			saveChildren(msg)
-			break
-		case "_SpamStatus":
-			updateStatus(msg)
-			break
+		conn.onmessage = function(evt) {
+			var msg = JSON.parse(evt.data)
+
+			console.log('msg', msg)
+
+			switch(msg.Msg) {
+			case "_ReplyState":
+				saveState(msg)
+				break
+			}
 		}
 	}
+
+	connect()
 }

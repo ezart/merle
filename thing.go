@@ -6,11 +6,28 @@ package merle
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"os"
 	"regexp"
 	"time"
 )
+
+type ThingAssets struct {
+
+	// Directory on file system for Thing's assets (html, css, js, etc)
+	// This is an absolute or relative directory.  If relative, it's
+	// relative to the Thing's binary path.
+	AssetsDir string
+
+	// Path to Thing's HTML template file, relative to AssetsDir.
+	HtmlTemplate string
+
+	// HtmlTemplateText is text passed in lieu of a template file.
+	// HtmlTemplateText takes priority over HtmlTemplate, if both are
+	// present.
+	HtmlTemplateText string
+}
 
 // All Things implement this interface.
 //
@@ -81,11 +98,15 @@ type Thinger interface {
 	//		}
 	//	}
 	Subscribers() Subscribers
+
+	// blah
+	Assets() *ThingAssets
 }
 
 type Thing struct {
 	Cfg         ThingConfig
 	thinger     Thinger
+	assets      *ThingAssets
 	id          string
 	model       string
 	name        string
@@ -93,6 +114,8 @@ type Thing struct {
 	bus         *bus
 	tunnel      *tunnel
 	web         *web
+	templ       *template.Template
+	templErr    error
 	isBridge    bool
 	bridge      *bridge
 	isPrime     bool
@@ -105,11 +128,11 @@ type Thing struct {
 
 // NewThing returns a Thing built from a Thinger.
 func NewThing(thinger Thinger) *Thing {
-
-	thing := &Thing{thinger: thinger}
-	thing.Cfg = defaultCfg
-
-	return thing
+	return &Thing{
+		Cfg: defaultCfg,
+		thinger: thinger,
+		assets: thinger.Assets(),
+	}
 }
 
 func (t *Thing) getIdentity(p *Packet) {
@@ -199,6 +222,8 @@ func (t *Thing) build(full bool) error {
 	t.bus = newBus(t, t.Cfg.MaxConnections, t.thinger.Subscribers())
 
 	t.bus.subscribe(GetIdentity, t.getIdentity)
+
+	t.setHtmlTemplate()
 
 	if full {
 		t.tunnel = newTunnel(t.log, t.id, t.Cfg.MotherHost,

@@ -45,17 +45,6 @@ type ThingConfig struct {
 	PortPrime uint
 	MaxConnections uint
 
-	// Directory on file system for Thing's assets (html, css, js, etc)
-	// This is an absolute or relative directory.  If relative, it's
-	// relative to the Thing's executable.
-	AssetsDir string
-	// Directory to Thing's HTML template file, relative to
-	// ThingAssets.Dir.
-	HtmlTemplate string
-	// TemplateText is text passed in lieu of a template file.
-	// TemplateText takes priority over Template, if both are present.
-	HtmlTemplateText string
-
 	// This section describes a Thing's Mother.  Every Thing has a Mother.  A
 	// Mother is also a Thing.  We can build a hierarchy of Things, with a Thing
 	// having a Mother, a GrandMother, a Great GrandMother, etc.
@@ -103,9 +92,6 @@ var defaultCfg = ThingConfig{
 	IsPrime: false,
 	PortPrime: 8000,
 	MaxConnections: 10,
-	AssetsDir: "",
-	HtmlTemplate: "",
-	HtmlTemplateText: "",
 	MotherHost: "",
 	MotherUser: "",
 	MotherPortPrivate: 8080,
