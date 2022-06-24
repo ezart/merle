@@ -46,16 +46,13 @@ function addChild(child) {
 	}
 }
 
-function updateStatus(msg) {
-	var img = document.getElementById(msg.Id)
-	var pre = document.getElementById("pre-" + msg.Id)
+function clearScreen() {
+	var children = document.getElementById("children")
+	var iframe = document.getElementById("child")
 
-	if (img == null) {
-		addChild(msg)
-	} else {
-		img.src = "/" + hubId + "/assets/images/" + msg.Status + ".jpg"
-		pre.innerText = msg.Name
-		show(msg.Id)
+	iframe.src = ""
+	while (children.firstChild) {
+		children.removeChild(children.firstChild)
 	}
 }
 
@@ -63,6 +60,20 @@ function saveState(msg) {
 	for (const id in msg.Children) {
 		child = msg.Children[id]
 		addChild(child)
+	}
+}
+
+function update(msg) {
+	var child = msg.Child
+	var img = document.getElementById(child.Id)
+	var pre = document.getElementById("pre-" + child.Id)
+
+	if (img == null) {
+		addChild(child)
+	} else {
+		img.src = "/" + hubId + "/assets/images/" + iconName(child) + ".jpg"
+		pre.innerText = child.Name
+		show(child.Id)
 	}
 }
 
@@ -76,6 +87,7 @@ function Run(ws, id) {
 		conn = new WebSocket(ws)
 
 		conn.onopen = function(evt) {
+			clearScreen()
 			conn.send(JSON.stringify({Msg: "_GetState"}))
 		}
 
@@ -97,6 +109,9 @@ function Run(ws, id) {
 			switch(msg.Msg) {
 			case "_ReplyState":
 				saveState(msg)
+				break
+			case "Update":
+				update(msg)
 				break
 			}
 		}
