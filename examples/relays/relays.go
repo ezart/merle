@@ -112,7 +112,7 @@ const html = `<html lang="en">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 	</head>
 	<body>
-		<div>
+		<div id="buttons" style="display: none;">
 			<input type="checkbox" id="relay0" disabled=true onclick='relayClick(this, 0)'>
 			<label for="relay0"> Relay 0 </label>
 			<input type="checkbox" id="relay1" disabled=true onclick='relayClick(this, 1)'>
@@ -129,6 +129,7 @@ const html = `<html lang="en">
 			relay[1] = document.getElementById("relay1")
 			relay[2] = document.getElementById("relay2")
 			relay[3] = document.getElementById("relay3")
+			buttons = document.getElementById("buttons")
 
 			var conn
 
@@ -136,6 +137,7 @@ const html = `<html lang="en">
 				conn = new WebSocket("{{.WebSocket}}")
 
 				conn.onopen = function(evt) {
+					buttons.style.display = "none"
 					conn.send(JSON.stringify({Msg: "_GetState"}))
 				}
 
@@ -167,6 +169,7 @@ const html = `<html lang="en">
 						relay[1].disabled = false
 						relay[2].disabled = false
 						relay[3].disabled = false
+						buttons.style.display = "block"
 						break
 					case "Click":
 						relay[msg.Relay].checked = msg.State
