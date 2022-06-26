@@ -24,7 +24,7 @@ function showIcon(child) {
 	var newpre = document.createElement("pre")
 	var newimg = document.createElement("img")
 
-	newpre.innerText = child.Name
+	newpre.innerText = child.Id
 	newpre.id = "pre-" + child.Id
 
 	newimg.src = "/" + hubId + "/assets/images/" + iconName(child) + ".jpg"
@@ -37,13 +37,8 @@ function showIcon(child) {
 }
 
 function addChild(child) {
-	var iframe = document.getElementById("child")
-
 	showIcon(child)
-
-	if (iframe.src == "") {
-		show(child.Id)
-	}
+	show(child.Id)
 }
 
 function clearScreen() {
@@ -72,7 +67,6 @@ function update(msg) {
 		addChild(child)
 	} else {
 		img.src = "/" + hubId + "/assets/images/" + iconName(child) + ".jpg"
-		pre.innerText = child.Name
 		show(child.Id)
 	}
 }
@@ -92,6 +86,7 @@ function Run(ws, id) {
 		}
 
 		conn.onclose = function(evt) {
+			clearScreen()
 			console.log('websocket close', evt.reason)
 			setTimeout(connect, 1000)
 		}
