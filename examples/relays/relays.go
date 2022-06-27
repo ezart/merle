@@ -25,6 +25,7 @@ func NewThing() merle.Thinger {
 
 type msg struct {
 	Msg   string
+	Connected bool
 	State [4]bool
 }
 
@@ -53,6 +54,7 @@ func (t *thing) getState(p *merle.Packet) {
 	defer t.RUnlock()
 
 	msg := &msg{Msg: merle.ReplyState}
+	msg.Connected = p.IsConnected()
 	for i, _ := range t.relays {
 		msg.State[i] = t.relays[i].state
 	}
@@ -107,51 +109,76 @@ func (t *thing) Subscribers() merle.Subscribers {
 	}
 }
 
-const html = `<html lang="en">
+const html = `
+<!DOCTYPE html>
+<html lang="en">
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 	</head>
 	<body>
 		<div id="buttons" style="display: none;">
-			<input type="checkbox" id="relay0" disabled=true onclick='relayClick(this, 0)'>
+			<input type="checkbox" id="relay0" disabled=true onclick='sendClick(this, 0)'>
 			<label for="relay0"> Relay 0 </label>
-			<input type="checkbox" id="relay1" disabled=true onclick='relayClick(this, 1)'>
+			<input type="checkbox" id="relay1" disabled=true onclick='sendClick(this, 1)'>
 			<label for="relay1"> Relay 1 </label>
-			<input type="checkbox" id="relay2" disabled=true onclick='relayClick(this, 2)'>
+			<input type="checkbox" id="relay2" disabled=true onclick='sendClick(this, 2)'>
 			<label for="relay2"> Relay 2 </label>
-			<input type="checkbox" id="relay3" disabled=true onclick='relayClick(this, 3)'>
+			<input type="checkbox" id="relay3" disabled=true onclick='sendClick(this, 3)'>
 			<label for="relay3"> Relay 3 </label>
 		</div>
 
 		<script>
-			relay = [4]
-			relay[0] = document.getElementById("relay0")
-			relay[1] = document.getElementById("relay1")
-			relay[2] = document.getElementById("relay2")
-			relay[3] = document.getElementById("relay3")
+			var conn
+
+			relays = []
+			for (var i = 0; i < 4; i++) {
+				relays[i] = document.getElementById("relay" + i)
+			}
 			buttons = document.getElementById("buttons")
 
-			var conn
+			function getState() {
+				conn.send(JSON.stringify({Msg: "_GetState"}))
+			}
+
+			function saveState(states) {
+				for (var i = 0; i < relays.length; i++) {
+					relays[i].checked = states[i]
+				}
+			}
+
+			function enable(connected) {
+				for (var i = 0; i < relays.length; i++) {
+					relays[i].disabled = !connected
+				}
+			}
+
+			function showAll() {
+				buttons.style.display = "block"
+			}
+
+			function clearAll() {
+				buttons.style.display = "none"
+			}
+
+			function sendClick(relay, num) {
+				conn.send(JSON.stringify({Msg: "Click", Relay: num,
+					State: relay.checked}))
+			}
 
 			function connect() {
 				conn = new WebSocket("{{.WebSocket}}")
 
 				conn.onopen = function(evt) {
-					buttons.style.display = "none"
-					conn.send(JSON.stringify({Msg: "_GetState"}))
+					clearAll()
+					getState()
 				}
 
 				conn.onclose = function(evt) {
-					console.log('websocket close', evt.reason)
-					relay[0].disabled = true
-					relay[1].disabled = true
-					relay[2].disabled = true
-					relay[3].disabled = true
+					enable(false)
 					setTimeout(connect, 1000)
 				}
 
 				conn.onerror = function(err) {
-					console.log('websocket error', err.message)
 					conn.close()
 				}
 
@@ -161,29 +188,24 @@ const html = `<html lang="en">
 
 					switch(msg.Msg) {
 					case "_ReplyState":
-						relay[0].checked = msg.State[0]
-						relay[1].checked = msg.State[1]
-						relay[2].checked = msg.State[2]
-						relay[3].checked = msg.State[3]
-						relay[0].disabled = false
-						relay[1].disabled = false
-						relay[2].disabled = false
-						relay[3].disabled = false
-						buttons.style.display = "block"
+						saveState(msg.State)
+						enable(msg.Connected)
+						showAll()
+						break
+					case "_EventConnect":
+						getState()
+						break
+					case "_EventDisconnect":
+						enable(false)
 						break
 					case "Click":
-						relay[msg.Relay].checked = msg.State
+						relays[msg.Relay].checked = msg.State
 						break
 					}
 				}
 			}
 
 			connect()
-
-			function relayClick(relay, num) {
-				conn.send(JSON.stringify({Msg: "Click", Relay: num,
-					State: relay.checked}))
-			}
 		</script>
 	</body>
 </html>`

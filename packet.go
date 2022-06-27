@@ -71,6 +71,10 @@ func (p *Packet) IsThing() bool {
 	return !p.bus.thing.isPrime
 }
 
+func (p *Packet) IsConnected() bool {
+	return p.bus.thing.connected
+}
+
 // Subscriber callback function to broadcast packet.  In this example, any
 // packets received with message Alert are broadcast to all other listeners.
 // Not applicable for CmdRun.

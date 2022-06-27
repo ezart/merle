@@ -58,8 +58,8 @@ func (h *hub) disconnect(p *merle.Packet) {
 
 func (h *hub) BridgeSubscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdBridgeConnect: merle.ReplyGetIdentity,
-		merle.CmdBridgeDisconnect: h.disconnect,
+		merle.EventBridgeConnect: merle.ReplyGetIdentity,
+		merle.EventBridgeDisconnect: h.disconnect,
 		merle.ReplyIdentity: h.connect,
 		"default": nil, // drop everything else silently
 	}

@@ -23,8 +23,11 @@ const (
 	// GetState TODO doc
 	GetState   = "_GetState"
 	ReplyState = "_ReplyState"
-	CmdBridgeConnect = "_CmdBridgeConnect"
-	CmdBridgeDisconnect = "_CmdBridgeDisconnect"
+
+	EventConnect = "_EventConnect"
+	EventDisconnect = "_EventDisconnect"
+	EventBridgeConnect = "_EventBridgeConnect"
+	EventBridgeDisconnect = "_EventBridgeDisconnect"
 )
 
 type Msg struct {

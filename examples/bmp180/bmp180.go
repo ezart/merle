@@ -40,7 +40,9 @@ func (b *bmp180) Subscribers() merle.Subscribers {
 	}
 }
 
-const html = `<html lang="en">
+const html = `
+<!DOCTYPE html>
+<html lang="en">
 	<body>
 		<pre id="pressure">Pressure:</pre>
 		<pre id="temperature">Temperature:</pre>

@@ -111,6 +111,7 @@ type Thing struct {
 	model       string
 	name        string
 	startupTime time.Time
+	connected   bool
 	bus         *bus
 	tunnel      *tunnel
 	web         *web
@@ -154,6 +155,8 @@ func (t *Thing) getChild(id string) *Thing {
 }
 
 func (t *Thing) run() error {
+
+	t.connected = true
 
 	// Force receipt of CmdInit msg
 	msg := Msg{Msg: CmdInit}

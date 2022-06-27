@@ -52,7 +52,9 @@ func (b *blink) Subscribers() merle.Subscribers {
 	}
 }
 
-const html = `<html lang="en">
+const html = `
+<!DOCTYPE html>
+<html lang="en">
 	<body>
 		<img id="LED" style="width: 400px">
 

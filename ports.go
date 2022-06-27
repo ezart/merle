@@ -118,6 +118,7 @@ func (p *port) wsClose() {
 	if p.ws == nil {
 		return
 	}
+	// TODO: is this doing anything?  Maybe p.ws.Close() is sufficient.
 	p.ws.WriteMessage(websocket.CloseMessage,
 		websocket.FormatCloseMessage(
 			websocket.CloseNormalClosure, ""))

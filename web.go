@@ -242,6 +242,7 @@ type webPublic struct {
 	portTLS     uint
 	addr        string
 	addrTLS     string
+	running     bool
 	mux         *mux.Router
 	server      *http.Server
 	serverTLS   *http.Server
@@ -308,6 +309,12 @@ func (w *webPublic) httpShutdown() {
 
 func (w *webPublic) start() {
 	w.thing.log.Println("STARTING public web")
+
+	if w.running {
+		return
+	}
+	w.running = true
+
 	if w.port == 0 {
 		w.thing.log.Println("Skipping public HTTP server; port is zero")
 		return

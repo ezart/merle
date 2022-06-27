@@ -68,12 +68,25 @@ func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) err
 	return nil
 }
 
+func (t *Thing) sendConnect() {
+	msg := Msg{Msg: EventConnect}
+	newPacket(t.bus, nil, &msg).Broadcast()
+}
+
+func (t *Thing) sendDisconnect() {
+	msg := Msg{Msg: EventDisconnect}
+	newPacket(t.bus, nil, &msg).Broadcast()
+}
+
 func (t *Thing) primeReady(self *Thing) {
+	t.connected = true
 	t.web.public.start()
+	t.sendConnect()
 }
 
 func (t *Thing) primeCleanup(self *Thing) {
-	t.web.public.stop()
+	t.connected = false
+	t.sendDisconnect()
 }
 
 func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {

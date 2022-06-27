@@ -78,7 +78,9 @@ func (g *gps) Subscribers() merle.Subscribers {
 	}
 }
 
-const html = `<html lang="en">
+const html = `
+<!DOCTYPE html>
+<html lang="en">
 	<head>
 		<!-- Leaflet's CSS -->
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css"
