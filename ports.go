@@ -86,7 +86,7 @@ func (p *port) wsOpen() error {
 
 func (p *port) wsIdentity() error {
 	msg := Msg{Msg: GetIdentity}
-	p.thing.log.Printf("Sending: %.80s", msg)
+	p.thing.log.Printf("Sending: %v", msg)
 	return p.ws.WriteJSON(&msg)
 }
 
@@ -110,7 +110,7 @@ again:
 	// Clear deadline
 	p.ws.SetReadDeadline(time.Time{})
 
-	p.thing.log.Printf("Received: %.80s", identity)
+	p.thing.log.Printf("Received: %v", identity)
 	return &identity, nil
 }
 
