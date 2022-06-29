@@ -34,11 +34,17 @@ type Msg struct {
 	Msg string
 }
 
+type MsgId struct {
+	Msg string
+	Id  string
+}
+
 // ReplyIdentity returns MsgIdentity response
 type MsgIdentity struct {
 	Msg         string
 	Id          string
 	Model       string
 	Name        string
+	Connected   bool
 	StartupTime time.Time
 }

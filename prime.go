@@ -69,12 +69,12 @@ func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) err
 }
 
 func (t *Thing) sendConnect() {
-	msg := Msg{Msg: EventConnect}
+	msg := MsgId{Msg: EventConnect, Id: t.id}
 	newPacket(t.bus, nil, &msg).Broadcast()
 }
 
 func (t *Thing) sendDisconnect() {
-	msg := Msg{Msg: EventDisconnect}
+	msg := MsgId{Msg: EventDisconnect, Id: t.id}
 	newPacket(t.bus, nil, &msg).Broadcast()
 }
 

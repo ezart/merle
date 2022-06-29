@@ -142,6 +142,7 @@ func (t *Thing) getIdentity(p *Packet) {
 		Id:          t.id,
 		Model:       t.model,
 		Name:        t.name,
+		Connected:   t.connected,
 		StartupTime: t.startupTime,
 	}
 	p.Marshal(&resp).Reply()

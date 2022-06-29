@@ -10,11 +10,11 @@ function show(id) {
 }
 
 function iconName(child) {
+	var status = "disconnected"
 	if (child.Connected) {
-		return "connected"
-	} else {
-		return "disconnected"
+		status = "connected"
 	}
+	return "/" + hubId + "/assets/images/" + status + ".jpg"
 }
 
 function showIcon(child) {
@@ -27,7 +27,7 @@ function showIcon(child) {
 	newpre.innerText = child.Id
 	newpre.id = "pre-" + child.Id
 
-	newimg.src = "/" + hubId + "/assets/images/" + iconName(child) + ".jpg"
+	newimg.src = iconName(child)
 	newimg.onclick = function (){show(child.Id);}
 	newimg.id = child.Id
 
@@ -58,15 +58,14 @@ function saveState(msg) {
 	}
 }
 
-function update(msg) {
-	var child = msg.Child
+function update(child) {
 	var img = document.getElementById(child.Id)
 	var pre = document.getElementById("pre-" + child.Id)
 
 	if (img == null) {
 		addChild(child)
 	} else {
-		img.src = "/" + hubId + "/assets/images/" + iconName(child) + ".jpg"
+		img.src = iconName(child)
 		show(child.Id)
 	}
 }
@@ -87,12 +86,10 @@ function Run(ws, id) {
 
 		conn.onclose = function(evt) {
 			clearScreen()
-			console.log('websocket close', evt.reason)
 			setTimeout(connect, 1000)
 		}
 
 		conn.onerror = function(err) {
-			console.log('websocket error', err.message)
 			conn.close()
 		}
 
@@ -105,7 +102,8 @@ function Run(ws, id) {
 			case "_ReplyState":
 				saveState(msg)
 				break
-			case "Update":
+			case "_EventConnect":
+			case "_EventDisconnect":
 				update(msg)
 				break
 			}

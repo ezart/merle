@@ -25,7 +25,6 @@ func NewThing() merle.Thinger {
 
 type msg struct {
 	Msg   string
-	Connected bool
 	State [4]bool
 }
 
@@ -54,7 +53,6 @@ func (t *thing) getState(p *merle.Packet) {
 	defer t.RUnlock()
 
 	msg := &msg{Msg: merle.ReplyState}
-	msg.Connected = p.IsConnected()
 	for i, _ := range t.relays {
 		msg.State[i] = t.relays[i].state
 	}
@@ -129,6 +127,7 @@ const html = `
 
 		<script>
 			var conn
+			var connected = false
 
 			relays = []
 			for (var i = 0; i < 4; i++) {
@@ -140,24 +139,21 @@ const html = `
 				conn.send(JSON.stringify({Msg: "_GetState"}))
 			}
 
+			function getIdentity() {
+				conn.send(JSON.stringify({Msg: "_GetIdentity"}))
+			}
+
 			function saveState(states) {
 				for (var i = 0; i < relays.length; i++) {
 					relays[i].checked = states[i]
 				}
 			}
 
-			function enable(connected) {
+			function showAll() {
 				for (var i = 0; i < relays.length; i++) {
 					relays[i].disabled = !connected
 				}
-			}
-
-			function showAll() {
 				buttons.style.display = "block"
-			}
-
-			function clearAll() {
-				buttons.style.display = "none"
 			}
 
 			function sendClick(relay, num) {
@@ -169,12 +165,12 @@ const html = `
 				conn = new WebSocket("{{.WebSocket}}")
 
 				conn.onopen = function(evt) {
-					clearAll()
-					getState()
+					getIdentity()
 				}
 
 				conn.onclose = function(evt) {
-					enable(false)
+					connected = false
+					showAll()
 					setTimeout(connect, 1000)
 				}
 
@@ -187,16 +183,21 @@ const html = `
 					console.log('msg', msg)
 
 					switch(msg.Msg) {
+					case "_ReplyIdentity":
+						connected = msg.Connected
+						getState()
+						break
 					case "_ReplyState":
 						saveState(msg.State)
-						enable(msg.Connected)
 						showAll()
 						break
 					case "_EventConnect":
+						connected = true
 						getState()
 						break
 					case "_EventDisconnect":
-						enable(false)
+						connected = false
+						showAll()
 						break
 					case "Click":
 						relays[msg.Relay].checked = msg.State

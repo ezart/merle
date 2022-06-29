@@ -8,15 +8,12 @@ import (
 
 type child struct {
 	Id string
-	Model string
-	Name string
 	Connected bool
 }
 
 type hub struct {
 	sync.RWMutex
 	children map[string]child
-	update chan child
 }
 
 func NewHub() merle.Thinger {
@@ -29,55 +26,44 @@ func (h *hub) BridgeThingers() merle.BridgeThingers {
 	}
 }
 
-func (h *hub) connect(p *merle.Packet) {
-	var msg merle.MsgIdentity
+func (h *hub) BridgeSubscribers() merle.Subscribers {
+	return merle.Subscribers{
+		"default": nil, // drop everything silently
+	}
+}
+
+func (h *hub) update(p *merle.Packet, connected bool) {
+	var msg merle.MsgId
 	p.Unmarshal(&msg)
 
 	child := child{
 		Id: msg.Id,
-		Model: msg.Model,
-		Name: msg.Name,
-		Connected: true,
+		Connected: connected,
 	}
 
 	h.Lock()
 	h.children[msg.Id] = child
 	h.Unlock()
 
-	h.update <- child
+	p.Broadcast()
+}
+
+func (h *hub) connect(p *merle.Packet) {
+	h.update(p, true)
 }
 
 func (h *hub) disconnect(p *merle.Packet) {
-	h.Lock()
-	child := h.children[p.Src()]
-	child.Connected = false
-	h.Unlock()
-
-	h.update <- child
+	h.update(p, false)
 }
 
-func (h *hub) BridgeSubscribers() merle.Subscribers {
-	return merle.Subscribers{
-		merle.EventBridgeConnect: merle.ReplyGetIdentity,
-		merle.EventBridgeDisconnect: h.disconnect,
-		merle.ReplyIdentity: h.connect,
-		"default": nil, // drop everything else silently
-	}
-}
-
-type msgChildren struct {
+type msgState struct {
 	Msg string
 	Children map[string]child
 }
 
-type msgUpdate struct {
-	Msg string
-	Child child
-}
-
 func (h *hub) getState(p *merle.Packet) {
 	h.RLock()
-	msg := &msgChildren{Msg: merle.ReplyState, Children: h.children}
+	msg := &msgState{Msg: merle.ReplyState, Children: h.children}
 	h.RUnlock()
 
 	p.Marshal(&msg).Reply()
@@ -85,24 +71,15 @@ func (h *hub) getState(p *merle.Packet) {
 
 func (h *hub) init(p *merle.Packet) {
 	h.children = make(map[string]child)
-	h.update = make(chan child)
-}
-
-func (h *hub) run(p *merle.Packet) {
-	for {
-		select {
-		case child := <- h.update:
-			msg := msgUpdate{Msg: "Update", Child: child}
-			p.Marshal(&msg).Broadcast()
-		}
-	}
 }
 
 func (h *hub) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		merle.CmdInit: h.init,
-		merle.CmdRun: h.run,
+		merle.CmdRun: merle.RunForever,
 		merle.GetState: h.getState,
+		merle.EventConnect: h.connect,
+		merle.EventDisconnect: h.disconnect,
 	}
 }
 
