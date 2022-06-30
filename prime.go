@@ -27,7 +27,7 @@ func (t *Thing) getPrimePort(id string) string {
 
 func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) error {
 	var name = fmt.Sprintf("port:%d", p.port)
-	var sock = newWebSocket(t, name, p.ws)
+	var sock = newWebSocket(t, name, 0, p.ws)
 	var pkt = newPacket(t.bus, sock, nil)
 	var msg = Msg{Msg: GetState}
 	var err error
@@ -68,25 +68,21 @@ func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) err
 	return nil
 }
 
-func (t *Thing) sendConnect() {
-	msg := MsgId{Msg: EventConnect, Id: t.id}
-	newPacket(t.bus, nil, &msg).Broadcast()
-}
-
-func (t *Thing) sendDisconnect() {
-	msg := MsgId{Msg: EventDisconnect, Id: t.id}
-	newPacket(t.bus, nil, &msg).Broadcast()
+func (t *Thing) sendStatus() {
+	msg := MsgEventStatus{Msg: EventStatus, Id: t.id, Online: t.online}
+	p := newPacket(t.bus, nil, &msg)
+	p.bus.broadcast(p, sock_flag_bcast | sock_flag_upstream)
 }
 
 func (t *Thing) primeReady(self *Thing) {
-	t.connected = true
+	t.online = true
 	t.web.public.start()
-	t.sendConnect()
+	t.sendStatus()
 }
 
 func (t *Thing) primeCleanup(self *Thing) {
-	t.connected = false
-	t.sendDisconnect()
+	t.online = false
+	t.sendStatus()
 }
 
 func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
@@ -98,6 +94,7 @@ func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
 	t.id = msg.Id
 	t.model = msg.Model
 	t.name = msg.Name
+	t.online = msg.Online
 	t.startupTime = msg.StartupTime
 	t.primeId = t.id
 

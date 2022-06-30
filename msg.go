@@ -24,19 +24,17 @@ const (
 	GetState   = "_GetState"
 	ReplyState = "_ReplyState"
 
-	EventConnect = "_EventConnect"
-	EventDisconnect = "_EventDisconnect"
-	EventBridgeConnect = "_EventBridgeConnect"
-	EventBridgeDisconnect = "_EventBridgeDisconnect"
+	EventStatus = "_EventStatus"
 )
 
 type Msg struct {
 	Msg string
 }
 
-type MsgId struct {
-	Msg string
-	Id  string
+type MsgEventStatus struct {
+	Msg    string
+	Id     string
+	Online bool
 }
 
 // ReplyIdentity returns MsgIdentity response
@@ -45,6 +43,6 @@ type MsgIdentity struct {
 	Id          string
 	Model       string
 	Name        string
-	Connected   bool
+	Online      bool
 	StartupTime time.Time
 }

@@ -93,7 +93,7 @@ func (b *bus) receive(p *Packet) {
 	// broadcasts until ReplyState is received.
 
 	if msg.Msg == ReplyState {
-		p.src.SetFlags(p.src.Flags() | bcast)
+		p.src.SetFlags(p.src.Flags() | sock_flag_bcast)
 		b.thing.log.Println("GOT REPLY STATE bcast set", p.src.Name())
 	}
 }
@@ -116,14 +116,14 @@ func (b *bus) reply(p *Packet) {
 	// receive unsolicited broadcast messages before ReplyState.
 
 	if msg.Msg == ReplyState {
-		p.src.SetFlags(p.src.Flags() | bcast)
+		p.src.SetFlags(p.src.Flags() | sock_flag_bcast)
 		b.thing.log.Println("SENDING REPLY STATE bcast set", p.src.Name())
 	}
 }
 
 // Broadcast sends the packet to each socket on the bus, expect to the
 // originating socket
-func (b *bus) broadcast(p *Packet) {
+func (b *bus) broadcast(p *Packet, flags uint32) {
 	sent := 0
 	src := p.src
 
@@ -136,14 +136,15 @@ func (b *bus) broadcast(p *Packet) {
 	for sock := range b.sockets {
 		if sock == src {
 			// don't send back to src
-			b.thing.log.Println("SKIPPING SELF:", sock.Name())
+			b.thing.log.Println("SKIPPING broadcast to SELF:", sock.Name())
 			continue
 		}
-		if sock.Flags()&bcast == 0 {
-			// Socket not ready for broadcasts.  Once a ReplyState
-			// message has been processed, the socket will be
-			// enabled for broadcasts.
-			b.thing.log.Println("SKIPPING BCAST NOT SET:", sock.Name())
+		missing := flags & ^sock.Flags()
+		if missing != 0 {
+			// Socket doesn't have all the needed flags set, so
+			// skip this socket.
+			b.thing.log.Printf("SKIPPING broadcast flags missing: %s, %02b",
+				sock.Name(), missing)
 			continue
 		}
 		if sent == 0 {

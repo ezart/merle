@@ -10,9 +10,9 @@ function show(id) {
 }
 
 function iconName(child) {
-	var status = "disconnected"
-	if (child.Connected) {
-		status = "connected"
+	var status = "offline"
+	if (child.Online) {
+		status = "online"
 	}
 	return "/" + hubId + "/assets/images/" + status + ".jpg"
 }
@@ -102,8 +102,7 @@ function Run(ws, id) {
 			case "_ReplyState":
 				saveState(msg)
 				break
-			case "_EventConnect":
-			case "_EventDisconnect":
+			case "_EventStatus":
 				update(msg)
 				break
 			}

@@ -24,8 +24,8 @@ func NewThing() merle.Thinger {
 }
 
 type msg struct {
-	Msg   string
-	State [4]bool
+	Msg    string
+	States [4]bool
 }
 
 func (t *thing) run(p *merle.Packet) {
@@ -54,7 +54,7 @@ func (t *thing) getState(p *merle.Packet) {
 
 	msg := &msg{Msg: merle.ReplyState}
 	for i, _ := range t.relays {
-		msg.State[i] = t.relays[i].state
+		msg.States[i] = t.relays[i].state
 	}
 
 	p.Marshal(&msg).Reply()
@@ -68,7 +68,7 @@ func (t *thing) saveState(p *merle.Packet) {
 	p.Unmarshal(&msg)
 
 	for i, _ := range t.relays {
-		t.relays[i].state = msg.State[i]
+		t.relays[i].state = msg.States[i]
 	}
 }
 
@@ -127,7 +127,7 @@ const html = `
 
 		<script>
 			var conn
-			var connected = false
+			var online = false
 
 			relays = []
 			for (var i = 0; i < 4; i++) {
@@ -151,7 +151,7 @@ const html = `
 
 			function showAll() {
 				for (var i = 0; i < relays.length; i++) {
-					relays[i].disabled = !connected
+					relays[i].disabled = !online
 				}
 				buttons.style.display = "block"
 			}
@@ -169,7 +169,7 @@ const html = `
 				}
 
 				conn.onclose = function(evt) {
-					connected = false
+					online = false
 					showAll()
 					setTimeout(connect, 1000)
 				}
@@ -184,20 +184,16 @@ const html = `
 
 					switch(msg.Msg) {
 					case "_ReplyIdentity":
-						connected = msg.Connected
+						online = msg.Online
 						getState()
 						break
 					case "_ReplyState":
 						saveState(msg.State)
 						showAll()
 						break
-					case "_EventConnect":
-						connected = true
+					case "_EventStatus":
+						online = msg.Online
 						getState()
-						break
-					case "_EventDisconnect":
-						connected = false
-						showAll()
 						break
 					case "Click":
 						relays[msg.Relay].checked = msg.State

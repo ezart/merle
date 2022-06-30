@@ -116,7 +116,7 @@ func (b *bridge) newChild(id, model, name string) (*Thing, error) {
 }
 
 func (b *bridge) bridgeReady(child *Thing) {
-	child.connected = true
+	child.online = true
 
 	child.bridgeSock = newWireSocket("bridge sock", b.bus, nil)
 	child.childSock = newWireSocket("child sock", child.bus, child.bridgeSock)
@@ -125,15 +125,15 @@ func (b *bridge) bridgeReady(child *Thing) {
 	b.bus.plugin(child.childSock)
 	child.bus.plugin(child.bridgeSock)
 
-	msg := Msg{Msg: EventBridgeConnect}
-	b.bus.receive(newPacket(b.bus, child.childSock, &msg))
+	//msg := Msg{Msg: EventBridgeConnect}
+	//b.bus.receive(newPacket(b.bus, child.childSock, &msg))
 }
 
 func (b *bridge) bridgeCleanup(child *Thing) {
-	child.connected = false
+	child.online = false
 
-	msg := Msg{Msg: EventBridgeDisconnect}
-	b.bus.receive(newPacket(b.bus, child.childSock, &msg))
+	//msg := Msg{Msg: EventBridgeDisconnect}
+	//b.bus.receive(newPacket(b.bus, child.childSock, &msg))
 
 	child.bus.unplug(child.bridgeSock)
 	b.bus.unplug(child.childSock)

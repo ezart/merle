@@ -110,8 +110,8 @@ type Thing struct {
 	id          string
 	model       string
 	name        string
+	online      bool
 	startupTime time.Time
-	connected   bool
 	bus         *bus
 	tunnel      *tunnel
 	web         *web
@@ -142,7 +142,7 @@ func (t *Thing) getIdentity(p *Packet) {
 		Id:          t.id,
 		Model:       t.model,
 		Name:        t.name,
-		Connected:   t.connected,
+		Online:      t.online,
 		StartupTime: t.startupTime,
 	}
 	p.Marshal(&resp).Reply()
@@ -157,7 +157,7 @@ func (t *Thing) getChild(id string) *Thing {
 
 func (t *Thing) run() error {
 
-	t.connected = true
+	t.online = true
 
 	// Force receipt of CmdInit msg
 	msg := Msg{Msg: CmdInit}

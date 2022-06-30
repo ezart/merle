@@ -7,8 +7,8 @@ import (
 )
 
 type child struct {
-	Id string
-	Connected bool
+	Id     string
+	Online bool
 }
 
 type hub struct {
@@ -32,13 +32,13 @@ func (h *hub) BridgeSubscribers() merle.Subscribers {
 	}
 }
 
-func (h *hub) update(p *merle.Packet, connected bool) {
-	var msg merle.MsgId
+func (h *hub) update(p *merle.Packet) {
+	var msg merle.MsgEventStatus
 	p.Unmarshal(&msg)
 
 	child := child{
 		Id: msg.Id,
-		Connected: connected,
+		Online: msg.Online,
 	}
 
 	h.Lock()
@@ -46,14 +46,6 @@ func (h *hub) update(p *merle.Packet, connected bool) {
 	h.Unlock()
 
 	p.Broadcast()
-}
-
-func (h *hub) connect(p *merle.Packet) {
-	h.update(p, true)
-}
-
-func (h *hub) disconnect(p *merle.Packet) {
-	h.update(p, false)
 }
 
 type msgState struct {
@@ -78,8 +70,7 @@ func (h *hub) Subscribers() merle.Subscribers {
 		merle.CmdInit: h.init,
 		merle.CmdRun: merle.RunForever,
 		merle.GetState: h.getState,
-		merle.EventConnect: h.connect,
-		merle.EventDisconnect: h.disconnect,
+		merle.EventStatus: h.update,
 	}
 }
 
