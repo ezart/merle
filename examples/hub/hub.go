@@ -3,6 +3,7 @@ package hub
 import (
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/relays"
+	"github.com/merliot/merle/examples/gps"
 	"sync"
 )
 
@@ -23,6 +24,7 @@ func NewHub() merle.Thinger {
 func (h *hub) BridgeThingers() merle.BridgeThingers {
 	return merle.BridgeThingers{
 		".*:relays:.*": func() merle.Thinger { return relays.NewThing() },
+		".*:gypsy:.*": func() merle.Thinger { return gps.NewGps() },
 	}
 }
 

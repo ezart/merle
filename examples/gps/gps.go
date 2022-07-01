@@ -1,9 +1,8 @@
 // file: examples/gps/gps.go
 
-package main
+package gps
 
 import (
-	"flag"
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/telit"
 	"log"
@@ -15,6 +14,10 @@ type gps struct {
 	sync.RWMutex
 	lastLat  float64
 	lastLong float64
+}
+
+func NewGps() merle.Thinger {
+	return &gps{}
 }
 
 type msg struct {
@@ -82,6 +85,8 @@ const html = `
 <!DOCTYPE html>
 <html lang="en">
 	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
 		<!-- Leaflet's CSS -->
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css"
 		integrity="sha512-hoalWLoI8r4UszCkZ5kL8vayOGVae1oxXe/2A4AO6J9+580uKHDO3JdHb7NzwwzK5xr/Fs0W40kiNHxM9vyTtQ=="
@@ -93,9 +98,12 @@ const html = `
 		crossorigin=""></script>
 	</head>
 	<body>
-		<div id="map" style="height:100%"></div>
+		<div id="map" style="height:100%" disabled=true></div>
 
 		<script>
+			var conn
+			var online = false
+
 			<!-- Create a Leaflet map using OpenStreetMap -->
 			map = L.map('map').setZoom(13)
 			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -107,24 +115,49 @@ const html = `
 			popup = "ID: {{.Id}}<br>Model: {{.Model}}<br>Name: {{.Name}}"
 			marker = L.marker([0, 0]).addTo(map).bindPopup(popup);
 
-			conn = new WebSocket("{{.WebSocket}}")
-
-			conn.onopen = function(evt) {
-				conn.send(JSON.stringify({Msg: "_GetState"}))
+			function show() {
+				div = document.getElementById("map")
+				div.disabled = !online
 			}
 
-			conn.onmessage = function(evt) {
-				msg = JSON.parse(evt.data)
-				console.log('msg', msg)
+			function connect() {
+				conn = new WebSocket("{{.WebSocket}}")
 
-				switch(msg.Msg) {
-				case "_ReplyState":
-				case "Update":
-					marker.setLatLng([msg.Lat, msg.Long])
-					map.panTo([msg.Lat, msg.Long])
-					break
+				conn.onopen = function(evt) {
+					getIdentify()
+				}
+
+				conn.onclose = function(evt) {
+					online = false
+					show()
+					setTimeout(connect, 1000)
+				}
+
+				conn.onerror = function(err) {
+					conn.close()
+				}
+
+				conn.onmessage = function(evt) {
+					msg = JSON.parse(evt.data)
+					console.log('msg', msg)
+
+					switch(msg.Msg) {
+					case "_ReplyIdentity":
+					case "_EventStatus":
+						online = msg.Online
+						getState()
+						break
+					case "_ReplyState":
+					case "Update":
+						marker.setLatLng([msg.Lat, msg.Long])
+						map.panTo([msg.Lat, msg.Long])
+						show()
+						break
+					}
 				}
 			}
+
+			connect()
 		</script>
 	</body>
 </html>`
@@ -133,24 +166,4 @@ func (g *gps) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
 		HtmlTemplateText: html,
 	}
-}
-
-func main() {
-	thing := merle.NewThing(&gps{})
-
-	thing.Cfg.Model = "gps"
-	thing.Cfg.Name = "gypsy"
-	thing.Cfg.User = "merle"
-
-	thing.Cfg.PortPublic = 80
-	thing.Cfg.PortPrivate = 8080
-
-	flag.StringVar(&thing.Cfg.MotherHost, "rhost", "", "Remote host")
-	flag.StringVar(&thing.Cfg.MotherUser, "ruser", "merle", "Remote user")
-	flag.BoolVar(&thing.Cfg.IsPrime, "prime", false, "Run as Thing Prime")
-	flag.UintVar(&thing.Cfg.PortPublicTLS, "TLS", 0, "TLS port")
-
-	flag.Parse()
-
-	log.Fatalln(thing.Run())
 }

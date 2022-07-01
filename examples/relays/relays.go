@@ -184,16 +184,13 @@ const html = `
 
 					switch(msg.Msg) {
 					case "_ReplyIdentity":
+					case "_EventStatus":
 						online = msg.Online
 						getState()
 						break
 					case "_ReplyState":
 						saveState(msg.States)
 						showAll()
-						break
-					case "_EventStatus":
-						online = msg.Online
-						getState()
 						break
 					case "Click":
 						relays[msg.Relay].checked = msg.State
