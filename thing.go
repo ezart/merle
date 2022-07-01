@@ -121,6 +121,7 @@ type Thing struct {
 	bridge      *bridge
 	isPrime     bool
 	primePort   *port
+	primeSock   *webSocket
 	primeId     string
 	bridgeSock  *wireSocket
 	childSock   *wireSocket

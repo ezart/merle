@@ -188,7 +188,7 @@ const html = `
 						getState()
 						break
 					case "_ReplyState":
-						saveState(msg.State)
+						saveState(msg.States)
 						showAll()
 						break
 					case "_EventStatus":

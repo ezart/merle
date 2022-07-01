@@ -59,7 +59,7 @@ func (p *Packet) Reply() {
 
 // Broadcast the Packet to all listeners except for the source of the Packet.
 func (p *Packet) Broadcast() {
-	p.bus.broadcast(p, sock_flag_bcast)
+	p.bus.broadcast(p)
 }
 
 // Send Packet to destination

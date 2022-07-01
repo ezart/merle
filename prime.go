@@ -27,13 +27,14 @@ func (t *Thing) getPrimePort(id string) string {
 
 func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) error {
 	var name = fmt.Sprintf("port:%d", p.port)
-	var sock = newWebSocket(t, name, 0, p.ws)
+	var sock = newWebSocket(t, name, p.ws)
 	var pkt = newPacket(t.bus, sock, nil)
 	var msg = Msg{Msg: GetState}
 	var err error
 
 	t.log.Printf("Websocket opened [%s]", name)
 
+	t.primeSock = sock
 	t.bus.plugin(sock)
 
 	// Send GetState msg to Thing
@@ -70,8 +71,8 @@ func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) err
 
 func (t *Thing) sendStatus() {
 	msg := MsgEventStatus{Msg: EventStatus, Id: t.id, Online: t.online}
-	p := newPacket(t.bus, nil, &msg)
-	p.bus.broadcast(p, sock_flag_bcast | sock_flag_upstream)
+	p := newPacket(t.bus, t.primeSock, &msg)
+	p.bus.broadcast(p)
 }
 
 func (t *Thing) primeReady(self *Thing) {

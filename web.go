@@ -82,7 +82,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	defer ws.Close()
 
 	name := "ws:" + r.RemoteAddr + r.RequestURI
-	var sock = newWebSocket(t, name, sock_flag_upstream, ws)
+	var sock = newWebSocket(t, name, ws)
 
 	t.log.Printf("Websocket opened [%s]", name)
 
@@ -464,9 +464,8 @@ type webSocket struct {
 	conn  *websocket.Conn
 }
 
-func newWebSocket(thing *Thing, name string, flags uint32,
-	conn *websocket.Conn) *webSocket {
-	return &webSocket{thing: thing, name: name, flags: flags, conn: conn}
+func newWebSocket(thing *Thing, name string, conn *websocket.Conn) *webSocket {
+	return &webSocket{thing: thing, name: name, conn: conn}
 }
 
 func (ws *webSocket) Send(p *Packet) error {

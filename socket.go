@@ -7,7 +7,6 @@ package merle
 // Socket flags
 const (
 	sock_flag_bcast uint32 = 1 << iota
-	sock_flag_upstream
 )
 
 // Socketer is an interface to a socket.  A socket plugs into a bus.
