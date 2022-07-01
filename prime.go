@@ -71,8 +71,7 @@ func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) err
 
 func (t *Thing) sendStatus() {
 	msg := MsgEventStatus{Msg: EventStatus, Id: t.id, Online: t.online}
-	p := newPacket(t.bus, t.primeSock, &msg)
-	p.bus.broadcast(p)
+	newPacket(t.bus, t.primeSock, &msg).Broadcast()
 }
 
 func (t *Thing) primeReady(self *Thing) {
