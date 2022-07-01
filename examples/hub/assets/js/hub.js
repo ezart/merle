@@ -3,10 +3,22 @@
 // in the LICENSE file.
 
 var hubId
+var lastImg
+var shown = false
 
 function show(id) {
 	var iframe = document.getElementById("child")
+	var img = document.getElementById(id)
+
 	iframe.src = "/" + encodeURIComponent(id)
+	img.style.border = "2px dashed blue"
+
+	if (typeof lastImg !== 'undefined') {
+		lastImg.style.border = "2px dashed orange"
+	}
+
+	lastImg = img
+	shown = true
 }
 
 function iconName(child) {
@@ -18,7 +30,6 @@ function iconName(child) {
 }
 
 function showIcon(child) {
-	var iframe = document.getElementById("child")
 	var children = document.getElementById("children")
 	var newdiv = document.createElement("div")
 	var newpre = document.createElement("pre")
@@ -37,8 +48,13 @@ function showIcon(child) {
 }
 
 function addChild(child) {
+	var iframe = document.getElementById("child")
+
 	showIcon(child)
-	show(child.Id)
+
+	if (!shown) {
+		show(child.Id)
+	}
 }
 
 function clearScreen() {
@@ -49,6 +65,7 @@ function clearScreen() {
 	while (children.firstChild) {
 		children.removeChild(children.firstChild)
 	}
+	shown = false
 }
 
 function saveState(msg) {
@@ -66,7 +83,6 @@ function update(child) {
 		addChild(child)
 	} else {
 		img.src = iconName(child)
-		show(child.Id)
 	}
 }
 

@@ -17,8 +17,8 @@ body, html {
 	flex-wrap: nowrap;
 	flex-direction: row;
 	align-content: space-between;
-	height: 100px;
-	background-color: black;
+	height: 175px;
+	background-color: orange;
 }
 
 .children > div {
@@ -31,8 +31,13 @@ body, html {
 }
 
 .children > div > pre {
-	color: white;
-	font: 14px Arial, sans-serif;
+	font: 12px Arial, sans-serif;
+}
+
+.children > div > img {
+	width: 80px;
+	border: 2px dashed orange;
+	border-radius: 10px;
 }
 
 .child {
