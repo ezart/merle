@@ -11,8 +11,8 @@ function show(id) {
 	var img = document.getElementById(id)
 
 	iframe.src = "/" + encodeURIComponent(id)
-	img.style.border = "2px dashed blue"
 
+	img.style.border = "2px dashed blue"
 	if (typeof lastImg !== 'undefined') {
 		lastImg.style.border = "2px dashed orange"
 	}
@@ -29,7 +29,7 @@ function iconName(child) {
 	return "/" + hubId + "/assets/images/" + status + ".jpg"
 }
 
-function showIcon(child) {
+function newIcon(child) {
 	var children = document.getElementById("children")
 	var newdiv = document.createElement("div")
 	var newpre = document.createElement("pre")
@@ -39,7 +39,7 @@ function showIcon(child) {
 	newpre.id = "pre-" + child.Id
 
 	newimg.src = iconName(child)
-	newimg.onclick = function (){show(child.Id);}
+	newimg.onclick = function (){show(child.Id)}
 	newimg.id = child.Id
 
 	newdiv.appendChild(newpre)
@@ -50,7 +50,7 @@ function showIcon(child) {
 function addChild(child) {
 	var iframe = document.getElementById("child")
 
-	showIcon(child)
+	newIcon(child)
 
 	if (!shown) {
 		show(child.Id)
@@ -112,7 +112,7 @@ function Run(ws, id) {
 		conn.onmessage = function(evt) {
 			var msg = JSON.parse(evt.data)
 
-			console.log('msg', msg)
+			console.log('hub', msg)
 
 			switch(msg.Msg) {
 			case "_ReplyState":

@@ -100,10 +100,11 @@ func (t *thing) click(p *merle.Packet) {
 
 func (t *thing) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdRun:     t.run,
-		merle.GetState:   t.getState,
-		merle.ReplyState: t.saveState,
-		"Click":          t.click,
+		merle.CmdRun:      t.run,
+		merle.GetState:    t.getState,
+		merle.ReplyState:  t.saveState,
+		merle.EventStatus: merle.Broadcast,
+		"Click":           t.click,
 	}
 }
 
@@ -180,7 +181,7 @@ const html = `
 
 				conn.onmessage = function(evt) {
 					msg = JSON.parse(evt.data)
-					console.log('msg', msg)
+					console.log('relays', msg)
 
 					switch(msg.Msg) {
 					case "_ReplyIdentity":

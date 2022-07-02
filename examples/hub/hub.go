@@ -24,7 +24,7 @@ func NewHub() merle.Thinger {
 func (h *hub) BridgeThingers() merle.BridgeThingers {
 	return merle.BridgeThingers{
 		".*:relays:.*": func() merle.Thinger { return relays.NewThing() },
-		".*:gypsy:.*": func() merle.Thinger { return gps.NewGps() },
+		".*:gps:.*": func() merle.Thinger { return gps.NewGps() },
 	}
 }
 

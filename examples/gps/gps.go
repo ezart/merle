@@ -74,10 +74,11 @@ func (g *gps) update(p *merle.Packet) {
 
 func (g *gps) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdRun:     g.run,
-		merle.GetState:   g.getState,
-		merle.ReplyState: g.saveState,
-		"Update":         g.update,
+		merle.CmdRun:      g.run,
+		merle.GetState:    g.getState,
+		merle.ReplyState:  g.saveState,
+		merle.EventStatus: merle.Broadcast,
+		"Update":          g.update,
 	}
 }
 
@@ -177,7 +178,7 @@ const html = `
 
 				conn.onmessage = function(evt) {
 					msg = JSON.parse(evt.data)
-					console.log('msg', msg)
+					console.log('gps', msg)
 
 					switch(msg.Msg) {
 					case "_ReplyIdentity":

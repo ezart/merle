@@ -146,7 +146,7 @@ function Run(scheme, host, id) {
 	conn.onmessage = function(evt) {
 		var msg = JSON.parse(evt.data)
 
-		console.log('thing msg', msg)
+		console.log('blink', msg)
 
 		switch(msg.Msg) {
 		case "_SpamStatus":

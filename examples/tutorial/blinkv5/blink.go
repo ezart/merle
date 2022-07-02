@@ -93,7 +93,7 @@ const html = `
 
 			conn.onmessage = function(evt) {
 				msg = JSON.parse(evt.data)
-				console.log('msg', msg)
+				console.log('blink', msg)
 
 				switch(msg.Msg) {
 				case "_ReplyState":

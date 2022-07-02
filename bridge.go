@@ -118,6 +118,7 @@ func (b *bridge) newChild(id, model, name string) (*Thing, error) {
 func (b *bridge) sendStatus(child *Thing) {
 	msg := MsgEventStatus{Msg: EventStatus, Id: child.id, Online: child.online}
 	b.thing.bus.receive(newPacket(b.thing.bus, nil, &msg))
+	child.bus.receive(newPacket(child.bus, nil, &msg))
 }
 
 func (b *bridge) bridgeReady(child *Thing) {
