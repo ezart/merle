@@ -82,7 +82,6 @@ func (g *gps) Subscribers() merle.Subscribers {
 }
 
 const html = `
-<!DOCTYPE html>
 <html lang="en">
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -96,9 +95,36 @@ const html = `
 		<script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"
 		integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
 		crossorigin=""></script>
+
+		<style>
+		#overlay {
+			position: fixed;
+			display: none;
+			width: 100%;
+			height: 100%;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: rgba(0,0,0,0.5);
+			z-index: 2000;
+			cursor: wait;
+		}
+		#offline {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			font-size: 50px;
+			color: white;
+			transform: translate(-50%,-50%);
+		}
+		</style>
 	</head>
-	<body>
-		<div id="map" style="height:100%" disabled=true></div>
+	<body style="margin: 0">
+		<div id="map" style="height:100%"></div>
+		<div id="overlay">
+			<div id="offline">Offline</div>
+		</div>
 
 		<script>
 			var conn
@@ -115,16 +141,28 @@ const html = `
 			popup = "ID: {{.Id}}<br>Model: {{.Model}}<br>Name: {{.Name}}"
 			marker = L.marker([0, 0]).addTo(map).bindPopup(popup);
 
+			function getState() {
+				conn.send(JSON.stringify({Msg: "_GetState"}))
+			}
+
+			function getIdentity() {
+				conn.send(JSON.stringify({Msg: "_GetIdentity"}))
+			}
+
 			function show() {
-				div = document.getElementById("map")
-				div.disabled = !online
+				overlay = document.getElementById("overlay")
+				if (online) {
+					overlay.style.display = "none"
+				} else {
+					overlay.style.display = "block"
+				}
 			}
 
 			function connect() {
 				conn = new WebSocket("{{.WebSocket}}")
 
 				conn.onopen = function(evt) {
-					getIdentify()
+					getIdentity()
 				}
 
 				conn.onclose = function(evt) {
