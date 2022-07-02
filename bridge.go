@@ -118,7 +118,7 @@ func (b *bridge) newChild(id, model, name string) (*Thing, error) {
 func (b *bridge) sendStatus(child *Thing) {
 	msg := MsgEventStatus{Msg: EventStatus, Id: child.id, Online: child.online}
 	b.thing.bus.receive(newPacket(b.thing.bus, nil, &msg))
-	child.bus.receive(newPacket(child.bus, nil, &msg))
+	newPacket(child.bus, child.primeSock, &msg).Broadcast()
 }
 
 func (b *bridge) bridgeReady(child *Thing) {
@@ -163,6 +163,7 @@ func (b *bridge) bridgeAttach(p *port, msg *MsgIdentity) error {
 		}
 	}
 
+	child.primePort = p
 	child.startupTime = msg.StartupTime
 
 	return child.runOnPort(p, b.bridgeReady, b.bridgeCleanup)

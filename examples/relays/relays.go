@@ -103,7 +103,6 @@ func (t *thing) Subscribers() merle.Subscribers {
 		merle.CmdRun:      t.run,
 		merle.GetState:    t.getState,
 		merle.ReplyState:  t.saveState,
-		merle.EventStatus: merle.Broadcast,
 		"Click":           t.click,
 	}
 }

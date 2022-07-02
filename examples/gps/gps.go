@@ -77,7 +77,6 @@ func (g *gps) Subscribers() merle.Subscribers {
 		merle.CmdRun:      g.run,
 		merle.GetState:    g.getState,
 		merle.ReplyState:  g.saveState,
-		merle.EventStatus: merle.Broadcast,
 		"Update":          g.update,
 	}
 }
