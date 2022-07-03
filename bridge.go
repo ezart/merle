@@ -56,7 +56,7 @@ func newBridge(thing *Thing, portBegin, portEnd uint) *bridge {
 		thing:    thing,
 		thingers: bridger.BridgeThingers(),
 		children: make(children),
-		bus:      newBus(thing, thing.Cfg.MaxConnections,
+		bus: newBus(thing, thing.Cfg.MaxConnections,
 			bridger.BridgeSubscribers()),
 	}
 

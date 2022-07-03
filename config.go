@@ -42,7 +42,7 @@ type ThingConfig struct {
 	// [Required, if Prime] PortPrime port is used to create a
 	// tunnel from Thing to Thing-prime.  The port should be a
 	// reserved port in ip_local_reserved_ports.
-	PortPrime uint
+	PortPrime      uint
 	MaxConnections uint
 
 	// This section describes a Thing's Mother.  Every Thing has a Mother.  A
@@ -78,23 +78,22 @@ type ThingConfig struct {
 	BridgePortBegin uint
 	// Ending port number.
 	BridgePortEnd uint
-
 }
 
 var defaultCfg = ThingConfig{
-	Id: "",
-	Model: "Thing",
-	Name: "Thingy",
-	User: "",
-	PortPublic: 0,
-	PortPublicTLS: 0,
-	PortPrivate: 0,
-	IsPrime: false,
-	PortPrime: 8000,
-	MaxConnections: 10,
-	MotherHost: "",
-	MotherUser: "",
+	Id:                "",
+	Model:             "Thing",
+	Name:              "Thingy",
+	User:              "",
+	PortPublic:        0,
+	PortPublicTLS:     0,
+	PortPrivate:       0,
+	IsPrime:           false,
+	PortPrime:         8000,
+	MaxConnections:    10,
+	MotherHost:        "",
+	MotherUser:        "",
 	MotherPortPrivate: 8080,
-	BridgePortBegin: 8000,
-	BridgePortEnd: 8040,
+	BridgePortBegin:   8000,
+	BridgePortEnd:     8040,
 }

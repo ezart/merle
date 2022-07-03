@@ -131,9 +131,9 @@ type Thing struct {
 // NewThing returns a Thing built from a Thinger.
 func NewThing(thinger Thinger) *Thing {
 	return &Thing{
-		Cfg: defaultCfg,
+		Cfg:     defaultCfg,
 		thinger: thinger,
-		assets: thinger.Assets(),
+		assets:  thinger.Assets(),
 	}
 }
 

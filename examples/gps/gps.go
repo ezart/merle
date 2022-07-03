@@ -74,10 +74,10 @@ func (g *gps) update(p *merle.Packet) {
 
 func (g *gps) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdRun:      g.run,
-		merle.GetState:    g.getState,
-		merle.ReplyState:  g.saveState,
-		"Update":          g.update,
+		merle.CmdRun:     g.run,
+		merle.GetState:   g.getState,
+		merle.ReplyState: g.saveState,
+		"Update":         g.update,
 	}
 }
 

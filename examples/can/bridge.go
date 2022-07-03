@@ -21,8 +21,8 @@ func (b *bridge) BridgeThingers() merle.BridgeThingers {
 
 func (b *bridge) BridgeSubscribers() merle.Subscribers {
 	return merle.Subscribers{
-		"CAN": merle.Broadcast, // broadcast CAN msgs to everyone
-		"default": nil,         // drop everything else silently
+		"CAN":     merle.Broadcast, // broadcast CAN msgs to everyone
+		"default": nil,             // drop everything else silently
 	}
 }
 
