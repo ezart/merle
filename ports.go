@@ -103,7 +103,7 @@ again:
 	}
 
 	if identity.Msg != ReplyIdentity {
-		p.thing.log.Printf("SKIPPING unexpected message %s", identity)
+		p.thing.log.Printf("SKIPPING unexpected message %v", identity)
 		goto again
 	}
 
