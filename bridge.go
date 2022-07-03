@@ -122,8 +122,6 @@ func (b *bridge) sendStatus(child *Thing) {
 }
 
 func (b *bridge) bridgeReady(child *Thing) {
-	child.online = true
-
 	child.bridgeSock = newWireSocket("bridge sock", b.bus, nil)
 	child.childSock = newWireSocket("child sock", child.bus, child.bridgeSock)
 	child.bridgeSock.opposite = child.childSock
@@ -131,16 +129,16 @@ func (b *bridge) bridgeReady(child *Thing) {
 	b.bus.plugin(child.childSock)
 	child.bus.plugin(child.bridgeSock)
 
+	child.online = true
 	b.sendStatus(child)
 }
 
 func (b *bridge) bridgeCleanup(child *Thing) {
 	child.online = false
+	b.sendStatus(child)
 
 	child.bus.unplug(child.bridgeSock)
 	b.bus.unplug(child.childSock)
-
-	b.sendStatus(child)
 }
 
 func (b *bridge) bridgeAttach(p *port, msg *MsgIdentity) error {
