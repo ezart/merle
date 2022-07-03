@@ -189,7 +189,8 @@ type wireSocket struct {
 }
 
 func newWireSocket(name string, bus *bus, opposite *wireSocket) *wireSocket {
-	return &wireSocket{name: name, bus: bus, opposite: opposite}
+	return &wireSocket{name: name, flags: sock_flag_bcast,
+		bus: bus, opposite: opposite}
 }
 
 func (s *wireSocket) Send(p *Packet) error {
