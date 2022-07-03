@@ -39,7 +39,7 @@ func (t *thing) run(p *merle.Packet) {
 		{driver: gpio.NewRelayDriver(adaptor, "37")}, // GPIO 26
 	}
 
-	for i, _ := range t.relays {
+	for i := range t.relays {
 		t.relays[i].driver.Start()
 		t.relays[i].driver.Off()
 		t.relays[i].state = false
@@ -53,7 +53,7 @@ func (t *thing) getState(p *merle.Packet) {
 	defer t.RUnlock()
 
 	msg := &msg{Msg: merle.ReplyState}
-	for i, _ := range t.relays {
+	for i := range t.relays {
 		msg.States[i] = t.relays[i].state
 	}
 
@@ -67,7 +67,7 @@ func (t *thing) saveState(p *merle.Packet) {
 	var msg msg
 	p.Unmarshal(&msg)
 
-	for i, _ := range t.relays {
+	for i := range t.relays {
 		t.relays[i].state = msg.States[i]
 	}
 }
