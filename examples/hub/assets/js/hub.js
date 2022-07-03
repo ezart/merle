@@ -14,7 +14,9 @@ function show(id) {
 
 	img.style.border = "2px dashed blue"
 	if (typeof lastImg !== 'undefined') {
-		lastImg.style.border = "2px dashed orange"
+		if (lastImg != img) {
+			lastImg.style.border = "2px dashed orange"
+		}
 	}
 
 	lastImg = img
