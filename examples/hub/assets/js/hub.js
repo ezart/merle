@@ -6,7 +6,7 @@ var hubId
 var lastImg
 var shown = false
 
-function show(id) {
+function showChild(id) {
 	var iframe = document.getElementById("child")
 	var img = document.getElementById(id)
 
@@ -41,7 +41,7 @@ function newIcon(child) {
 	newpre.id = "pre-" + child.Id
 
 	newimg.src = iconName(child)
-	newimg.onclick = function (){show(child.Id)}
+	newimg.onclick = function (){showChild(child.Id)}
 	newimg.id = child.Id
 
 	newdiv.appendChild(newpre)
@@ -55,7 +55,7 @@ function addChild(child) {
 	newIcon(child)
 
 	if (!shown) {
-		show(child.Id)
+		showChild(child.Id)
 	}
 }
 
