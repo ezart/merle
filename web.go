@@ -131,10 +131,10 @@ func (t *Thing) templateParams(r *http.Request) map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		"Host":   r.Host,
-		"Id":     t.id,
-		"Model":  t.model,
-		"Name":   t.name,
+		"Host":  r.Host,
+		"Id":    t.id,
+		"Model": t.model,
+		"Name":  t.name,
 		// TODO The forward slashes are getting escaped in the output
 		// TODO within <script></script> tags.  So "/" turns into "\/".
 		// TODO Need to figure out why it's doing that or decide if it matters.

@@ -169,7 +169,7 @@ func (b *bus) send(p *Packet, dst string) {
 			b.thing.log.Printf("Send to [%s]: %.80s", dst, p.String())
 			sock.Send(p)
 			sent = true
-			break;
+			break
 		}
 	}
 

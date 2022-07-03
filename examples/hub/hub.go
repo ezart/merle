@@ -2,8 +2,8 @@ package hub
 
 import (
 	"github.com/merliot/merle"
-	"github.com/merliot/merle/examples/relays"
 	"github.com/merliot/merle/examples/gps"
+	"github.com/merliot/merle/examples/relays"
 	"sync"
 )
 
@@ -24,7 +24,7 @@ func NewHub() merle.Thinger {
 func (h *hub) BridgeThingers() merle.BridgeThingers {
 	return merle.BridgeThingers{
 		".*:relays:.*": func() merle.Thinger { return relays.NewThing() },
-		".*:gps:.*": func() merle.Thinger { return gps.NewGps() },
+		".*:gps:.*":    func() merle.Thinger { return gps.NewGps() },
 	}
 }
 
@@ -39,7 +39,7 @@ func (h *hub) update(p *merle.Packet) {
 	p.Unmarshal(&msg)
 
 	child := child{
-		Id: msg.Id,
+		Id:     msg.Id,
 		Online: msg.Online,
 	}
 
@@ -51,7 +51,7 @@ func (h *hub) update(p *merle.Packet) {
 }
 
 type msgState struct {
-	Msg string
+	Msg      string
 	Children map[string]child
 }
 
@@ -69,16 +69,16 @@ func (h *hub) init(p *merle.Packet) {
 
 func (h *hub) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdInit: h.init,
-		merle.CmdRun: merle.RunForever,
-		merle.GetState: h.getState,
+		merle.CmdInit:     h.init,
+		merle.CmdRun:      merle.RunForever,
+		merle.GetState:    h.getState,
 		merle.EventStatus: h.update,
 	}
 }
 
 func (h *hub) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
-		AssetsDir: "examples/hub/assets",
+		AssetsDir:    "examples/hub/assets",
 		HtmlTemplate: "templates/hub.html",
 	}
 }

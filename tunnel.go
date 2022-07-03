@@ -32,7 +32,7 @@ func newTunnel(log *log.Logger, id, host, user string,
 		user:        user,
 		portPrivate: portPrivate,
 		portRemote:  portRemote,
-		log: log,
+		log:         log,
 	}
 }
 

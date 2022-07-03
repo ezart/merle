@@ -8,7 +8,8 @@ import (
 )
 
 func main() {
-	thing := merle.NewThing(gps.NewGps())
+	gps := gps.NewGps()
+	thing := merle.NewThing(gps)
 
 	thing.Cfg.Model = "gps"
 	thing.Cfg.Name = "gypsy"
@@ -16,6 +17,8 @@ func main() {
 
 	thing.Cfg.PortPublic = 80
 	thing.Cfg.PortPrivate = 8080
+
+	flag.BoolVar(&gps.Demo, "demo", false, "Run in Demo mode")
 
 	flag.StringVar(&thing.Cfg.MotherHost, "rhost", "", "Remote host")
 	flag.StringVar(&thing.Cfg.MotherUser, "ruser", "merle", "Remote user")
@@ -26,4 +29,3 @@ func main() {
 
 	log.Fatalln(thing.Run())
 }
-

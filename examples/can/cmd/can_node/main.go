@@ -26,4 +26,3 @@ func main() {
 
 	log.Fatalln(thing.Run())
 }
-

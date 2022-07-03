@@ -11,7 +11,7 @@ import (
 
 type relay struct {
 	driver *gpio.RelayDriver
-	state bool
+	state  bool
 }
 
 type thing struct {
@@ -45,7 +45,7 @@ func (t *thing) run(p *merle.Packet) {
 		t.relays[i].state = false
 	}
 
-	select{}
+	select {}
 }
 
 func (t *thing) getState(p *merle.Packet) {
@@ -100,10 +100,10 @@ func (t *thing) click(p *merle.Packet) {
 
 func (t *thing) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdRun:      t.run,
-		merle.GetState:    t.getState,
-		merle.ReplyState:  t.saveState,
-		"Click":           t.click,
+		merle.CmdRun:     t.run,
+		merle.GetState:   t.getState,
+		merle.ReplyState: t.saveState,
+		"Click":          t.click,
 	}
 }
 

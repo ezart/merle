@@ -10,7 +10,7 @@ import (
 
 type node struct {
 	Iface string
-	sock *canbus.Socket
+	sock  *canbus.Socket
 }
 
 func NewNode() *node {
@@ -18,8 +18,8 @@ func NewNode() *node {
 }
 
 type canMsg struct {
-	Msg string
-	Id  uint32
+	Msg  string
+	Id   uint32
 	Data []byte
 }
 

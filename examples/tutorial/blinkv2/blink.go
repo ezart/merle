@@ -29,7 +29,7 @@ func (b *blink) run(p *merle.Packet) {
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		merle.CmdInit: nil,
-		merle.CmdRun: b.run,
+		merle.CmdRun:  b.run,
 	}
 }
 
