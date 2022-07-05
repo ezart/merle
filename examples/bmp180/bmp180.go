@@ -14,9 +14,9 @@ import (
 
 type bmp180 struct {
 	sync.RWMutex
-	driver *i2c.BMP180Driver
+	driver          *i2c.BMP180Driver
 	lastTemperature int
-	lastPressure int
+	lastPressure    int
 }
 
 func NewBmp180() *bmp180 {
@@ -25,8 +25,8 @@ func NewBmp180() *bmp180 {
 
 type msg struct {
 	Msg         string
-	Temperature int    // F
-	Pressure    int    // kPa
+	Temperature int // F
+	Pressure    int // kPa
 }
 
 func (b *bmp180) init(p *merle.Packet) {
@@ -51,7 +51,7 @@ func (b *bmp180) run(p *merle.Packet) {
 
 		b.Lock()
 		if msg.Temperature != b.lastTemperature ||
-		   msg.Pressure != b.lastPressure {
+			msg.Pressure != b.lastPressure {
 			b.lastTemperature = msg.Temperature
 			b.lastPressure = msg.Pressure
 			p.Marshal(&msg).Broadcast()
@@ -66,8 +66,8 @@ func (b *bmp180) getState(p *merle.Packet) {
 	b.RLock()
 	defer b.RUnlock()
 	msg := &msg{
-		Msg: merle.ReplyState,
-		Pressure: b.lastPressure,
+		Msg:         merle.ReplyState,
+		Pressure:    b.lastPressure,
 		Temperature: b.lastTemperature,
 	}
 	p.Marshal(&msg).Reply()
