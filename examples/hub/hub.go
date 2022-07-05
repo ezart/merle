@@ -4,6 +4,7 @@ import (
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/gps"
 	"github.com/merliot/merle/examples/relays"
+	"github.com/merliot/merle/examples/bmp180"
 	"sync"
 )
 
@@ -25,6 +26,7 @@ func (h *hub) BridgeThingers() merle.BridgeThingers {
 	return merle.BridgeThingers{
 		".*:relays:.*": func() merle.Thinger { return relays.NewThing() },
 		".*:gps:.*":    func() merle.Thinger { return gps.NewGps() },
+		".*:bmp180:.*":    func() merle.Thinger { return bmp180.NewBmp180() },
 	}
 }
 

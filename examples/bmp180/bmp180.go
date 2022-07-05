@@ -155,6 +155,7 @@ const html = `
 				title: "Temperature",
 				width: 300,
 				height: 300,
+				valueInt: 0,
 				valueDec: 0,
 			})
 			var presGauge = new RadialGauge({
@@ -170,6 +171,7 @@ const html = `
 				title: "Pressure",
 				width: 300,
 				height: 300,
+				valueInt: 0,
 				valueDec: 0,
 			})
 
