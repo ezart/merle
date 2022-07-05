@@ -1,6 +1,6 @@
 // file: examples/bmp180/bmp180.go
 
-package main
+package bmp180
 
 import (
 	"github.com/merliot/merle"
@@ -17,6 +17,10 @@ type bmp180 struct {
 	driver *i2c.BMP180Driver
 	lastTemperature int
 	lastPressure int
+}
+
+func NewBmp180() *bmp180 {
+	return &bmp180{}
 }
 
 type msg struct {
