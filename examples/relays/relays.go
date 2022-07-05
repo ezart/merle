@@ -113,7 +113,7 @@ const html = `
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 	</head>
-	<body>
+	<body style="background-color:orange">
 		<div id="buttons" style="display: none">
 			<input type="checkbox" id="relay0" disabled=true onclick='sendClick(this, 0)'>
 			<label for="relay0"> Relay 0 </label>
