@@ -88,6 +88,8 @@ func Broadcast(p *Packet) {
 	p.Broadcast()
 }
 
+func NoInit(p *Packet) {
+}
 // Subscriber callback function to run forever.  Only applicable for CmdRun.
 // Use this callback when there is no other work to do in CmdRun than select{}.
 //

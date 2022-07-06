@@ -6,7 +6,6 @@ import (
 	"github.com/merliot/merle"
 	"gobot.io/x/gobot/drivers/i2c"
 	"gobot.io/x/gobot/platforms/raspi"
-	"log"
 	"math"
 	"sync"
 	"time"
@@ -23,7 +22,7 @@ func NewBmp180() *bmp180 {
 	return &bmp180{}
 }
 
-type msg struct {
+type MsgState struct {
 	Msg         string
 	Temperature int // F
 	Pressure    int // kPa
@@ -37,7 +36,7 @@ func (b *bmp180) init(p *merle.Packet) {
 }
 
 func (b *bmp180) run(p *merle.Packet) {
-	msg := msg{Msg: "Update"}
+	msg := MsgState{Msg: "Update"}
 
 	for {
 		temp, _ := b.driver.Temperature()
@@ -65,7 +64,7 @@ func (b *bmp180) run(p *merle.Packet) {
 func (b *bmp180) getState(p *merle.Packet) {
 	b.RLock()
 	defer b.RUnlock()
-	msg := &msg{
+	msg := &MsgState{
 		Msg:         merle.ReplyState,
 		Pressure:    b.lastPressure,
 		Temperature: b.lastTemperature,
@@ -76,7 +75,7 @@ func (b *bmp180) getState(p *merle.Packet) {
 func (b *bmp180) saveState(p *merle.Packet) {
 	b.Lock()
 	defer b.Unlock()
-	var msg msg
+	var msg MsgState
 	p.Unmarshal(&msg)
 	b.lastPressure = msg.Pressure
 	b.lastTemperature = msg.Temperature
@@ -244,10 +243,4 @@ func (b *bmp180) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
 		HtmlTemplateText: html,
 	}
-}
-
-func main() {
-	thing := merle.NewThing(&bmp180{})
-	thing.Cfg.PortPublic = 80
-	log.Fatalln(thing.Run())
 }

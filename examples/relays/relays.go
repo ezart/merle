@@ -19,11 +19,11 @@ type thing struct {
 	relays [4]relay
 }
 
-func NewThing() merle.Thinger {
+func NewRelays() merle.Thinger {
 	return &thing{}
 }
 
-type msg struct {
+type MsgState struct {
 	Msg    string
 	States [4]bool
 }
@@ -52,7 +52,7 @@ func (t *thing) getState(p *merle.Packet) {
 	t.RLock()
 	defer t.RUnlock()
 
-	msg := &msg{Msg: merle.ReplyState}
+	msg := &MsgState{Msg: merle.ReplyState}
 	for i := range t.relays {
 		msg.States[i] = t.relays[i].state
 	}
@@ -64,7 +64,7 @@ func (t *thing) saveState(p *merle.Packet) {
 	t.Lock()
 	defer t.Unlock()
 
-	var msg msg
+	var msg MsgState
 	p.Unmarshal(&msg)
 
 	for i := range t.relays {
@@ -72,7 +72,7 @@ func (t *thing) saveState(p *merle.Packet) {
 	}
 }
 
-type clickMsg struct {
+type MsgClick struct {
 	Msg   string
 	Relay int
 	State bool
@@ -82,7 +82,7 @@ func (t *thing) click(p *merle.Packet) {
 	t.Lock()
 	defer t.Unlock()
 
-	var msg clickMsg
+	var msg MsgClick
 	p.Unmarshal(&msg)
 
 	t.relays[msg.Relay].state = msg.State

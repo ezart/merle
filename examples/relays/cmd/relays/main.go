@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	thing := merle.NewThing(relays.NewThing())
+	thing := merle.NewThing(relays.NewRelays())
 
 	thing.Cfg.Model = "relays"
 	thing.Cfg.Name = "relaysforhope"
