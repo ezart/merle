@@ -1,0 +1,45 @@
+<!--
+Copyright 2021-2022 Scott Feldman (sfeldma@gmail.com). All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file. 
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta name="viewport"
+		      content="width=device-width, initial-scale=1">
+
+		<title>{{.Name}}</title>
+
+		<link rel="stylesheet" type="text/css"
+			href="/{{.AssetsDir}}/css/thermo.css">
+
+	</head>
+
+	<body>
+		
+		<div class="column">
+			<div class="row1">
+				<div id="furnace" class="furnace">
+					Furnace<br>Relay<br>
+					<img src="foo">
+				</div>
+				<div id="aircond">Air Conditioner<br>Relay</div>
+				<div id="sensor">Temperature<br>Sensor</div>
+			</div>
+			<div class="row2">
+				<div id="setpoint">
+					Set Point<br>
+					<input type="range" min="1" max="100" value="50" class="slider" id="setp">
+				</div>
+			</div>
+		</div>
+
+		<script src="/{{.AssetsDir}}/js/thermo.js"></script>
+		<script>Run({{.WebSocket}}, {{.Id}})</script>
+
+	</body>
+
+</html>
