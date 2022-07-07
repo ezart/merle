@@ -51,7 +51,6 @@ func (b *blink) getState(p *merle.Packet) {
 func (b *blink) saveState(p *merle.Packet) {
 	b.Lock()
 	p.Unmarshal(b)
-	b.State = msg.State
 	b.Unlock()
 }
 
