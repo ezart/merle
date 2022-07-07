@@ -53,9 +53,10 @@ function refresh(msg) {
 		sensor.style.backgroundColor = "lightgrey"
 		temp.style.backgroundColor = "lightgrey"
 	}
+
 	slider.value = msg.SetPoint
-	sp.textContent = msg.SetPoint
-	temp.textContent = msg.Sensors.Temp
+	sp.innerHTML = msg.SetPoint + "&deg;F"
+	temp.innerHTML = msg.Sensors.Temp + "&deg;F"
 	all.style.display = "flex"
 }
 

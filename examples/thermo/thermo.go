@@ -4,7 +4,6 @@ import (
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/bmp180"
 	"github.com/merliot/merle/examples/relays"
-	"log"
 	"sync"
 )
 
