@@ -22,6 +22,7 @@ function refresh(msg) {
 	if (msg.Relays.States[0]) {
 		relay0.textContent = "ON"
 		relay0.style.backgroundColor = "lightgreen"
+		relay0.style.color = "black"
 	} else {
 		relay0.textContent = "OFF"
 		relay0.style.backgroundColor = "red"
@@ -30,6 +31,7 @@ function refresh(msg) {
 	if (msg.Relays.States[1]) {
 		relay1.textContent = "ON"
 		relay1.style.backgroundColor = "lightgreen"
+		relay1.style.color = "black"
 	} else {
 		relay1.textContent = "OFF"
 		relay1.style.backgroundColor = "red"
@@ -42,9 +44,7 @@ function refresh(msg) {
 		furnace.style.backgroundColor = "lightgrey"
 		aircond.style.backgroundColor = "lightgrey"
 		relay0.style.backgroundColor = "lightgrey"
-		relay0.style.color = "black"
 		relay1.style.backgroundColor = "lightgrey"
-		relay1.style.color = "black"
 	}
 	if (msg.Sensors.Online) {
 		sensor.style.backgroundColor = "lightblue"
