@@ -47,7 +47,7 @@ func (p *Packet) String() string {
 
 func (p *Packet) Src() string {
 	if p.src == nil {
-		return "???"
+		return "SYSTEM"
 	}
 	return p.src.Src()
 }

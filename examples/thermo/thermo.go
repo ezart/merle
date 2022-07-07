@@ -10,6 +10,7 @@ import (
 
 type thermo struct {
 	sync.RWMutex
+	recalc chan bool
 	refresh chan bool
 	Msg string
 	Relays struct {
@@ -21,7 +22,6 @@ type thermo struct {
 		Id       string
 		Online   bool
 		Temp     int
-		prevTemp int
 	}
 	SetPoint int
 }
@@ -44,20 +44,14 @@ func (t *thermo) relayClick(p *merle.Packet, relay int, on bool) {
 		State: on,
 	}
 	p.Marshal(&msg)
-	log.Println("SENDING CLICK")
 	p.Send(t.Relays.Id)
-	log.Println("SENT CLICK")
 }
 
 func (t *thermo) calculate(p *merle.Packet) {
 	var furnaceClick bool = false
 	var airCondClick bool = false
-	var tempChanged bool = false
 
 	t.Lock()
-
-	tempChanged = (t.Sensors.Temp != t.Sensors.prevTemp)
-	t.Sensors.prevTemp = t.Sensors.Temp
 
 	// Turn furnace relay on if current temp < setpoint,
 	// other turn on air conditioner relay
@@ -87,10 +81,7 @@ func (t *thermo) calculate(p *merle.Packet) {
 		t.relayClick(p, 1, wantAirCondOn)
 	}
 
-	log.Println("REFRESH", furnaceClick, airCondClick, tempChanged)
-	if (furnaceClick || airCondClick || tempChanged) {
-		t.refresh <- true
-	}
+	t.refresh <- true
 }
 
 func (t *thermo) identity(p *merle.Packet) {
@@ -173,8 +164,18 @@ func (t *thermo) click(p *merle.Packet) {
 	t.calculate(p)
 }
 
+func (t *thermo) bridgeRun(p *merle.Packet) {
+	for {
+		select {
+		case <- t.recalc:
+			t.calculate(p)
+		}
+	}
+}
+
 func (t *thermo) BridgeSubscribers() merle.Subscribers {
 	return merle.Subscribers{
+		merle.CmdRun:        t.bridgeRun,
 		merle.EventStatus:   merle.ReplyGetIdentity,
 		merle.ReplyIdentity: t.identity,
 		merle.ReplyState:    t.state,
@@ -185,6 +186,7 @@ func (t *thermo) BridgeSubscribers() merle.Subscribers {
 }
 
 func (t *thermo) init(p *merle.Packet) {
+	t.recalc = make(chan bool)
 	t.refresh = make(chan bool)
 	t.SetPoint = 68 // Nixon
 }
@@ -199,7 +201,6 @@ func (t *thermo) run(p *merle.Packet) {
 	for {
 		select {
 		case <- t.refresh:
-			log.Println("GOT REFRESH")
 			t.marshal(p)
 			p.Broadcast()
 		}
@@ -207,9 +208,22 @@ func (t *thermo) run(p *merle.Packet) {
 }
 
 func (t *thermo) getState(p *merle.Packet) {
-	log.Println("GETSTATE")
 	t.marshal(p)
 	p.Reply()
+}
+
+type MsgSetPoint struct {
+	Msg string
+	Val int
+}
+
+func (t *thermo) setPoint(p *merle.Packet) {
+	var msg MsgSetPoint
+	p.Unmarshal(&msg)
+	t.Lock()
+	t.SetPoint = msg.Val
+	t.Unlock()
+	t.recalc <- true
 }
 
 func (t *thermo) Subscribers() merle.Subscribers {
@@ -218,6 +232,7 @@ func (t *thermo) Subscribers() merle.Subscribers {
 		merle.CmdRun:      t.run,
 		merle.GetState:    t.getState,
 		merle.EventStatus: nil,
+		"SetPoint":        t.setPoint,
 	}
 }
 

@@ -20,25 +20,33 @@ found in the LICENSE file.
 
 	<body>
 		
-		<div class="column">
+		<div class="all" id="all">
 			<div class="row1">
-				<div id="furnace" class="furnace">
+				<div id="furnace">
 					Furnace<br>Relay<br>
-					<img src="foo">
+					<div class="io" id="relay0"></div>
 				</div>
-				<div id="aircond">Air Conditioner<br>Relay</div>
-				<div id="sensor">Temperature<br>Sensor</div>
+				<div id="aircond">
+					Air Conditioner<br>Relay
+					<div class="io" id="relay1"></div>
+				</div>
+				<div id="sensor">
+					Temperature<br>Sensor
+					<div class="io" id="temp"></div>
+				</div>
 			</div>
 			<div class="row2">
 				<div id="setpoint">
 					Set Point<br>
-					<input type="range" min="1" max="100" value="50" class="slider" id="setp">
+					<input type="range" min="1" max="120" value="68"
+						id="slider" onchange="setpoint(this.value)">
+					<div class="io" id="sp"></div>
 				</div>
 			</div>
 		</div>
 
 		<script src="/{{.AssetsDir}}/js/thermo.js"></script>
-		<script>Run({{.WebSocket}}, {{.Id}})</script>
+		<script>Run({{.WebSocket}})</script>
 
 	</body>
 
