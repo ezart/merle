@@ -9,66 +9,46 @@ import (
 	"sync"
 )
 
-type relay struct {
-	driver *gpio.RelayDriver
-	state  bool
-}
-
-type thing struct {
+type Relays struct {
 	sync.RWMutex
-	relays [4]relay
+	drivers [4]*gpio.RelayDriver
+	Msg     string
+	States  [4]bool
 }
 
 func NewRelays() merle.Thinger {
-	return &thing{}
+	return &Relays{}
 }
 
-type MsgState struct {
-	Msg    string
-	States [4]bool
-}
-
-func (t *thing) run(p *merle.Packet) {
+func (r *Relays) run(p *merle.Packet) {
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
 
-	t.relays = [4]relay{
-		{driver: gpio.NewRelayDriver(adaptor, "31")}, // GPIO 6
-		{driver: gpio.NewRelayDriver(adaptor, "33")}, // GPIO 13
-		{driver: gpio.NewRelayDriver(adaptor, "35")}, // GPIO 19
-		{driver: gpio.NewRelayDriver(adaptor, "37")}, // GPIO 26
-	}
+	r.drivers[0] = gpio.NewRelayDriver(adaptor, "31") // GPIO 6
+	r.drivers[1] = gpio.NewRelayDriver(adaptor, "33") // GPIO 13
+	r.drivers[2] = gpio.NewRelayDriver(adaptor, "35") // GPIO 19
+	r.drivers[3] = gpio.NewRelayDriver(adaptor, "37") // GPIO 26
 
-	for i := range t.relays {
-		t.relays[i].driver.Start()
-		t.relays[i].driver.Off()
-		t.relays[i].state = false
+	for _, driver := range r.drivers {
+		driver.Start()
+		driver.Off()
 	}
 
 	select {}
 }
 
-func (t *thing) getState(p *merle.Packet) {
-	msg := &MsgState{Msg: merle.ReplyState}
-
-	t.RLock()
-	for i := range t.relays {
-		msg.States[i] = t.relays[i].state
-	}
-	t.RUnlock()
-
-	p.Marshal(&msg).Reply()
+func (r *Relays) getState(p *merle.Packet) {
+	r.RLock()
+	r.Msg = merle.ReplyState
+	p.Marshal(r)
+	r.RUnlock()
+	p.Reply()
 }
 
-func (t *thing) saveState(p *merle.Packet) {
-	var msg MsgState
-	p.Unmarshal(&msg)
-
-	t.Lock()
-	for i := range t.relays {
-		t.relays[i].state = msg.States[i]
-	}
-	t.Unlock()
+func (r *Relays) saveState(p *merle.Packet) {
+	r.Lock()
+	p.Unmarshal(r)
+	r.Unlock()
 }
 
 type MsgClick struct {
@@ -77,31 +57,31 @@ type MsgClick struct {
 	State bool
 }
 
-func (t *thing) click(p *merle.Packet) {
+func (r *Relays) click(p *merle.Packet) {
 	var msg MsgClick
 	p.Unmarshal(&msg)
 
-	t.Lock()
-	t.relays[msg.Relay].state = msg.State
-	t.Unlock()
+	r.Lock()
+	r.States[msg.Relay] = msg.State
+	r.Unlock()
 
 	if p.IsThing() {
 		if msg.State {
-			t.relays[msg.Relay].driver.On()
+			r.drivers[msg.Relay].On()
 		} else {
-			t.relays[msg.Relay].driver.Off()
+			r.drivers[msg.Relay].Off()
 		}
 	}
 
 	p.Broadcast()
 }
 
-func (t *thing) Subscribers() merle.Subscribers {
+func (r *Relays) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdRun:     t.run,
-		merle.GetState:   t.getState,
-		merle.ReplyState: t.saveState,
-		"Click":          t.click,
+		merle.CmdRun:     r.run,
+		merle.GetState:   r.getState,
+		merle.ReplyState: r.saveState,
+		"Click":          r.click,
 	}
 }
 
@@ -141,9 +121,9 @@ const html = `
 				conn.send(JSON.stringify({Msg: "_GetIdentity"}))
 			}
 
-			function saveState(states) {
+			function saveState(msg) {
 				for (var i = 0; i < relays.length; i++) {
-					relays[i].checked = states[i]
+					relays[i].checked = msg.States[i]
 				}
 			}
 
@@ -187,7 +167,7 @@ const html = `
 						getState()
 						break
 					case "_ReplyState":
-						saveState(msg.States)
+						saveState(msg)
 						showAll()
 						break
 					case "Click":
@@ -202,7 +182,7 @@ const html = `
 	</body>
 </html>`
 
-func (t *thing) Assets() *merle.ThingAssets {
+func (r *Relays) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
 		HtmlTemplateText: html,
 	}

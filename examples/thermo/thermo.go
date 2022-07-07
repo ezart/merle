@@ -117,7 +117,7 @@ func (t *thermo) identity(p *merle.Packet) {
 func (t *thermo) state(p *merle.Packet) {
 	switch p.Src() {
 	case t.Relays.Id:
-		var msg relays.MsgState
+		var msg relays.Relays
 		p.Unmarshal(&msg)
 		t.Lock()
 		t.Relays.States = msg.States

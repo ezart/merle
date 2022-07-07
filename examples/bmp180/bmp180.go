@@ -20,7 +20,7 @@ type Bmp180 struct {
 }
 
 func NewBmp180() *Bmp180 {
-	return &Bmp180{Msg: merle.ReplyState}
+	return &Bmp180{}
 }
 
 func (b *Bmp180) init(p *merle.Packet) {
