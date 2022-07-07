@@ -4,24 +4,24 @@ import (
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/bmp180"
 	"github.com/merliot/merle/examples/relays"
-	"sync"
 	"log"
+	"sync"
 )
 
 type thermo struct {
 	sync.RWMutex
-	recalc chan bool
+	recalc  chan bool
 	refresh chan bool
-	Msg string
-	Relays struct {
+	Msg     string
+	Relays  struct {
 		Id     string
 		Online bool
 		States [4]bool
 	}
 	Sensors struct {
-		Id       string
-		Online   bool
-		Temp     int
+		Id     string
+		Online bool
+		Temp   int
 	}
 	SetPoint int
 }
@@ -39,7 +39,7 @@ func (t *thermo) BridgeThingers() merle.BridgeThingers {
 
 func (t *thermo) relayClick(p *merle.Packet, relay int, on bool) {
 	msg := relays.MsgClick{
-		Msg: "Click",
+		Msg:   "Click",
 		Relay: relay,
 		State: on,
 	}
@@ -106,7 +106,7 @@ func (t *thermo) identity(p *merle.Packet) {
 	}
 	t.Unlock()
 
-	if (calculate) {
+	if calculate {
 		if msg.Online {
 			merle.ReplyGetState(p)
 		} else {
@@ -167,7 +167,7 @@ func (t *thermo) click(p *merle.Packet) {
 func (t *thermo) bridgeRun(p *merle.Packet) {
 	for {
 		select {
-		case <- t.recalc:
+		case <-t.recalc:
 			t.calculate(p)
 		}
 	}
@@ -200,7 +200,7 @@ func (t *thermo) marshal(p *merle.Packet) {
 func (t *thermo) run(p *merle.Packet) {
 	for {
 		select {
-		case <- t.refresh:
+		case <-t.refresh:
 			t.marshal(p)
 			p.Broadcast()
 		}
