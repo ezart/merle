@@ -15,11 +15,12 @@ type child struct {
 
 type hub struct {
 	sync.RWMutex
-	children map[string]child
+	Msg string
+	Children map[string]child
 }
 
 func NewHub() merle.Thinger {
-	return &hub{}
+	return &hub{Msg: merle.ReplyState}
 }
 
 func (h *hub) BridgeThingers() merle.BridgeThingers {
@@ -46,27 +47,21 @@ func (h *hub) update(p *merle.Packet) {
 	}
 
 	h.Lock()
-	h.children[msg.Id] = child
+	h.Children[msg.Id] = child
 	h.Unlock()
 
 	p.Broadcast()
 }
 
-type msgState struct {
-	Msg      string
-	Children map[string]child
-}
-
 func (h *hub) getState(p *merle.Packet) {
 	h.RLock()
-	msg := &msgState{Msg: merle.ReplyState, Children: h.children}
+	p.Marshal(h)
 	h.RUnlock()
-
-	p.Marshal(&msg).Reply()
+	p.Reply()
 }
 
 func (h *hub) init(p *merle.Packet) {
-	h.children = make(map[string]child)
+	h.Children = make(map[string]child)
 }
 
 func (h *hub) Subscribers() merle.Subscribers {
