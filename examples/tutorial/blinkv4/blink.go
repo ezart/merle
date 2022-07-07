@@ -13,33 +13,28 @@ import (
 
 type blink struct {
 	sync.RWMutex
-	state bool
-}
-
-type msg struct {
 	Msg   string
 	State bool
 }
 
 func (b *blink) run(p *merle.Packet) {
-	msg := &msg{Msg: "Update"}
-
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
 
 	led := gpio.NewLedDriver(adaptor, "11")
 	led.Start()
 
+	b.Msg = merle.ReplyState
+
 	for {
 		led.Toggle()
 
 		b.Lock()
-		b.state = led.State()
-		//		b.state = !b.state
-		msg.State = b.state
+		b.State = led.State()
+		p.Marshal(b)
 		b.Unlock()
 
-		p.Marshal(&msg).Broadcast()
+		p.Broadcast()
 
 		time.Sleep(time.Second)
 	}
@@ -47,9 +42,9 @@ func (b *blink) run(p *merle.Packet) {
 
 func (b *blink) getState(p *merle.Packet) {
 	b.RLock()
-	defer b.RUnlock()
-	msg := &msg{Msg: merle.ReplyState, State: b.state}
-	p.Marshal(&msg).Reply()
+	p.Marshal(b)
+	b.RUnlock()
+	p.Reply()
 }
 
 func (b *blink) Subscribers() merle.Subscribers {
@@ -81,7 +76,6 @@ const html = `
 
 				switch(msg.Msg) {
 				case "_ReplyState":
-				case "Update":
 					image.src = "/{{.AssetsDir}}/images/led-" +
 						msg.State + ".png"
 					break
