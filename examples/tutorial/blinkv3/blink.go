@@ -11,37 +11,32 @@ import (
 )
 
 type blink struct {
-	state bool
-}
-
-type msg struct {
 	Msg   string
 	State bool
 }
 
 func (b *blink) run(p *merle.Packet) {
-	msg := &msg{Msg: "Update"}
-
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
 
 	led := gpio.NewLedDriver(adaptor, "11")
 	led.Start()
 
+	b.Msg = "Update"
+
 	for {
 		led.Toggle()
-		b.state = led.State()
+		b.State = led.State()
 
-		msg.State = b.state
-		p.Marshal(&msg).Broadcast()
+		p.Marshal(b).Broadcast()
 
 		time.Sleep(time.Second)
 	}
 }
 
 func (b *blink) getState(p *merle.Packet) {
-	msg := &msg{Msg: merle.ReplyState, State: b.state}
-	p.Marshal(&msg).Reply()
+	b.Msg = merle.ReplyState
+	p.Marshal(b).Reply()
 }
 
 func (b *blink) Subscribers() merle.Subscribers {
