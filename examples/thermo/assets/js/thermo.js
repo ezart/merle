@@ -4,13 +4,10 @@
 
 var thermoId
 
-function clearScreen() {
+function clear() {
 }
 
-function saveState(msg) {
-}
-
-function update(child) {
+function refresh(msg) {
 }
 
 function Run(ws, id) {
@@ -23,12 +20,12 @@ function Run(ws, id) {
 		conn = new WebSocket(ws)
 
 		conn.onopen = function(evt) {
-			clearScreen()
+			clear()
 			conn.send(JSON.stringify({Msg: "_GetState"}))
 		}
 
 		conn.onclose = function(evt) {
-			clearScreen()
+			clear()
 			setTimeout(connect, 1000)
 		}
 
@@ -43,10 +40,7 @@ function Run(ws, id) {
 
 			switch(msg.Msg) {
 			case "_ReplyState":
-				saveState(msg)
-				break
-			case "_EventStatus":
-				update(msg)
+				refresh(msg)
 				break
 			}
 		}
