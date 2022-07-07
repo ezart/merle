@@ -13,18 +13,12 @@ import (
 )
 
 type blink struct {
-	sync.RWMutex
-	state bool
-}
-
-type msg struct {
+	sync.Mutex
 	Msg   string
 	State bool
 }
 
 func (b *blink) run(p *merle.Packet) {
-	msg := &msg{Msg: "Update"}
-
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
 
@@ -35,29 +29,29 @@ func (b *blink) run(p *merle.Packet) {
 		led.Toggle()
 
 		b.Lock()
-		b.state = led.State()
-		//		b.state = !b.state
-		msg.State = b.state
+		b.Msg = "Update"
+		b.State = led.State()
+		p.Marshal(b)
 		b.Unlock()
 
-		p.Marshal(&msg).Broadcast()
+		p.Broadcast()
 
 		time.Sleep(time.Second)
 	}
 }
 
 func (b *blink) getState(p *merle.Packet) {
-	b.RLock()
-	defer b.RUnlock()
-	msg := &msg{Msg: merle.ReplyState, State: b.state}
-	p.Marshal(&msg).Reply()
+	b.Lock()
+	b.Msg = merle.ReplyState
+	p.Marshal(b)
+	b.Unlock()
+	p.Reply()
 }
 
 func (b *blink) saveState(p *merle.Packet) {
-	var msg msg
-	p.Unmarshal(&msg)
 	b.Lock()
-	b.state = msg.State
+	p.Unmarshal(b)
+	b.State = msg.State
 	b.Unlock()
 }
 

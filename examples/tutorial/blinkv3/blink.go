@@ -22,10 +22,10 @@ func (b *blink) run(p *merle.Packet) {
 	led := gpio.NewLedDriver(adaptor, "11")
 	led.Start()
 
-	b.Msg = merle.ReplyState
-
 	for {
 		led.Toggle()
+
+		b.Msg = "Update"
 		b.State = led.State()
 
 		p.Marshal(b).Broadcast()
@@ -35,6 +35,7 @@ func (b *blink) run(p *merle.Packet) {
 }
 
 func (b *blink) getState(p *merle.Packet) {
+	b.Msg = merle.ReplyState
 	p.Marshal(b).Reply()
 }
 
@@ -67,6 +68,7 @@ const html = `
 
 				switch(msg.Msg) {
 				case "_ReplyState":
+				case "Update":
 					image.src = "/{{.AssetsDir}}/images/led-" +
 						msg.State + ".png"
 					break
