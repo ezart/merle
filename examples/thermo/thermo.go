@@ -133,10 +133,10 @@ func (t *thermo) state(p *merle.Packet) {
 		t.Relays.States = msg.States
 		t.Unlock()
 	case t.Sensors.Id:
-		var msg bmp180.MsgState
-		p.Unmarshal(&msg)
+		var bmp bmp180.Bmp180
+		p.Unmarshal(&bmp)
 		t.Lock()
-		t.Sensors.Temp = msg.Temperature
+		t.Sensors.Temp = bmp.Temperature
 		t.Unlock()
 	}
 
@@ -146,10 +146,10 @@ func (t *thermo) state(p *merle.Packet) {
 func (t *thermo) update(p *merle.Packet) {
 	switch p.Src() {
 	case t.Sensors.Id:
-		var msg bmp180.MsgState
-		p.Unmarshal(&msg)
+		var bmp bmp180.Bmp180
+		p.Unmarshal(&bmp)
 		t.Lock()
-		t.Sensors.Temp = msg.Temperature
+		t.Sensors.Temp = bmp.Temperature
 		t.Unlock()
 	default:
 		return

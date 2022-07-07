@@ -11,32 +11,27 @@ import (
 	"time"
 )
 
-type bmp180 struct {
+type Bmp180 struct {
 	sync.RWMutex
-	driver          *i2c.BMP180Driver
-	lastTemperature int
-	lastPressure    int
-}
-
-func NewBmp180() *bmp180 {
-	return &bmp180{}
-}
-
-type MsgState struct {
+	driver      *i2c.BMP180Driver
 	Msg         string
-	Temperature int // F
-	Pressure    int // kPa
+	Temperature int
+	Pressure    int
 }
 
-func (b *bmp180) init(p *merle.Packet) {
+func NewBmp180() *Bmp180 {
+	return &Bmp180{Msg: merle.ReplyState}
+}
+
+func (b *Bmp180) init(p *merle.Packet) {
 	adaptor := raspi.NewAdaptor()
 	adaptor.Connect()
 	b.driver = i2c.NewBMP180Driver(adaptor)
 	b.driver.Start()
 }
 
-func (b *bmp180) run(p *merle.Packet) {
-	msg := MsgState{Msg: "Update"}
+func (b *Bmp180) run(p *merle.Packet) {
+	var changed bool = false
 
 	for {
 		temp, _ := b.driver.Temperature()
@@ -45,48 +40,47 @@ func (b *bmp180) run(p *merle.Packet) {
 		temp = (temp * 1.8) + 32.0
 		pres = pres / 1000.0
 
-		msg.Temperature = int(math.Round(float64(temp)))
-		msg.Pressure = int(math.Round(float64(pres)))
+		newTemp := int(math.Round(float64(temp)))
+		newPres := int(math.Round(float64(pres)))
 
 		b.Lock()
-		if msg.Temperature != b.lastTemperature ||
-			msg.Pressure != b.lastPressure {
-			b.lastTemperature = msg.Temperature
-			b.lastPressure = msg.Pressure
-			p.Marshal(&msg).Broadcast()
+		if newTemp != b.Temperature || newPres != b.Pressure {
+			b.Msg = "Update"
+			b.Temperature = newTemp
+			b.Pressure = newPres
+			p.Marshal(b)
+			changed = true
 		}
 		b.Unlock()
+
+		if changed {
+			p.Broadcast()
+		}
 
 		time.Sleep(time.Second)
 	}
 }
 
-func (b *bmp180) getState(p *merle.Packet) {
+func (b *Bmp180) getState(p *merle.Packet) {
 	b.RLock()
-	defer b.RUnlock()
-	msg := &MsgState{
-		Msg:         merle.ReplyState,
-		Pressure:    b.lastPressure,
-		Temperature: b.lastTemperature,
-	}
-	p.Marshal(&msg).Reply()
+	b.Msg = merle.ReplyState
+	p.Marshal(b)
+	b.RUnlock()
+	p.Reply()
 }
 
-func (b *bmp180) saveState(p *merle.Packet) {
+func (b *Bmp180) saveState(p *merle.Packet) {
 	b.Lock()
-	defer b.Unlock()
-	var msg MsgState
-	p.Unmarshal(&msg)
-	b.lastPressure = msg.Pressure
-	b.lastTemperature = msg.Temperature
+	p.Unmarshal(b)
+	b.Unlock()
 }
 
-func (b *bmp180) update(p *merle.Packet) {
+func (b *Bmp180) update(p *merle.Packet) {
 	b.saveState(p)
 	p.Broadcast()
 }
 
-func (b *bmp180) Subscribers() merle.Subscribers {
+func (b *Bmp180) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
 		merle.CmdInit:    b.init,
 		merle.CmdRun:     b.run,
@@ -239,7 +233,7 @@ const html = `
 	</body>
 </html>`
 
-func (b *bmp180) Assets() *merle.ThingAssets {
+func (b *Bmp180) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
 		HtmlTemplateText: html,
 	}
