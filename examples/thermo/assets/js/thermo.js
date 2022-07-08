@@ -45,6 +45,8 @@ function refresh(msg) {
 		aircond.style.backgroundColor = "lightgrey"
 		relay0.style.backgroundColor = "lightgrey"
 		relay1.style.backgroundColor = "lightgrey"
+		relay0.style.color = "grey"
+		relay1.style.color = "grey"
 	}
 	if (msg.Sensors.Online) {
 		sensor.style.backgroundColor = "lightblue"
