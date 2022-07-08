@@ -22,21 +22,27 @@ found in the LICENSE file.
 		
 		<div class="all" id="all">
 			<div class="row1">
-				<div id="furnace">
-					Furnace<br>Relay<br><br>
-					<div class="io" id="relay0"></div>
-				</div>
-				<div id="aircond">
-					Air<br>Conditioner<br>Relay
-					<div class="io" id="relay1"></div>
-				</div>
-				<div id="sensor">
-					Temperature<br>Sensor<br><br>
-					<div class="io" id="temp"></div>
-				</div>
+				<a class="link" id="furnace_link" href="">
+					<div class="top" id="furnace">
+						Furnace<br>Relay<br><br>
+						<div class="io" id="relay0"></div>
+					</div>
+				</a>
+				<a class="link" id="aircond_link" href="">
+					<div class="top" id="aircond">
+						Air<br>Conditioner<br>Relay
+						<div class="io" id="relay1"></div>
+					</div>
+				</a>
+				<a class="link" id="sensor_link" href="">
+					<div class="top" id="sensor">
+						Temperature<br>Sensor<br><br>
+						<div class="io" id="temp"></div>
+					</div>
+				</a>
 			</div>
 			<div class="row2">
-				<div id="setpoint">
+				<div class="bottom" id="setpoint">
 					Set Point<br>
 					<input type="range" min="1" max="120" value="68"
 						id="slider" onchange="setpoint(this.value)">

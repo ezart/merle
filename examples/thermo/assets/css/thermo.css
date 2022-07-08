@@ -9,13 +9,17 @@ body {
 	flex-wrap: nowrap;
 }
 
+.link {
+	text-decoration: none;
+}
+
 .row1 {
 	display: flex;
 	flex-wrap: nowrap;
 	justify-content: center;
 }
 
-.row1 > div {
+.top {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -35,7 +39,7 @@ body {
 	justify-content: center;
 }
 
-.row2 > div {
+.bottom {
 	display: flex;
 	flex-direction: column;
 	align-items: center;

@@ -8,6 +8,9 @@ var all = document.getElementById("all")
 var furnace = document.getElementById("furnace")
 var aircond = document.getElementById("aircond")
 var sensor = document.getElementById("sensor")
+var furnace_link = document.getElementById("furnace_link")
+var aircond_link = document.getElementById("aircond_link")
+var sensor_link = document.getElementById("sensor_link")
 var slider = document.getElementById("slider")
 var sp = document.getElementById("sp")
 var temp = document.getElementById("temp")
@@ -40,6 +43,8 @@ function refresh(msg) {
 	if (msg.Relays.Online) {
 		furnace.style.backgroundColor = "lightblue"
 		aircond.style.backgroundColor = "lightblue"
+		furnace_link.href = "/" + encodeURIComponent(msg.Relays.Id)
+		aircond_link.href = "/" + encodeURIComponent(msg.Relays.Id)
 	} else {
 		furnace.style.backgroundColor = "lightgrey"
 		aircond.style.backgroundColor = "lightgrey"
@@ -47,13 +52,17 @@ function refresh(msg) {
 		relay1.style.backgroundColor = "lightgrey"
 		relay0.style.color = "grey"
 		relay1.style.color = "grey"
+		furnace_link.href = ""
+		aircond_link.href = ""
 	}
 	if (msg.Sensors.Online) {
 		sensor.style.backgroundColor = "lightblue"
 		temp.style.backgroundColor = "lightgreen"
+		sensor_link.href = "/" + encodeURIComponent(msg.Sensors.Id)
 	} else {
 		sensor.style.backgroundColor = "lightgrey"
 		temp.style.backgroundColor = "lightgrey"
+		sensor_link.href = ""
 	}
 
 	slider.value = msg.SetPoint
