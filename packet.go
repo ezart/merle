@@ -8,8 +8,9 @@ import (
 	"encoding/json"
 )
 
-// A Packet is the basic unit of communication in Merle.  Message Subscribers
-// receive, process and optional forward a Packet.
+// A Packet is the basic unit of communication in Merle.  A Packet contains a
+// message.  Thing message Subscribers receive, process and optional forward
+// Packets.
 type Packet struct {
 	// Bus the packet lives on
 	bus *bus
@@ -54,12 +55,13 @@ func (p *Packet) Src() string {
 	return p.src.Src()
 }
 
-// Reply back to sender of Packet
+// Reply back to sender of Packet.  Do not hold locks when calling Reply().
 func (p *Packet) Reply() {
 	p.bus.reply(p)
 }
 
-// Broadcast the Packet to everyone else on the bus
+// Broadcast the Packet to everyone else on the bus.  Do not hold locks when
+// call Broadcast().
 func (p *Packet) Broadcast() {
 	p.bus.broadcast(p)
 }

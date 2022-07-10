@@ -9,14 +9,15 @@ const (
 	sock_flag_bcast uint32 = 1 << iota
 )
 
-// Socketer is an interface to a socket.  A socket plugs into a bus.
+// socketer is an interface to a socket.  A socket plugs into a bus.
 type socketer interface {
-	// Send the packet on bus the socket is connected to
+	// Send the Packet
 	Send(*Packet) error
 	// Close the socket
 	Close()
 	// Name of the socket
 	Name() string
+	// Socket flags
 	Flags() uint32
 	SetFlags(uint32)
 	Src() string
