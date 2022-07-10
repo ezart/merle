@@ -15,7 +15,7 @@ type child struct {
 
 type hub struct {
 	sync.RWMutex
-	Msg string
+	Msg      string
 	Children map[string]child
 }
 

@@ -30,8 +30,7 @@ func (b *blink) run(p *merle.Packet) {
 
 		b.Lock()
 		b.Msg = "Update"
-		b.State = !b.State
-//		b.State = led.State()
+		b.State = led.State()
 		p.Marshal(b)
 		b.Unlock()
 
