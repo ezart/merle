@@ -6,10 +6,10 @@ package merle
 
 // Thing configuration.  All Things share this configuration.  A default
 // configuration is assigned at creation (thing = NewThing()).  Override
-// default configuration before calling thing.Run().
+// default configurations before calling thing.Run().
 type ThingConfig struct {
 
-	// Thing configuration.
+	// ########## Thing configuration.
 	//
 	// [Optional] Thing's Id.  Ids are unique within an application to
 	// differentiate one Thing from another.  Id is optional; if Id is not
@@ -32,7 +32,7 @@ type ThingConfig struct {
 
 	// [Optional] If PortPublic is non-zero, an HTTP web server is started
 	// on port PortPublic.  PortPublic is typically set to 80.  The HTTP
-	// web server runs the Thing's home page.  The default is 0.
+	// web server runs Thing's UI.  The default is 0.
 	PortPublic uint
 
 	// [Optional] If PortPublicTLS is non-zero, an HTTPS web server is
@@ -49,7 +49,7 @@ type ThingConfig struct {
 	// websocket over HTTP.  The default is 0.
 	PortPrivate uint
 
-	// [Optional] Run as Thing-prime.  The default is 0.
+	// [Optional] Run as Thing-prime.  The default is false.
 	IsPrime bool
 
 	// [Required, if Prime] PortPrime port is used to create a
@@ -60,11 +60,11 @@ type ThingConfig struct {
 	// MaxConnection is maximum number of inbound connections to a Thing.
 	// Inbound connections are WebSockets from web browsers or WebSockets
 	// from Thing Prime.  The default is 30.  With the default, the 31st
-	// (and higher) concurrent web browser connection attempt will block,
-	// waiting for one of the first 30 web browser sessions to terminate.
+	// (and higher) concurrent WebSocket connection attempt will block,
+	// waiting for one of the first 30 WebSocket sessions to terminate.
 	MaxConnections uint
 
-	// Mother configuration.
+	// ########## Mother configuration.
 	//
 	// This section describes a Thing's mother.  Every Thing has a mother.  A
 	// mother is also a Thing.  We can build a hierarchy of Things, with a Thing
@@ -82,7 +82,7 @@ type ThingConfig struct {
 	// Port on Host for Mother's private HTTP server
 	MotherPortPrivate uint
 
-	// Bridge configuration.
+	// ########## Bridge configuration.
 	//
 	// A Thing implementing the Bridger interface will use this config for
 	// bridge-specific configuration.

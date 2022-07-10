@@ -61,7 +61,7 @@ func (p *Packet) Reply() {
 }
 
 // Broadcast the Packet to everyone else on the bus.  Do not hold locks when
-// call Broadcast().
+// calling Broadcast().
 func (p *Packet) Broadcast() {
 	p.bus.broadcast(p)
 }
@@ -94,8 +94,8 @@ func Broadcast(p *Packet) {
 	p.Broadcast()
 }
 
-// Subscriber callback function to skip CmdInit.  In this example, CmdInit is
-// skipped:
+// Subscriber callback helper function to skip CmdInit.  In this example,
+// CmdInit is skipped:
 //
 //	return merle.Subscribers{
 //		merle.CmdInit: merle.NoInit,
@@ -105,8 +105,9 @@ func Broadcast(p *Packet) {
 func NoInit(p *Packet) {
 }
 
-// Subscriber callback function to run forever.  Only applicable for CmdRun.
-// Use this callback when there is no other work to do in CmdRun than select{}.
+// Subscriber callback helper function to run forever.  Only applicable for
+// CmdRun.  Use this callback when there is no other work to do in CmdRun than
+// select{}.
 //
 //	return merle.Subscribers{
 //		...
@@ -122,8 +123,8 @@ func RunForever(p *Packet) {
 	select {}
 }
 
-// Subscriber callback function to return empty state in response to GetState.
-// Example:
+// Subscriber callback helper function to return empty state in response to
+// GetState.  Example:
 //
 //	return merle.Subscribers{
 //		...
@@ -135,14 +136,14 @@ func ReplyStateEmpty(p *Packet) {
 	p.Marshal(&msg).Reply()
 }
 
-// Subscriber callback function to GetState
+// Subscriber callback helper function to GetState
 func ReplyGetState(p *Packet) {
 	msg := Msg{Msg: GetState}
 	p.Marshal(&msg).Reply()
 }
 
-// Subscriber callback function to GetIdentity.  Example of chaining the event
-// status change notification to send a GetIdentity request:
+// Subscriber callback helper function to GetIdentity.  Example of chaining the
+// event status change notification to send a GetIdentity request:
 //
 //	return merle.Subscribers{
 //		...
