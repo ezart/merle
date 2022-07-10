@@ -10,26 +10,87 @@ import (
 
 // System messages.  System messages are prefixed with '_'.
 const (
+	// CmdInit is guaranteed to be the first message a new Thing will see.
+	// Thing can optionally subscribe and handle CmdInit via Subscribers(),
+	// to initialize Thing's state.
+	//
+	// CmdInit is not sent to Thing Prime.  Thing Prime will get its
+	// initial state with a GetState call to Thing.
 	CmdInit = "_CmdInit"
-	// All Things must handle CmdRun to do work.  CmdRun should run
-	// forever; it is an error for CmdRun handler to finish.  The callback
-	// merle.RunForever can be used if there is no more work beyond select{}.
-	// CmdRun is not sent to Thing-prime.
+
+	// CmdRun is Thing's main loop.  All Things must subscribe and handle
+	// CmdRun, via Subscribers().  CmdRun should run forever; it is an error
+	// for CmdRun handler to exit.
+	//
+	// CmdRun is not sent to Thing Prime.  Thing Prime does not have a main
+	// loop.
+	//
+	// If the Thing is a bridge, CmdRun is also sent to the bridge bus on
+	// startup of the bridge, via BridgeSubscribers().  In this case, CmdRun
+	// is optional and doesn't need to run forever.
 	CmdRun = "_CmdRun"
-	// GetIdentity requests Thing's identity
+
+	// GetIdentity requests Thing's identity.  Thing does not need to
+	// subscribe to GetIdentity.  Thing will internally respond with a
+	// ReplyIdentity message.
 	GetIdentity = "_GetIdentity"
-	// Reply to GetIdentity with MsgIdentity
+
+	// Response to GetIdentity.  ReplyIdentity message is coded as
+	// MsgIdentity.
 	ReplyIdentity = "_ReplyIdentity"
-	// GetState TODO doc
+
+	// GetState requests Thing's state.  Thing should respond with a
+	// ReplyState message containg Thing's state.
 	GetState   = "_GetState"
+
+	// Response to GetState.  ReplyState message coding is Thing-specific. 
+	//
+	// It is convienent to use Thing's type struct (the Thinger) as the
+	// container for Thing's state.  Just include a Msg member and export
+	// any other state members (with an uppercase leading letter).  Then
+	// the whole type struct can be passed in p.Marshal() to form the
+	// resonse.
+	//
+	//	type thing struct {
+	//		Msg       string
+	//		StateVar0 int
+	//              StateVar1 bool
+	//		// non-exported members
+	//	}
+	//
+	//	func (t *thing) init(p *merle.Packet) {
+	//		t.StateVar0 = 42
+	//		t.StateVar1 = true
+	//	}
+	//
+	//	func (t *thing) getState(p *merle.Packet) {
+	//		t.Msg = merle.ReplyState
+	//		p.Marshal(t).Reply()
+	//	}
+	//
+	//	// Will send JSON message:
+	//	//
+	//	//  {
+	//	//	"Msg": "_ReplyState",
+	//	//	"StateVar0": 42,
+	//	//	"StateVar1": true,
+	//	//  }
+	//
 	ReplyState = "_ReplyState"
 
+	// EventStatus message is an unsolicited notification that a child
+	// Thing's connection status has changed.
+	//
+	// EventStatus message is coded as MsgEventStatus.
 	EventStatus = "_EventStatus"
 )
 
-// Basic message structure.  All messages in Merle build on this basic struct,
-// with a member Msg which is the message type, something unique within the
-// Thing's message namespace.
+// Basic message structure.  All messages in Merle build on this basic struct.
+// All messages have a member Msg which is the message type, something unique
+// within the Thing's message namespace.
+//
+// System messages are sent with Msg prefixed with a "_".  Don't prefix normal
+// Thing messages with "_".
 type Msg struct {
 	Msg string
 	// Message-specific members here
@@ -46,7 +107,7 @@ type MsgEventStatus struct {
 	Online bool
 }
 
-// ReplyIdentity returns MsgIdentity response
+// Thing identification message return in ReplyIdentity
 type MsgIdentity struct {
 	Msg         string
 	Id          string
