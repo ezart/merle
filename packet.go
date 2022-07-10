@@ -45,6 +45,8 @@ func (p *Packet) String() string {
 	return string(p.msg)
 }
 
+// Src is the Packet's source Thing Id.  If the Packet originated internally
+// (p.src == nil), then use "SYSTEM" for Id.
 func (p *Packet) Src() string {
 	if p.src == nil {
 		return "SYSTEM"
@@ -52,42 +54,52 @@ func (p *Packet) Src() string {
 	return p.src.Src()
 }
 
-// Reply back to sender of Packet.
+// Reply back to sender of Packet
 func (p *Packet) Reply() {
 	p.bus.reply(p)
 }
 
-// Broadcast the Packet to all listeners except for the source of the Packet.
+// Broadcast the Packet to everyone else on the bus
 func (p *Packet) Broadcast() {
 	p.bus.broadcast(p)
 }
 
 // Send Packet to destination
+// TODO: Use restrictions?  Only to be called from bridge, or could be called
+// TODO: from child to talk to another child, over a bridge?
 func (p *Packet) Send(dst string) {
 	p.bus.send(p, dst)
 }
 
+// Test if this is the real Thing or Thing Prime.
+//
+// If p.IsThing() is not true, then we're on Thing Prime and should not access
+// device I/O and only update Thing's software state.  If p.IsThing() is true,
+// then this is the real Thing and we can access device I/O.
 func (p *Packet) IsThing() bool {
 	return !p.bus.thing.isPrime
 }
 
 // Subscriber callback function to broadcast packet.  In this example, any
-// packets received with message Alert are broadcast to all other listeners.
-// Not applicable for CmdRun.
+// packets received with message Alert are broadcast to all other listeners:
 //
 //	return merle.Subscribers{
-//		{"Alert", merle.Broadcast},
+//		...
+//		"Alert", merle.Broadcast,
 //	}
 //
 func Broadcast(p *Packet) {
-	msg := Msg{}
-	p.Unmarshal(&msg)
-	if msg.Msg == CmdRun {
-		return
-	}
 	p.Broadcast()
 }
 
+// Subscriber callback function to skip CmdInit.  In this example, CmdInit is
+// skipped:
+//
+//	return merle.Subscribers{
+//		merle.CmdInit: merle.NoInit,
+//		...
+//	}
+//
 func NoInit(p *Packet) {
 }
 
@@ -95,7 +107,8 @@ func NoInit(p *Packet) {
 // Use this callback when there is no other work to do in CmdRun than select{}.
 //
 //	return merle.Subscribers{
-//		{CmdRun, merle.RunForver},
+//		...
+//		merle.CmdRun: merle.RunForver,
 //	}
 //
 func RunForever(p *Packet) {
@@ -107,16 +120,32 @@ func RunForever(p *Packet) {
 	select {}
 }
 
+// Subscriber callback function to return empty state in response to GetState.
+// Example:
+//
+//	return merle.Subscribers{
+//		...
+//		merle.GetState: merle.ReplyStateEmpty,
+//	}
+//
 func ReplyStateEmpty(p *Packet) {
 	msg := Msg{Msg: ReplyState}
 	p.Marshal(&msg).Reply()
 }
 
+// Subscriber callback function to GetState
 func ReplyGetState(p *Packet) {
 	msg := Msg{Msg: GetState}
 	p.Marshal(&msg).Reply()
 }
 
+// Subscriber callback function to GetIdentity.  Example:
+//
+//	return merle.Subscribers{
+//		...
+//		merle.EventStatus: merle.ReplyGetIdentity,
+//	}
+//
 func ReplyGetIdentity(p *Packet) {
 	msg := Msg{Msg: GetIdentity}
 	p.Marshal(&msg).Reply()
