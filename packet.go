@@ -12,9 +12,9 @@ import (
 // message.  Thing message Subscribers receive, process and optional forward
 // Packets.
 type Packet struct {
-	// Bus the packet lives on
+	// Bus the Packet lives on
 	bus *bus
-	// Source socket on bus; the packet source
+	// Source socket on bus; the Packet source
 	src socketer
 	// Message
 	msg []byte
@@ -82,8 +82,8 @@ func (p *Packet) IsThing() bool {
 	return !p.bus.thing.isPrime
 }
 
-// Subscriber callback function to broadcast packet.  In this example, any
-// packets received with message Alert are broadcast to all other listeners:
+// Subscriber callback function to broadcast Packet.  In this example, any
+// Packets received with message Alert are broadcast to all other listeners:
 //
 //	return merle.Subscribers{
 //		...
@@ -141,11 +141,13 @@ func ReplyGetState(p *Packet) {
 	p.Marshal(&msg).Reply()
 }
 
-// Subscriber callback function to GetIdentity.  Example:
+// Subscriber callback function to GetIdentity.  Example of chaining the event
+// status change notification to send a GetIdentity request:
 //
 //	return merle.Subscribers{
 //		...
 //		merle.EventStatus: merle.ReplyGetIdentity,
+//		merle.ReplyIdentity: t.identity,
 //	}
 //
 func ReplyGetIdentity(p *Packet) {

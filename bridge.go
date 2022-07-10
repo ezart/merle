@@ -11,8 +11,8 @@ import (
 )
 
 // BridgeThingers is a map of functions which can generate Thingers, keyed by a
-// regular expression (re) of the form: id:model:name specifying which Things
-// can attach to the bridge.
+// regular expression (re) of the form: id:model:name.  The keys specify which
+// Things can attach to the bridge.
 type BridgeThingers map[string]func() Thinger
 
 // A Thing implementing the Bridger interface is a Bridge
@@ -22,22 +22,23 @@ type Bridger interface {
 	// expression (re) of the form: id:model:name specifying which Things
 	// can attach to the bridge. E.g.:
 	//
-	//	return merle.Thingers{
-	//		".*:blink:.*": blink.NewBlinker,
-	//		".*:gps:.*": gps.NewGps,
+	//	return merle.BridgeThingers{
+	//		".*:relays:.*": func() merle.Thinger { return relays.NewRelays() },
+	//		".*:bmp180:.*": func() merle.Thinger { return bmp180.NewBmp180() },
 	//	}
 	//
-	// In this example, "01234:blink:blinky" would match the first entry.
-	// "8888:foo:bar" would not match either entry and would not attach.
+	// In this example, a Thing with [id:model:name] = "01234:relays:foo"
+	// would match the first entry.  Another Thing with "8888:foo:bar"
+	// would not match either entry and would not attach.
 	BridgeThingers() BridgeThingers
 
 	// List of subscribers on Bridge bus.  All packets from all connected
 	// Things (children) are forwarded to the Bridge bus and tested against
-	// the subscribers.
+	// the BridgeSubscribers.
 	BridgeSubscribers() Subscribers
 }
 
-// Children are the Things connected to the bridge, map keyed by Child Id
+// children are the Things connected to the bridge, map keyed by Child Id
 type children map[string]*Thing
 
 // Bridge backing struct

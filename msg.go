@@ -27,10 +27,19 @@ const (
 	EventStatus = "_EventStatus"
 )
 
+// Basic message structure.  All messages in Merle build on this basic struct,
+// with a member Msg which is the message type, something unique within the
+// Thing's message namespace.
 type Msg struct {
 	Msg string
+	// Message-specific members here
 }
 
+// Event status change notification message.  On child connect or disconnect,
+// this notification is sent to:
+//
+// 1) If Thing Prime, send to all listeners (browsers) on Thing Prime.
+// 2) If Bridge, send to mother bus and to bridge bus.
 type MsgEventStatus struct {
 	Msg    string
 	Id     string
