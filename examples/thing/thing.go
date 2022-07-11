@@ -7,17 +7,9 @@ import (
 type thing struct {
 }
 
-func (t *thing) Subscribers() merle.Subscribers {
-	return merle.Subscribers{
-		merle.CmdRun: merle.RunForever,
-	}
-}
+func (t *thing) Subscribers() merle.Subscribers { ... }
 
-func (t *thing) Assets() *merle.ThingAssets {
-	return &merle.ThingAssets{
-		HtmlTemplateText: "Hello!\n",
-	}
-}
+func (t *thing) Assets() *merle.ThingAssets { ... }
 
 func main() {
 	thing := merle.NewThing(&thing{})

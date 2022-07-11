@@ -29,77 +29,36 @@ type ThingAssets struct {
 	HtmlTemplateText string
 }
 
-// All Things implement this interface.
+// All Things implement the Thinger interface.
 //
-// A Thing's subscribers handle incoming messages.  The collection of message
-// handlers comprise the Thing's "model".
-//
-// Minimally, the Thing should subscibe to the CmdRun message as CmdRun is the
-// Thing's main loop.  This loop should run forever.  It is an error for CmdRun
-// to end.  The main loop initializes the Thing's resources and asynchronously
-// monitors and updates those resources.
-//
-// Here's an example of a CmdRun handler which initializes some hardware
-// resources and then (asyncrounously) polls for hardware updates.
-//
-//	func (t *thing) run(p *merle.Packet) {
-//
-//		// Initialize hardware
-//
-//		t.adaptor = raspi.NewAdaptor()
-//		t.adaptor.Connect()
-//
-//		t.led = gpio.NewLedDriver(t.adaptor, "11")
-//		t.led.Start()
-//
-//		// Every second update hardware and send
-//		// notifications
-//
-//		ticker := time.NewTicker(time.Second)
-//
-//		t.sendLedState(p)
-//
-//		for {
-//			select {
-//			case <-ticker.C:
-//				t.toggle()
-//				t.sendLedState(p)
-//			}
-//		}
-//	}
-//
-// The Packet passed in can be used repeatably to send notifications.  Here,
-// the Packet message is updated to broadcast the hardware state to listeners.
-//
-//	func (t *thing) sendLedState(p *merle.Packet) {
-//		spam := spamLedState{
-//			Msg:   "SpamLedState",
-//			State: t.state(),
-//		}
-//		p.Marshal(&spam).Broadcast()
-//	}
+// To be a Thinger, the Thing must implement the two methods Subscribers() and Assets():
+// 
+//	type thing struct {}
+//	func (t *thing) Subscribers() merle.Subscribers { ... }
+//	func (t *thing) Assets() *merle.ThingAssets { ... }
 //
 type Thinger interface {
 
-	// Map of Thing's subscribers, keyed by message.  On packet receipt, a
-	// subscriber is looked up by packet message.  If there is a match, the
+	// Map of Thing's subscribers, keyed by message.  On Packet receipt, a
+	// subscriber is looked up by Packet message.  If there is a match, the
 	// subscriber callback is called.  If no subscribers match the received
 	// message, the "default" subscriber matches.  If still no matches, the
-	// packet is not handled.  If the callback is nil, the packet is
+	// Packet is not handled.  If the callback is nil, the Packet is
 	// (silently) dropped.  Here is an example of a subscriber map:
 	//
 	//	func (t *thing) Subscribers() merle.Subscribers {
 	//		return merle.Subscribers{
-	//			merle.CmdRun: t.run,
-	//			"GetState": t.getState,
-	//			"ReplyState": t.saveState,
-	//			"SpamUpdate": t.update,
-	//			"SpamTimer": nil,         // silent drop
+	//			merle.CmdRun:     t.run,
+	//			merle.GetState:   t.getState,
+	//			merle.ReplyState: t.saveState,
+	//			"SpamUpdate":     t.update,
+	//			"SpamTimer":      nil,         // silent drop
 	//		}
 	//	}
+	//
 	Subscribers() Subscribers
 
-	// blah
+	// Thing's web server assets.
 	Assets() *ThingAssets
 }
 
@@ -129,7 +88,7 @@ type Thing struct {
 	log         *log.Logger
 }
 
-// NewThing returns a Thing built from a Thinger.
+// NewThing returns a new Thing built from a Thinger
 func NewThing(thinger Thinger) *Thing {
 	return &Thing{
 		Cfg:     defaultCfg,

@@ -27,7 +27,7 @@ import (
 // argument.  An example handler for the "SetPoint" Msg above:
 //
 // func (t *thing) setPoint(p *merle.Packet) {
-//	// do someting with Packet p
+//	// do something with Packet p
 // }
 //
 // If the handler is nil, a Packet will be dropped silently.
