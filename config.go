@@ -4,9 +4,17 @@
 
 package merle
 
-// Thing configuration.  All Things share this configuration.  A default
-// configuration is assigned at creation (thing = NewThing()).  Override
-// default configurations before calling thing.Run().
+// Thing configuration.  A default configuration is assigned at creation
+// (NewThing()).  Override default configurations before calling thing.Run().
+// For example:
+//
+// func main() {
+// 	thing := merle.NewThing(&hello{})
+// 	thing.Cfg.User = "merle"  // turn on Basic Authentication for user merle
+// 	thing.Cfg.PortPublic = 80 // turn on public web server on port :80
+// 	log.Fatalln(thing.Run())
+// }
+
 type ThingConfig struct {
 
 	// ########## Thing configuration.
