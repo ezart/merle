@@ -104,6 +104,7 @@ type Thinger interface {
 }
 
 type Thing struct {
+	// Thing's configuration
 	Cfg         ThingConfig
 	thinger     Thinger
 	assets      *ThingAssets
@@ -261,6 +262,8 @@ func (t *Thing) build(full bool) error {
 	return nil
 }
 
+// Run Thing.  An error is returned if Run() fails.  Normally, Run() should not
+// fail and not exit.
 func (t *Thing) Run() error {
 	err := t.build(true)
 	if err != nil {

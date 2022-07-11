@@ -8,9 +8,8 @@ import (
 	"encoding/json"
 )
 
-// A Packet is the basic unit of communication in Merle.  A Packet contains a
-// message.  Thing message Subscribers receive, process and optional forward
-// Packets.
+// A Packet is the basic unit of communication in Merle.  Thing Subscribers() receive, process and optional forward
+// Packets.  A Packet contains a single message and the message is JSON-encoded.
 type Packet struct {
 	// Bus the Packet lives on
 	bus *bus
@@ -30,13 +29,13 @@ func (p *Packet) clone(bus *bus, src socketer) *Packet {
 	return &Packet{bus: bus, src: src, msg: p.msg}
 }
 
-// JSON marshal into Packet message
+// JSON-encode the message into the Packet
 func (p *Packet) Marshal(msg interface{}) *Packet {
 	p.msg, _ = json.Marshal(msg)
 	return p
 }
 
-// JSON unmarshal from Packet message
+// JSON-decode the message from the Packet
 func (p *Packet) Unmarshal(msg interface{}) {
 	json.Unmarshal(p.msg, msg)
 }
@@ -46,8 +45,8 @@ func (p *Packet) String() string {
 	return string(p.msg)
 }
 
-// Src is the Packet's source Thing Id.  If the Packet originated internally
-// (p.src == nil), then use "SYSTEM" for Id.
+// Src is the Packet's originating Thing's Id.  If the Packet originated
+// internally, then Src() is "SYSTEM".
 func (p *Packet) Src() string {
 	if p.src == nil {
 		return "SYSTEM"
@@ -82,20 +81,22 @@ func (p *Packet) IsThing() bool {
 	return !p.bus.thing.isPrime
 }
 
-// Subscriber callback function to broadcast Packet.  In this example, any
-// Packets received with message Alert are broadcast to all other listeners:
+// Subscriber helper function to broadcast Packet.  Do not call with locks
+// held.
+//
+// In this example, any Packets received with message Alert are broadcast to
+// all other listeners:
 //
 //	return merle.Subscribers{
 //		...
-//		"Alert", merle.Broadcast,
+//		"Alert": merle.Broadcast,
 //	}
 //
 func Broadcast(p *Packet) {
 	p.Broadcast()
 }
 
-// Subscriber callback helper function to skip CmdInit.  In this example,
-// CmdInit is skipped:
+// Subscriber helper function to do nothing on CmdInit.  Example:
 //
 //	return merle.Subscribers{
 //		merle.CmdInit: merle.NoInit,
@@ -105,13 +106,11 @@ func Broadcast(p *Packet) {
 func NoInit(p *Packet) {
 }
 
-// Subscriber callback helper function to run forever.  Only applicable for
-// CmdRun.  Use this callback when there is no other work to do in CmdRun than
-// select{}.
+// Subscriber helper function to run forever.  Only applicable for CmdRun.
 //
 //	return merle.Subscribers{
 //		...
-//		merle.CmdRun: merle.RunForver,
+//		merle.CmdRun: merle.RunForever,
 //	}
 //
 func RunForever(p *Packet) {
@@ -123,8 +122,8 @@ func RunForever(p *Packet) {
 	select {}
 }
 
-// Subscriber callback helper function to return empty state in response to
-// GetState.  Example:
+// Subscriber helper function to return empty state in response to GetState.
+// Example:
 //
 //	return merle.Subscribers{
 //		...
@@ -136,14 +135,14 @@ func ReplyStateEmpty(p *Packet) {
 	p.Marshal(&msg).Reply()
 }
 
-// Subscriber callback helper function to GetState
+// Subscriber helper function to GetState
 func ReplyGetState(p *Packet) {
 	msg := Msg{Msg: GetState}
 	p.Marshal(&msg).Reply()
 }
 
-// Subscriber callback helper function to GetIdentity.  Example of chaining the
-// event status change notification to send a GetIdentity request:
+// Subscriber helper function to GetIdentity.  Example of chaining the event
+// status change notification to send a GetIdentity request:
 //
 //	return merle.Subscribers{
 //		...

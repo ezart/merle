@@ -54,7 +54,7 @@ const (
 	//	type thing struct {
 	//		Msg       string
 	//		StateVar0 int
-	//              StateVar1 bool
+	//		StateVar1 bool
 	//		// non-exported members
 	//	}
 	//
@@ -68,14 +68,13 @@ const (
 	//		p.Marshal(t).Reply()
 	//	}
 	//
-	//	// Will send JSON message:
-	//	//
-	//	//  {
-	//	//	"Msg": "_ReplyState",
-	//	//	"StateVar0": 42,
-	//	//	"StateVar1": true,
-	//	//  }
+	// Will send JSON message:
 	//
+	//  {
+	//	"Msg": "_ReplyState",
+	//	"StateVar0": 42,
+	//	"StateVar1": true,
+	//  }
 	ReplyState = "_ReplyState"
 
 	// EventStatus message is an unsolicited notification that a child
@@ -85,12 +84,12 @@ const (
 	EventStatus = "_EventStatus"
 )
 
-// Basic message structure.  All messages in Merle build on this basic struct.
-// All messages have a member Msg which is the message type, something unique
-// within the Thing's message namespace.
+// All messages in Merle build on this basic struct.  All messages have a
+// member Msg which is the message type, a string that's unique within the
+// Thing's message namespace.
 //
-// System messages are sent with Msg prefixed with a "_".  Don't prefix normal
-// Thing messages with "_".
+// System messages type Msg is prefixed with a "_".  Regular Thing messages
+// should not be prefixed with "_".
 type Msg struct {
 	Msg string
 	// Message-specific members here
@@ -99,8 +98,8 @@ type Msg struct {
 // Event status change notification message.  On child connect or disconnect,
 // this notification is sent to:
 //
-// 1) If Thing Prime, send to all listeners (browsers) on Thing Prime.
-// 2) If Bridge, send to mother bus and to bridge bus.
+// 1. If Thing Prime, send to all listeners (browsers) on Thing Prime.
+// 2. If Bridge, send to mother bus and to bridge bus.
 type MsgEventStatus struct {
 	Msg    string
 	Id     string

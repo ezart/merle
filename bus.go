@@ -8,9 +8,32 @@ import (
 	"sync"
 )
 
-// Subscibers is a map of message subscribers, keyed by the message.  On packet
-// receipt, the packet message is used to lookup a subsciber.  The subscriber
-// callback is called to handle the packet.
+// Subscribers is a map of message subscribers, keyed by Msg.  On Packet
+// receipt, the Packet Msg is used to lookup a subscriber.  If a match,
+// the subscriber handler is called to process the Packet.
+//
+// Here's an example Subscribers() list:
+//
+// func (t *thing) Subscribers() merle.Subscribers {
+//	return merle.Subscribers{
+//		merle.CmdInit:     t.init,
+//		merle.CmdRun:      t.run,
+//		merle.GetState:    t.getState,
+//		merle.EventStatus: nil,
+//		"SetPoint":        t.setPoint,
+//	}
+//
+// A subscriber handler is a function that takes a Packet pointer as it's only
+// argument.  An example handler:
+//
+// func (t *thing) setPoint(p *merle.Packet) {
+//	// do someting with Packet p
+// }
+//
+// If the handler is nil, a Packet will be dropped silently.
+//
+// If the key "default" exists, then the default handler is called for any
+// non-matching Packets.
 type Subscribers map[string]func(*Packet)
 
 type sockets map[socketer]bool
