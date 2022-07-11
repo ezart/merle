@@ -31,9 +31,9 @@ func (b *Bmp180) init(p *merle.Packet) {
 }
 
 func (b *Bmp180) run(p *merle.Packet) {
-	var changed bool = false
-
 	for {
+		var changed bool = false
+
 		temp, _ := b.driver.Temperature()
 		pres, _ := b.driver.Pressure()
 
