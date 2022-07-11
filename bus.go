@@ -24,7 +24,7 @@ import (
 //	}
 //
 // A subscriber handler is a function that takes a Packet pointer as it's only
-// argument.  An example handler:
+// argument.  An example handler for the "SetPoint" Msg above:
 //
 // func (t *thing) setPoint(p *merle.Packet) {
 //	// do someting with Packet p
@@ -33,7 +33,15 @@ import (
 // If the handler is nil, a Packet will be dropped silently.
 //
 // If the key "default" exists, then the default handler is called for any
-// non-matching Packets.
+// non-matching Packets.  Here's an example BridgeSuscribers() that silently
+// drops all packets except CAN messages:
+//
+// func (b *bridge) BridgeSubscribers() merle.Subscribers {
+// 	return merle.Subscribers{
+// 		"CAN":     merle.Broadcast, // broadcast CAN msgs to everyone
+// 		"default": nil,             // drop everything else silently
+// 	}
+// }
 type Subscribers map[string]func(*Packet)
 
 type sockets map[socketer]bool
