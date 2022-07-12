@@ -14,7 +14,7 @@ func main() {
 	thing.Cfg.Name = "relaysforhope"
 	thing.Cfg.User = "merle"
 
-	thing.Cfg.PortPublic = 80
+	thing.Cfg.PortPublic = 7000
 	thing.Cfg.PortPrivate = 8080
 
 	flag.StringVar(&thing.Cfg.MotherHost, "rhost", "", "Remote host")

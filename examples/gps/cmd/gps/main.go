@@ -11,12 +11,13 @@ func main() {
 	gps := gps.NewGps()
 	thing := merle.NewThing(gps)
 
+	thing.Cfg.Id = "00_11_22_33_44_55"
 	thing.Cfg.Model = "gps"
 	thing.Cfg.Name = "gypsy"
 	thing.Cfg.User = "merle"
 
-	thing.Cfg.PortPublic = 80
-	thing.Cfg.PortPrivate = 8080
+	thing.Cfg.PortPublic = 7001
+	thing.Cfg.PortPrivate = 8081
 
 	flag.BoolVar(&gps.Demo, "demo", false, "Run in Demo mode")
 
