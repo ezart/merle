@@ -16,8 +16,8 @@ func main() {
 	thing.Cfg.Name = "gypsy"
 	thing.Cfg.User = "merle"
 
-	thing.Cfg.PortPublic = 7001
-	thing.Cfg.PortPrivate = 8081
+	thing.Cfg.PortPublic = 80
+	thing.Cfg.PortPrivate = 8080
 
 	flag.BoolVar(&gps.Demo, "demo", false, "Run in Demo mode")
 
