@@ -199,7 +199,7 @@ func (t *Thing) state(w http.ResponseWriter, r *http.Request) {
 	msg := Msg{Msg: GetState}
 	p := newPacket(t.bus, nil, &msg)
 	t.bus.receive(p)
-	fmt.Fprintf(w, p.String())
+	fmt.Fprintf(w, prettyPrintJSON(p.msg))
 }
 
 func (w *webPublic) pamValidate(user, passwd string) (bool, error) {
@@ -306,10 +306,10 @@ func (w *webPublic) newServer() {
 	w.mux = mux.NewRouter()
 
 	w.mux.HandleFunc("/ws/{id}", w.basicAuth(w.user, w.thing.ws))
-	w.mux.HandleFunc("/{id}", w.basicAuth(w.user, w.thing.home))
-	w.mux.HandleFunc("/{id}/state", w.basicAuth(w.user, w.thing.state))
-	w.mux.HandleFunc("/", w.basicAuth(w.user, w.thing.home))
 	w.mux.HandleFunc("/state", w.basicAuth(w.user, w.thing.state))
+	w.mux.HandleFunc("/{id}/state", w.basicAuth(w.user, w.thing.state))
+	w.mux.HandleFunc("/{id}", w.basicAuth(w.user, w.thing.home))
+	w.mux.HandleFunc("/", w.basicAuth(w.user, w.thing.home))
 
 	w.server = &http.Server{
 		Addr:    w.addr,

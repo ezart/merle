@@ -5,6 +5,8 @@
 package merle
 
 import (
+	"bytes"
+	"encoding/json"
 	"net"
 	"strings"
 )
@@ -22,3 +24,12 @@ func defaultId() string {
 	}
 	return "unknown"
 }
+
+func prettyPrintJSON(msg []byte) string {
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, msg, "", "    "); err != nil {
+		return ""
+	}
+	return prettyJSON.String()
+}
+
