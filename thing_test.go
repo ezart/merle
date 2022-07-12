@@ -86,7 +86,9 @@ func checkIdentityResp(r *MsgIdentity) error {
 	return nil
 }
 
-func testIdentify(t *testing.T, thing *Thing, httpPort uint) {
+func testIdentify(t *testing.T, thing *Thing) {
+	httpPort := thing.Cfg.PortPrivate
+
 	var p = newPort(thing, httpPort, nil)
 
 	err := p.wsOpen()
@@ -112,7 +114,9 @@ func testIdentify(t *testing.T, thing *Thing, httpPort uint) {
 	p.ws.Close()
 }
 
-func testDone(t *testing.T, thing *Thing, httpPort uint) {
+func testDone(t *testing.T, thing *Thing) {
+	httpPort := thing.Cfg.PortPrivate
+
 	var p = newPort(thing, httpPort, nil)
 
 	err := p.wsOpen()
@@ -131,7 +135,9 @@ func testDone(t *testing.T, thing *Thing, httpPort uint) {
 	p.ws.Close()
 }
 
-func testHomePage(t *testing.T, httpPort uint) {
+func testHomePage(t *testing.T, thing *Thing) {
+	httpPort := thing.Cfg.PortPublic
+
 	url := fmt.Sprintf("http://localhost:%d", httpPort)
 
 	get, err := http.Get(url)
@@ -153,12 +159,12 @@ func testHomePage(t *testing.T, httpPort uint) {
 	}
 }
 
-func testSimple(t *testing.T, thing *Thing, publicPort, privatePort uint) {
+func testSimple(t *testing.T, thing *Thing) {
 	// sleep a second for http servers to start
 	time.Sleep(time.Second)
-	testHomePage(t, publicPort)
-	testIdentify(t, thing, privatePort)
-	testDone(t, thing, privatePort)
+	testHomePage(t, thing)
+	testIdentify(t, thing)
+	testDone(t, thing)
 }
 
 func TestRun(t *testing.T) {
@@ -176,7 +182,7 @@ func TestRun(t *testing.T) {
 	thing.Cfg.PortPublic = 8080
 	thing.Cfg.PortPrivate = 8081
 
-	go testSimple(t, thing, thing.Cfg.PortPublic, thing.Cfg.PortPrivate)
+	go testSimple(t, thing)
 
 	err := thing.Run()
 	if err == nil {
