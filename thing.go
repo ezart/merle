@@ -62,6 +62,7 @@ type Thinger interface {
 	Assets() *ThingAssets
 }
 
+// Thing made from a Thinger.
 type Thing struct {
 	// Thing's configuration
 	Cfg         ThingConfig
@@ -88,7 +89,16 @@ type Thing struct {
 	log         *log.Logger
 }
 
-// NewThing returns a new Thing built from a Thinger
+// NewThing returns a Thing built from a Thinger.
+//
+//	type thing struct {
+//		// Implements Thinger interface
+//	}
+// 
+//	func main() {
+//		merle.NewThing(&thing{}).Run()
+//	}
+//
 func NewThing(thinger Thinger) *Thing {
 	return &Thing{
 		Cfg:     defaultCfg,
@@ -221,8 +231,15 @@ func (t *Thing) build(full bool) error {
 	return nil
 }
 
-// Run Thing.  An error is returned if Run() fails.  Normally, Run() should not
-// fail and not exit.
+// Run Thing.  An error is returned if Run() fails.  Configure Thing before
+// running.
+//
+//	func main() {
+//		thing := merle.NewThing(&thing{})
+//		thing.Cfg.PortPublic = 80  // run public web server on port :80
+//		log.Fatalln(thing.Run())
+//	}
+//
 func (t *Thing) Run() error {
 	err := t.build(true)
 	if err != nil {
