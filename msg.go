@@ -4,9 +4,7 @@
 
 package merle
 
-import (
-	"time"
-)
+import "time"
 
 // System messages.  System messages are prefixed with '_'.
 const (
@@ -41,9 +39,9 @@ const (
 
 	// GetState requests Thing's state.  Thing should respond with a
 	// ReplyState message containg Thing's state.
-	GetState   = "_GetState"
+	GetState = "_GetState"
 
-	// Response to GetState.  ReplyState message coding is Thing-specific. 
+	// Response to GetState.  ReplyState message coding is Thing-specific.
 	//
 	// It is convienent to use Thing's type struct (the Thinger) as the
 	// container for Thing's state.  Just include a Msg member and export

@@ -4,9 +4,7 @@
 
 package merle
 
-import (
-	"encoding/json"
-)
+import "encoding/json"
 
 // A Packet is the basic unit of communication in Merle.  Thing Subscribers() receive, process and optional forward
 // Packets.  A Packet contains a single message and the message is JSON-encoded.

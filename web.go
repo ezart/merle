@@ -26,8 +26,10 @@ import (
 )
 
 type web struct {
-	public  *webPublic
-	private *webPrivate
+	public   *webPublic
+	private  *webPrivate
+	templ    *template.Template
+	templErr error
 }
 
 func newWeb(t *Thing, portPublic, portPublicTLS, portPrivate uint,
@@ -107,18 +109,22 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	t.bus.unplug(sock)
 }
 
+func (t *Thing) setAssetsDir(child *Thing) {
+	t.web.staticFiles(child)
+}
+
 func (t *Thing) setHtmlTemplate() {
 	a := t.assets
 	if a.HtmlTemplateText != "" {
-		t.templ, t.templErr = template.New("").Parse(a.HtmlTemplateText)
-		if t.templErr != nil {
-			t.log.Println("Error parsing HtmlTemplateText:", t.templErr)
+		t.web.templ, t.web.templErr = template.New("").Parse(a.HtmlTemplateText)
+		if t.web.templErr != nil {
+			t.log.Println("Error parsing HtmlTemplateText:", t.web.templErr)
 		}
 	} else if a.HtmlTemplate != "" {
 		file := path.Join(a.AssetsDir, a.HtmlTemplate)
-		t.templ, t.templErr = template.ParseFiles(file)
-		if t.templErr != nil {
-			t.log.Println("Error parsing HtmlTemplate:", t.templErr)
+		t.web.templ, t.web.templErr = template.ParseFiles(file)
+		if t.web.templErr != nil {
+			t.log.Println("Error parsing HtmlTemplate:", t.web.templErr)
 		}
 	}
 }
@@ -166,10 +172,10 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if t.templErr != nil {
-		http.Error(w, t.templErr.Error(), http.StatusNotFound)
-	} else if t.templ != nil {
-		t.templ.Execute(w, t.templateParams(r))
+	if t.web.templErr != nil {
+		http.Error(w, t.web.templErr.Error(), http.StatusNotFound)
+	} else if t.web.templ != nil {
+		t.web.templ.Execute(w, t.templateParams(r))
 	}
 }
 

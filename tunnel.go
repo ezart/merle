@@ -2,11 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
+//go:build !tinygo
+// +build !tinygo
+
 package merle
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"os/exec"
 	"strconv"
@@ -16,23 +18,21 @@ import (
 
 // Tunnel (remote SSH port forwarding) to connect a child thing to it's mother thing
 type tunnel struct {
-	id          string
+	thing       *Thing
 	host        string
 	user        string
 	portPrivate uint
 	portRemote  uint
-	log         *log.Logger
 }
 
-func newTunnel(log *log.Logger, id, host, user string,
+func newTunnel(t *Thing, host, user string,
 	portPrivate, portRemote uint) *tunnel {
 	return &tunnel{
-		id:          id,
+		thing:       t,
 		host:        host,
 		user:        user,
 		portPrivate: portPrivate,
 		portRemote:  portRemote,
-		log:         log,
 	}
 }
 
@@ -50,10 +50,10 @@ func (t *tunnel) getPort() string {
 	args := []string{
 		t.user + "@" + t.host,
 		"curl", "-s",
-		"localhost:" + privatePort + "/port/" + t.id,
+		"localhost:" + privatePort + "/port/" + t.thing.id,
 	}
 
-	t.log.Printf("Tunnel getting port [ssh %s]", args)
+	t.thing.log.Printf("Tunnel getting port [ssh %s]", args)
 
 	cmd := exec.Command("ssh", args...)
 
@@ -64,7 +64,7 @@ func (t *tunnel) getPort() string {
 
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		t.log.Printf("Tunnel get port failed: %s, err %v", stdoutStderr, err)
+		t.thing.log.Printf("Tunnel get port failed: %s, err %v", stdoutStderr, err)
 		return ""
 	}
 
@@ -72,13 +72,13 @@ func (t *tunnel) getPort() string {
 
 	switch port {
 	case "404 page not found\n":
-		t.log.Println("Tunnel weirdness; Thing trying to be its own Mother?; trying again")
+		t.thing.log.Println("Tunnel weirdness; Thing trying to be its own Mother?; trying again")
 		return ""
 	case "no ports available":
-		t.log.Println("Tunnel no ports available; trying again")
+		t.thing.log.Println("Tunnel no ports available; trying again")
 		return ""
 	case "port busy":
-		t.log.Println("Tunnel port is busy; trying again")
+		t.thing.log.Println("Tunnel port is busy; trying again")
 		return ""
 	}
 
@@ -100,7 +100,7 @@ func (t *tunnel) tunnel(port string) error {
 		"-R", remote, t.user + "@" + t.host,
 	}
 
-	t.log.Printf("Creating tunnel [ssh %s]", args)
+	t.thing.log.Printf("Creating tunnel [ssh %s]", args)
 
 	cmd := exec.Command("ssh", args...)
 
@@ -111,7 +111,7 @@ func (t *tunnel) tunnel(port string) error {
 
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		t.log.Printf("Create tunnel failed: %s, err %v", stdoutStderr, err)
+		t.thing.log.Printf("Create tunnel failed: %s, err %v", stdoutStderr, err)
 	}
 
 	return err
@@ -130,14 +130,14 @@ func (t *tunnel) create() {
 			goto again
 		}
 
-		t.log.Println("Tunnel got port", port)
+		t.thing.log.Println("Tunnel got port", port)
 
 		err = t.tunnel(port)
 		if err != nil {
 			goto again
 		}
 
-		t.log.Println("Tunnel disconnected")
+		t.thing.log.Println("Tunnel disconnected")
 
 	again:
 		// TODO maybe try some exponential back-off aglo ala TCP
@@ -149,29 +149,29 @@ func (t *tunnel) create() {
 		// avoid port contention.
 
 		f := rand.Float32() * 10
-		t.log.Printf("Tunnel create sleeping for %f seconds", f)
+		t.thing.log.Printf("Tunnel create sleeping for %f seconds", f)
 		time.Sleep(time.Duration(f*1000) * time.Millisecond)
 	}
 }
 
 func (t *tunnel) start() {
 	if t.host == "" {
-		t.log.Println("Skipping tunnel to mother; missing host")
+		t.thing.log.Println("Skipping tunnel to mother; missing host")
 		return
 	}
 
 	if t.user == "" {
-		t.log.Println("Skipping tunnel to mother; missing user")
+		t.thing.log.Println("Skipping tunnel to mother; missing user")
 		return
 	}
 
 	if t.portRemote == 0 {
-		t.log.Println("Skipping tunnel to mother; missing remote port")
+		t.thing.log.Println("Skipping tunnel to mother; missing remote port")
 		return
 	}
 
 	if t.portPrivate == 0 {
-		t.log.Println("Skipping tunnel to mother; missing private port")
+		t.thing.log.Println("Skipping tunnel to mother; missing private port")
 		return
 	}
 

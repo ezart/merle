@@ -4,9 +4,7 @@
 
 package merle
 
-import (
-	"sync"
-)
+import "sync"
 
 // Subscribers is a map of message subscribers, keyed by Msg.  On Packet
 // receipt, the Packet Msg is used to lookup a subscriber.  If a match,

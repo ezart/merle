@@ -63,7 +63,7 @@ type ThingConfig struct {
 	// [Required, if Prime] PortPrime port is used to create a
 	// tunnel from Thing to Thing-prime.  The port should be a
 	// reserved port in ip_local_reserved_ports.
-	PortPrime      uint
+	PortPrime uint
 
 	// MaxConnection is maximum number of inbound connections to a Thing.
 	// Inbound connections are WebSockets from web browsers or WebSockets

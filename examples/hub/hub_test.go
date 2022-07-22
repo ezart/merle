@@ -14,10 +14,10 @@ import (
 func testHub(t *testing.T, hub *merle.Thing) {
 	// sleep a second for http servers to start
 	/*
-	time.Sleep(time.Second)
-	testHomePage(t, publicPort)
-	testIdentify(t, thing, privatePort)
-	testDone(t, thing, privatePort)
+		time.Sleep(time.Second)
+		testHomePage(t, publicPort)
+		testIdentify(t, thing, privatePort)
+		testDone(t, thing, privatePort)
 	*/
 }
 

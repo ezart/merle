@@ -7,23 +7,70 @@
 
 package merle
 
-type ThingAssets struct {
-	Dir          string
-	Template     string
-	TemplateText string
+type tunnel struct {
+}
+
+func newTunnel(t *Thing, host, user string,
+	portPrivate, portRemote uint) *tunnel {
+	return &tunnel{}
+}
+
+func (t *tunnel) start() {
+}
+
+func (t *tunnel) stop() {
+}
+
+type port struct {
+}
+
+type portAttachCb func(*port, *MsgIdentity) error
+
+func newPort(thing *Thing, p uint, attachCb portAttachCb) *port {
+	return &port{}
+}
+
+func (t *Thing) setAssetsDir(child *Thing) {
+}
+
+func (t *Thing) setHtmlTemplate() {
+}
+
+func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
+	return nil
+}
+
+func (t *Thing) primeRun() error {
+	return nil
+}
+
+type Bridger interface {
+}
+
+type bridge struct {
+}
+
+func (b *bridge) getChild(id string) *Thing {
+	return nil
+}
+
+func (b *bridge) start() {
+}
+
+func (b *bridge) stop() {
+}
+
+func newBridge(thing *Thing, portBegin, portEnd uint) *bridge {
+	return &bridge{}
 }
 
 type web struct {
+	public  *webPublic
+	private *webPrivate
 }
 
 func newWeb(t *Thing, portPublic, portPublicTLS, portPrivate uint, user string) *web {
 	return &web{}
-}
-
-func (w *web) start() {
-}
-
-func (w *web) stop() {
 }
 
 func (w *web) handlePrimePortId() {
@@ -48,12 +95,6 @@ func (w *webPrivate) start() {
 func (w *webPrivate) stop() {
 }
 
-func (w *webPrivate) handlePrimePortId() {
-}
-
-func (w *webPrivate) handleBridgePortId() {
-}
-
 type webPublic struct {
 }
 
@@ -67,6 +108,8 @@ func (w *webPublic) start() {
 func (w *webPublic) stop() {
 }
 
-func (t *Thing) runOnPort(p *port) error {
-	return nil
+type webSocket struct {
+}
+
+type wireSocket struct {
 }

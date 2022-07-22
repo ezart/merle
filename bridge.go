@@ -2,11 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be found
 // in the LICENSE file.
 
+//go:build !tinygo
+// +build !tinygo
+
 package merle
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"regexp"
 )
 
@@ -69,6 +71,13 @@ func newBridge(thing *Thing, portBegin, portEnd uint) *bridge {
 
 func (b *bridge) getChild(id string) *Thing {
 	return b.children[id]
+}
+
+func (t *Thing) getChild(id string) *Thing {
+	if !t.isBridge {
+		return nil
+	}
+	return t.bridge.getChild(id)
 }
 
 func (b *bridge) newChild(id, model, name string) (*Thing, error) {
@@ -150,7 +159,7 @@ func (b *bridge) bridgeAttach(p *port, msg *MsgIdentity) error {
 	if child == nil {
 		child, err = b.newChild(msg.Id, msg.Model, msg.Name)
 		if err != nil {
-			return errors.Wrap(err, "Bridge attach creating new child")
+			return fmt.Errorf("%s: Bridge attach creating new child", err)
 		}
 		b.children[msg.Id] = child
 	} else {

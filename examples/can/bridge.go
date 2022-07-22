@@ -2,9 +2,7 @@
 
 package can
 
-import (
-	"github.com/merliot/merle"
-)
+import "github.com/merliot/merle"
 
 type bridge struct {
 }

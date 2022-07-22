@@ -6,10 +6,8 @@ package merle
 
 import (
 	"fmt"
-	"html/template"
 	"log"
 	"os"
-	"regexp"
 	"time"
 )
 
@@ -32,7 +30,7 @@ type ThingAssets struct {
 // All Things implement the Thinger interface.
 //
 // To be a Thinger, the Thing must implement the two methods Subscribers() and Assets():
-// 
+//
 //	type thing struct {}
 //	func (t *thing) Subscribers() merle.Subscribers { ... }
 //	func (t *thing) Assets() *merle.ThingAssets { ... }
@@ -76,8 +74,6 @@ type Thing struct {
 	bus         *bus
 	tunnel      *tunnel
 	web         *web
-	templ       *template.Template
-	templErr    error
 	isBridge    bool
 	bridge      *bridge
 	isPrime     bool
@@ -94,7 +90,7 @@ type Thing struct {
 //	type thing struct {
 //		// Implements Thinger interface
 //	}
-// 
+//
 //	func main() {
 //		merle.NewThing(&thing{}).Run()
 //	}
@@ -117,13 +113,6 @@ func (t *Thing) getIdentity(p *Packet) {
 		StartupTime: t.startupTime,
 	}
 	p.Marshal(&resp).Reply()
-}
-
-func (t *Thing) getChild(id string) *Thing {
-	if !t.isBridge {
-		return nil
-	}
-	return t.bridge.getChild(id)
 }
 
 func (t *Thing) run() error {
@@ -168,15 +157,13 @@ func (t *Thing) run() error {
 
 func (t *Thing) build(full bool) error {
 
-	re := regexp.MustCompile("^[a-zA-Z0-9_]*$")
-
-	if !re.MatchString(t.Cfg.Id) {
+	if !validId(t.Cfg.Id) {
 		return fmt.Errorf("Id must contain only alphanumeric or underscore characters")
 	}
-	if !re.MatchString(t.Cfg.Model) {
+	if !validModel(t.Cfg.Model) {
 		return fmt.Errorf("Model must contain only alphanumeric or underscore characters")
 	}
-	if !re.MatchString(t.Cfg.Name) {
+	if !validName(t.Cfg.Name) {
 		return fmt.Errorf("Name must contain only alphanumeric or underscore characters")
 	}
 
@@ -201,7 +188,7 @@ func (t *Thing) build(full bool) error {
 	t.setHtmlTemplate()
 
 	if full {
-		t.tunnel = newTunnel(t.log, t.id, t.Cfg.MotherHost,
+		t.tunnel = newTunnel(t, t.Cfg.MotherHost,
 			t.Cfg.MotherUser, t.Cfg.PortPrivate,
 			t.Cfg.MotherPortPrivate)
 
@@ -252,8 +239,4 @@ func (t *Thing) Run() error {
 	default:
 		return t.run()
 	}
-}
-
-func (t *Thing) setAssetsDir(child *Thing) {
-	t.web.staticFiles(child)
 }
