@@ -205,7 +205,7 @@ func (t *Thing) state(w http.ResponseWriter, r *http.Request) {
 	msg := Msg{Msg: GetState}
 	p := newPacket(t.bus, nil, &msg)
 	t.bus.receive(p)
-	fmt.Fprintf(w, prettyPrintJSON(p.msg))
+	fmt.Fprintf(w, jsonPrettyPrint(p.msg))
 }
 
 func (w *webPublic) pamValidate(user, passwd string) (bool, error) {

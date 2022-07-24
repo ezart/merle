@@ -129,3 +129,21 @@ func (l *logger) println(v ...interface{}) {
 
 func (l *logger) fatalln(v ...interface{}) {
 }
+
+// TODO encoding/json isn't working with tinygo yet, so
+// TODO these stubs for Marshal and Unmarshal need to be
+// TODO open-coded to work on basic Merle message types
+// TODO like CmdInit and CmdRun and whatever else we
+// TODO might run into on a  tinygo deployment.
+
+func jsonMarshal(v interface{}) ([]byte, error) {
+	return []byte{}, nil
+}
+
+func jsonUnmarshal(data []byte, v interface{}) error {
+	return nil
+}
+
+func jsonPrettyPrint(msg []byte) string {
+	return ""
+}

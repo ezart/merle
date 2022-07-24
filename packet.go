@@ -4,8 +4,6 @@
 
 package merle
 
-import "encoding/json"
-
 // A Packet is the basic unit of communication in Merle.  Thing Subscribers() receive, process and optional forward
 // Packets.  A Packet contains a single message and the message is JSON-encoded.
 type Packet struct {
@@ -19,7 +17,7 @@ type Packet struct {
 
 func newPacket(bus *bus, src socketer, msg interface{}) *Packet {
 	p := &Packet{bus: bus, src: src}
-	p.msg, _ = json.Marshal(msg)
+	p.msg, _ = jsonMarshal(msg)
 	return p
 }
 
@@ -29,13 +27,13 @@ func (p *Packet) clone(bus *bus, src socketer) *Packet {
 
 // JSON-encode the message into the Packet
 func (p *Packet) Marshal(msg interface{}) *Packet {
-	p.msg, _ = json.Marshal(msg)
+	p.msg, _ = jsonMarshal(msg)
 	return p
 }
 
 // JSON-decode the message from the Packet
 func (p *Packet) Unmarshal(msg interface{}) {
-	json.Unmarshal(p.msg, msg)
+	jsonUnmarshal(p.msg, msg)
 }
 
 // String representation of Packet message
