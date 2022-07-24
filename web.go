@@ -72,13 +72,13 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if id != "" && id != t.id {
-		t.log.Println("Mismatch on Ids")
+		t.log.println("Mismatch on Ids")
 		return
 	}
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		t.log.Println("Websocket upgrader error:", err)
+		t.log.println("Websocket upgrader error:", err)
 		return
 	}
 	defer ws.Close()
@@ -86,7 +86,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	name := "ws:" + r.RemoteAddr + r.RequestURI
 	var sock = newWebSocket(t, name, ws)
 
-	t.log.Printf("Websocket opened [%s]", name)
+	t.log.printf("Websocket opened [%s]", name)
 
 	// Plug the websocket into Thing's bus
 	t.bus.plugin(sock)
@@ -97,7 +97,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 
 		_, pkt.msg, err = ws.ReadMessage()
 		if err != nil {
-			t.log.Printf("Websocket closed [%s]", name)
+			t.log.printf("Websocket closed [%s]", name)
 			break
 		}
 
@@ -118,13 +118,13 @@ func (t *Thing) setHtmlTemplate() {
 	if a.HtmlTemplateText != "" {
 		t.web.templ, t.web.templErr = template.New("").Parse(a.HtmlTemplateText)
 		if t.web.templErr != nil {
-			t.log.Println("Error parsing HtmlTemplateText:", t.web.templErr)
+			t.log.println("Error parsing HtmlTemplateText:", t.web.templErr)
 		}
 	} else if a.HtmlTemplate != "" {
 		file := path.Join(a.AssetsDir, a.HtmlTemplate)
 		t.web.templ, t.web.templErr = template.ParseFiles(file)
 		if t.web.templErr != nil {
-			t.log.Println("Error parsing HtmlTemplate:", t.web.templErr)
+			t.log.println("Error parsing HtmlTemplate:", t.web.templErr)
 		}
 	}
 }
@@ -218,17 +218,17 @@ func (w *webPublic) pamValidate(user, passwd string) (bool, error) {
 			return "", errors.New("Unrecognized message style")
 		})
 	if err != nil {
-		w.thing.log.Println("PAM Start:", err)
+		w.thing.log.println("PAM Start:", err)
 		return false, err
 	}
 	err = trans.Authenticate(0)
 	if err != nil {
-		w.thing.log.Printf("Authenticate [%s,%s]: %s", user, passwd, err)
+		w.thing.log.printf("Authenticate [%s,%s]: %s", user, passwd, err)
 		return false, err
 	}
 	err = trans.AcctMgmt(0)
 	if err != nil {
-		w.thing.log.Printf("Authenticate [%s,%s]: %s", user, passwd, err)
+		w.thing.log.printf("Authenticate [%s,%s]: %s", user, passwd, err)
 		return false, err
 	}
 
@@ -341,11 +341,11 @@ func (w *webPublic) httpShutdown() {
 	// Close all WebSocket connections on bus
 	w.thing.bus.close()
 	w.Done()
-	w.thing.log.Println("HTTP SHUTDOWN done")
+	w.thing.log.println("HTTP SHUTDOWN done")
 }
 
 func (w *webPublic) start() {
-	w.thing.log.Println("STARTING public web")
+	w.thing.log.println("STARTING public web")
 
 	if w.running {
 		return
@@ -353,37 +353,37 @@ func (w *webPublic) start() {
 	w.running = true
 
 	if w.port == 0 {
-		w.thing.log.Println("Skipping public HTTP server; port is zero")
+		w.thing.log.println("Skipping public HTTP server; port is zero")
 		return
 	}
 
 	if w.user != "" {
-		w.thing.log.Printf("Basic HTTP Authentication enabled for user \"%s\"",
+		w.thing.log.printf("Basic HTTP Authentication enabled for user \"%s\"",
 			w.user)
 	}
 
 	w.Add(2)
 	w.server.RegisterOnShutdown(w.httpShutdown)
 
-	w.thing.log.Println("Public HTTP server listening on port", w.server.Addr)
+	w.thing.log.println("Public HTTP server listening on port", w.server.Addr)
 
 	go func() {
 		if err := w.server.ListenAndServe(); err != http.ErrServerClosed {
-			w.thing.log.Fatalln("Public HTTP server failed:", err)
+			w.thing.log.fatalln("Public HTTP server failed:", err)
 		}
 		w.Done()
-		w.thing.log.Println("WAITGROUP HTTP done")
+		w.thing.log.println("WAITGROUP HTTP done")
 	}()
 
 	if w.portTLS == 0 {
-		w.thing.log.Println("Skipping public HTTPS server; port is zero")
+		w.thing.log.println("Skipping public HTTPS server; port is zero")
 		return
 	}
 
 	w.Add(2)
 	w.serverTLS.RegisterOnShutdown(w.Done)
 
-	w.thing.log.Println("Public HTTPS server listening on port", w.serverTLS.Addr)
+	w.thing.log.println("Public HTTPS server listening on port", w.serverTLS.Addr)
 
 	go func() {
 		// TODO Consider passing in optional certificate and key to
@@ -393,10 +393,10 @@ func (w *webPublic) start() {
 		// TODO than DNS because Let's Encrypt wants a server name (DNS name),
 		// TODO and not an IP addr.
 		if err := w.serverTLS.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
-			w.thing.log.Fatalln("Public HTTPS server failed:", err)
+			w.thing.log.fatalln("Public HTTPS server failed:", err)
 		}
 		w.Done()
-		w.thing.log.Println("WAITGROUP HTTPS done")
+		w.thing.log.println("WAITGROUP HTTPS done")
 	}()
 }
 
@@ -407,9 +407,9 @@ func (w *webPublic) stop() {
 	if w.port != 0 {
 		w.server.Shutdown(context.Background())
 	}
-	w.thing.log.Println("STOPPING web public...waiting for waitgroup")
+	w.thing.log.println("STOPPING web public...waiting for waitgroup")
 	w.Wait()
-	w.thing.log.Println("STOPPING web public...waitgroup done")
+	w.thing.log.println("STOPPING web public...waitgroup done")
 
 	// We have to create a new server each time we shut one down.
 	// (You can't restart a server once it's shutdown).
@@ -447,18 +447,18 @@ func newWebPrivate(t *Thing, port uint) *webPrivate {
 
 func (w *webPrivate) start() {
 	if w.port == 0 {
-		w.thing.log.Println("Skipping private HTTP server; port is zero")
+		w.thing.log.println("Skipping private HTTP server; port is zero")
 		return
 	}
 
 	w.Add(2)
 	w.server.RegisterOnShutdown(w.Done)
 
-	w.thing.log.Println("Private HTTP server listening on port", w.server.Addr)
+	w.thing.log.println("Private HTTP server listening on port", w.server.Addr)
 
 	go func() {
 		if err := w.server.ListenAndServe(); err != http.ErrServerClosed {
-			w.thing.log.Fatalln("Private HTTP server failed:", err)
+			w.thing.log.fatalln("Private HTTP server failed:", err)
 		}
 		w.Done()
 	}()

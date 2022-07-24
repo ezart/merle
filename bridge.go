@@ -179,7 +179,7 @@ func (b *bridge) bridgeAttach(p *port, msg *MsgIdentity) error {
 
 func (b *bridge) start() {
 	if err := b.ports.start(); err != nil {
-		b.thing.log.Println("Starting bridge error:", err)
+		b.thing.log.println("Starting bridge error:", err)
 	}
 	msg := Msg{Msg: CmdRun}
 	go b.bus.receive(newPacket(b.bus, nil, &msg))

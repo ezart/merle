@@ -53,7 +53,7 @@ func (t *tunnel) getPort() string {
 		"localhost:" + privatePort + "/port/" + t.thing.id,
 	}
 
-	t.thing.log.Printf("Tunnel getting port [ssh %s]", args)
+	t.thing.log.printf("Tunnel getting port [ssh %s]", args)
 
 	cmd := exec.Command("ssh", args...)
 
@@ -64,7 +64,7 @@ func (t *tunnel) getPort() string {
 
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		t.thing.log.Printf("Tunnel get port failed: %s, err %v", stdoutStderr, err)
+		t.thing.log.printf("Tunnel get port failed: %s, err %v", stdoutStderr, err)
 		return ""
 	}
 
@@ -72,13 +72,13 @@ func (t *tunnel) getPort() string {
 
 	switch port {
 	case "404 page not found\n":
-		t.thing.log.Println("Tunnel weirdness; Thing trying to be its own Mother?; trying again")
+		t.thing.log.println("Tunnel weirdness; Thing trying to be its own Mother?; trying again")
 		return ""
 	case "no ports available":
-		t.thing.log.Println("Tunnel no ports available; trying again")
+		t.thing.log.println("Tunnel no ports available; trying again")
 		return ""
 	case "port busy":
-		t.thing.log.Println("Tunnel port is busy; trying again")
+		t.thing.log.println("Tunnel port is busy; trying again")
 		return ""
 	}
 
@@ -100,7 +100,7 @@ func (t *tunnel) tunnel(port string) error {
 		"-R", remote, t.user + "@" + t.host,
 	}
 
-	t.thing.log.Printf("Creating tunnel [ssh %s]", args)
+	t.thing.log.printf("Creating tunnel [ssh %s]", args)
 
 	cmd := exec.Command("ssh", args...)
 
@@ -111,7 +111,7 @@ func (t *tunnel) tunnel(port string) error {
 
 	stdoutStderr, err := cmd.CombinedOutput()
 	if err != nil {
-		t.thing.log.Printf("Create tunnel failed: %s, err %v", stdoutStderr, err)
+		t.thing.log.printf("Create tunnel failed: %s, err %v", stdoutStderr, err)
 	}
 
 	return err
@@ -130,14 +130,14 @@ func (t *tunnel) create() {
 			goto again
 		}
 
-		t.thing.log.Println("Tunnel got port", port)
+		t.thing.log.println("Tunnel got port", port)
 
 		err = t.tunnel(port)
 		if err != nil {
 			goto again
 		}
 
-		t.thing.log.Println("Tunnel disconnected")
+		t.thing.log.println("Tunnel disconnected")
 
 	again:
 		// TODO maybe try some exponential back-off aglo ala TCP
@@ -149,29 +149,29 @@ func (t *tunnel) create() {
 		// avoid port contention.
 
 		f := rand.Float32() * 10
-		t.thing.log.Printf("Tunnel create sleeping for %f seconds", f)
+		t.thing.log.printf("Tunnel create sleeping for %f seconds", f)
 		time.Sleep(time.Duration(f*1000) * time.Millisecond)
 	}
 }
 
 func (t *tunnel) start() {
 	if t.host == "" {
-		t.thing.log.Println("Skipping tunnel to mother; missing host")
+		t.thing.log.println("Skipping tunnel to mother; missing host")
 		return
 	}
 
 	if t.user == "" {
-		t.thing.log.Println("Skipping tunnel to mother; missing user")
+		t.thing.log.println("Skipping tunnel to mother; missing user")
 		return
 	}
 
 	if t.portRemote == 0 {
-		t.thing.log.Println("Skipping tunnel to mother; missing remote port")
+		t.thing.log.println("Skipping tunnel to mother; missing remote port")
 		return
 	}
 
 	if t.portPrivate == 0 {
-		t.thing.log.Println("Skipping tunnel to mother; missing private port")
+		t.thing.log.println("Skipping tunnel to mother; missing private port")
 		return
 	}
 

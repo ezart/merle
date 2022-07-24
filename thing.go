@@ -6,8 +6,6 @@ package merle
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"time"
 )
 
@@ -82,7 +80,7 @@ type Thing struct {
 	primeId     string
 	bridgeSock  *wireSocket
 	childSock   *wireSocket
-	log         *log.Logger
+	log         *logger
 }
 
 // NewThing returns a Thing built from a Thinger.
@@ -173,7 +171,7 @@ func (t *Thing) build(full bool) error {
 	}
 
 	prefix := "[" + id + "] "
-	t.log = log.New(os.Stderr, prefix, 0)
+	t.log = NewLogger(prefix)
 
 	t.id = id
 	t.model = t.Cfg.Model
@@ -213,7 +211,7 @@ func (t *Thing) build(full bool) error {
 		prime = "[Thing Prime] "
 	}
 
-	t.log.Printf("%sModel: \"%s\", Name: \"%s\"", prime, t.model, t.name)
+	t.log.printf("%sModel: \"%s\", Name: \"%s\"", prime, t.model, t.name)
 
 	return nil
 }

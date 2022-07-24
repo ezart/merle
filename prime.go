@@ -7,11 +7,7 @@
 
 package merle
 
-import (
-	"fmt"
-	"log"
-	"os"
-)
+import "fmt"
 
 func (t *Thing) getPrimePort(id string) string {
 	t.primePort.Lock()
@@ -35,13 +31,13 @@ func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) err
 	var msg = Msg{Msg: GetState}
 	var err error
 
-	t.log.Printf("Websocket opened [%s]", name)
+	t.log.printf("Websocket opened [%s]", name)
 
 	t.primeSock = sock
 	t.bus.plugin(sock)
 
 	// Send GetState msg to Thing
-	t.log.Println("PRIME SENDING:", msg)
+	t.log.println("PRIME SENDING:", msg)
 	sock.Send(pkt.Marshal(&msg))
 
 	for {
@@ -50,7 +46,7 @@ func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) err
 
 		pkt.msg, err = p.readMessage()
 		if err != nil {
-			t.log.Printf("Websocket closed [%s]", name)
+			t.log.printf("Websocket closed [%s]", name)
 			break
 		}
 
@@ -59,14 +55,14 @@ func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) err
 		t.bus.receive(pkt)
 
 		if msg.Msg == ReplyState {
-			t.log.Println("PRIME READY")
+			t.log.println("PRIME READY")
 			ready(t)
 		}
 	}
 
 	t.bus.unplug(sock)
 
-	t.log.Println("PRIME CLEANUP")
+	t.log.println("PRIME CLEANUP")
 	cleanup(t)
 
 	return nil
@@ -102,7 +98,7 @@ func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
 	t.primeId = t.id
 
 	prefix := "[" + t.id + "] "
-	t.log = log.New(os.Stderr, prefix, 0)
+	t.log = NewLogger(prefix)
 
 	t.setAssetsDir(t)
 

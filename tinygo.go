@@ -113,3 +113,19 @@ type webSocket struct {
 
 type wireSocket struct {
 }
+
+type logger struct {
+}
+
+func NewLogger(prefix string) *logger {
+	return &logger{}
+}
+
+func (l *logger) printf(format string, v ...interface{}) {
+}
+
+func (l *logger) println(v ...interface{}) {
+}
+
+func (l *logger) fatalln(v ...interface{}) {
+}

@@ -89,7 +89,7 @@ func (p *port) wsOpen() error {
 
 func (p *port) wsIdentity() error {
 	msg := Msg{Msg: GetIdentity}
-	p.thing.log.Printf("Sending: %v", msg)
+	p.thing.log.printf("Sending: %v", msg)
 	return p.ws.WriteJSON(&msg)
 }
 
@@ -106,14 +106,14 @@ again:
 	}
 
 	if identity.Msg != ReplyIdentity {
-		p.thing.log.Printf("SKIPPING unexpected message %v", identity)
+		p.thing.log.printf("SKIPPING unexpected message %v", identity)
 		goto again
 	}
 
 	// Clear deadline
 	p.ws.SetReadDeadline(time.Time{})
 
-	p.thing.log.Printf("Received: %v", identity)
+	p.thing.log.printf("Received: %v", identity)
 	return &identity, nil
 }
 
@@ -159,13 +159,13 @@ func (p *port) attach() {
 	defer p.wsDisconnect()
 	resp, err := p.wsConnect()
 	if err != nil {
-		p.thing.log.Printf("Port[%d] connect failure: %s", p.port, err)
+		p.thing.log.printf("Port[%d] connect failure: %s", p.port, err)
 		return
 	}
 
 	err = p.attachCb(p, resp)
 	if err != nil {
-		p.thing.log.Printf("Port[%d] attach failed: %s", p.port, err)
+		p.thing.log.printf("Port[%d] attach failed: %s", p.port, err)
 	}
 }
 
@@ -209,7 +209,7 @@ func (p *port) connect() {
 	p.Lock()
 	defer p.Unlock()
 	if !p.tunnelConnected {
-		p.thing.log.Printf("Tunnel connected on Port[%d]", p.port)
+		p.thing.log.printf("Tunnel connected on Port[%d]", p.port)
 		p.tunnelConnected = true
 		p.tunnelTrying = false
 		go p.attach()
@@ -220,7 +220,7 @@ func (p *port) disconnect() {
 	p.Lock()
 	defer p.Unlock()
 	if p.tunnelConnected {
-		p.thing.log.Printf("Closing tunnel on Port[%d]", p.port)
+		p.thing.log.printf("Closing tunnel on Port[%d]", p.port)
 		p.tunnelConnected = false
 	}
 }
@@ -247,7 +247,7 @@ func (p *port) run() error {
 		select {
 		case <-ticker.C:
 			if err := p.scan(); err != nil {
-				p.thing.log.Println("Scanning port error:", err)
+				p.thing.log.println("Scanning port error:", err)
 				return err
 			}
 		}
@@ -271,7 +271,7 @@ func (p *ports) nextPort() (port *port) {
 		}
 		if port.tunnelTrying && port.tunnelTryingUntil.After(time.Now()) {
 			port.Unlock()
-			p.thing.log.Printf("Port[%d] still tunnelTrying", port.port)
+			p.thing.log.printf("Port[%d] still tunnelTrying", port.port)
 			continue
 		}
 		port.tunnelTrying = true
@@ -326,7 +326,7 @@ func (p *ports) init() error {
 		p.ports[i].attachCb = p.attachCb
 	}
 
-	p.thing.log.Printf("Bridge ports[%d-%d]", p.begin, p.end)
+	p.thing.log.printf("Bridge ports[%d-%d]", p.begin, p.end)
 
 	return nil
 }
@@ -364,7 +364,7 @@ func (p *ports) start() error {
 				return
 			case <-p.ticker.C:
 				if err := p.scan(); err != nil {
-					p.thing.log.Println("Scanning ports error:", err)
+					p.thing.log.println("Scanning ports error:", err)
 					return
 				}
 			}

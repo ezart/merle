@@ -100,7 +100,7 @@ func (b *bus) receive(p *Packet) {
 	f, match := b.subs[msg.Msg]
 	if match {
 		if f != nil {
-			b.thing.log.Printf("Received [%s]: %.80s", p.Src(),
+			b.thing.log.printf("Received [%s]: %.80s", p.Src(),
 				p.String())
 			f(p)
 		}
@@ -108,12 +108,12 @@ func (b *bus) receive(p *Packet) {
 		f, match = b.subs["default"]
 		if match {
 			if f != nil {
-				b.thing.log.Printf("Received [%s] by default: %.80s",
+				b.thing.log.printf("Received [%s] by default: %.80s",
 					p.Src(), p.String())
 				f(p)
 			}
 		} else {
-			b.thing.log.Printf("Not handled [%s]: %.80s", p.Src(),
+			b.thing.log.printf("Not handled [%s]: %.80s", p.Src(),
 				p.String())
 		}
 	}
@@ -123,21 +123,21 @@ func (b *bus) receive(p *Packet) {
 
 	if msg.Msg == ReplyState {
 		p.src.SetFlags(p.src.Flags() | sock_flag_bcast)
-		b.thing.log.Println("GOT REPLY STATE bcast set", p.src.Name())
+		b.thing.log.println("GOT REPLY STATE bcast set", p.src.Name())
 	}
 }
 
 // Reply sends the packet back to the source socket
 func (b *bus) reply(p *Packet) {
 	if p.src == nil {
-		b.thing.log.Println("REPLY ABORTED; source is missing")
+		b.thing.log.println("REPLY ABORTED; source is missing")
 		return
 	}
 
 	msg := Msg{}
 	p.Unmarshal(&msg)
 
-	b.thing.log.Printf("Reply: %.80s", p.String())
+	b.thing.log.printf("Reply: %.80s", p.String())
 	p.src.Send(p)
 
 	// Sending ReplyState is a special case.  The socket is disabled for
@@ -146,7 +146,7 @@ func (b *bus) reply(p *Packet) {
 
 	if msg.Msg == ReplyState {
 		p.src.SetFlags(p.src.Flags() | sock_flag_bcast)
-		b.thing.log.Println("SENDING REPLY STATE bcast set", p.src.Name())
+		b.thing.log.println("SENDING REPLY STATE bcast set", p.src.Name())
 	}
 }
 
@@ -165,25 +165,25 @@ func (b *bus) broadcast(p *Packet) {
 	for sock := range b.sockets {
 		if sock == src {
 			// don't send back to src
-			b.thing.log.Println("SKIPPING broadcast to SELF:", sock.Name())
+			b.thing.log.println("SKIPPING broadcast to SELF:", sock.Name())
 			continue
 		}
 		if sock.Flags()&sock_flag_bcast == 0 {
 			// Socket not ready for broadcasts.  Once a ReplyState
 			// message has been processed, the socket will be
 			// enabled for broadcasts.
-			b.thing.log.Println("SKIPPING BCAST NOT SET:", sock.Name())
+			b.thing.log.println("SKIPPING BCAST NOT SET:", sock.Name())
 			continue
 		}
 		if sent == 0 {
-			b.thing.log.Printf("Broadcast: %.80s", p.String())
+			b.thing.log.printf("Broadcast: %.80s", p.String())
 			sent++
 		}
 		sock.Send(p)
 	}
 
 	if sent == 0 {
-		b.thing.log.Printf("Would Broadcast: %.80s", p.String())
+		b.thing.log.printf("Would Broadcast: %.80s", p.String())
 	}
 }
 
@@ -195,7 +195,7 @@ func (b *bus) send(p *Packet, dst string) {
 
 	for sock := range b.sockets {
 		if sock.Src() == dst {
-			b.thing.log.Printf("Send to [%s]: %.80s", dst, p.String())
+			b.thing.log.printf("Send to [%s]: %.80s", dst, p.String())
 			sock.Send(p)
 			sent = true
 			break
@@ -203,12 +203,12 @@ func (b *bus) send(p *Packet, dst string) {
 	}
 
 	if !sent {
-		b.thing.log.Printf("Destination [%s] unknown: %.80s", dst, p.String())
+		b.thing.log.printf("Destination [%s] unknown: %.80s", dst, p.String())
 	}
 }
 
 func (b *bus) close() {
-	b.thing.log.Println("CLOSING BUS")
+	b.thing.log.println("CLOSING BUS")
 	b.sockLock.Lock()
 	defer b.sockLock.Unlock()
 
