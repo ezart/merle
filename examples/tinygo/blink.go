@@ -1,5 +1,9 @@
+// file: examples/tinygo/blink.go
+
 //go:build tinygo
 // +build tinygo
+
+// tinygo flash -target=arduino-nano33 examples/tinygo/blink.go
 
 package main
 
