@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/merliot/merle"
 	"log"
+
+	"github.com/merliot/merle"
 )
 
 type hello struct {

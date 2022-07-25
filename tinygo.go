@@ -7,6 +7,13 @@
 
 package merle
 
+import (
+	"machine"
+	"time"
+
+	"tinygo.org/x/drivers/wifinina"
+)
+
 type tunnel struct {
 }
 
@@ -146,4 +153,46 @@ func jsonUnmarshal(data []byte, v interface{}) error {
 
 func jsonPrettyPrint(msg []byte) string {
 	return ""
+}
+
+func Nano33ConnectAP(ssid, pass string) {
+	// These are the default pins for the Arduino Nano33 IoT.
+	spi := machine.NINA_SPI
+
+	// Configure SPI for 8Mhz, Mode 0, MSB First
+	spi.Configure(machine.SPIConfig{
+		Frequency: 8 * 1e6,
+		SDO:       machine.NINA_SDO,
+		SDI:       machine.NINA_SDI,
+		SCK:       machine.NINA_SCK,
+	})
+
+	// This is the ESP chip that has the WIFININA firmware flashed on it
+	adaptor := wifinina.New(spi,
+		machine.NINA_CS,
+		machine.NINA_ACK,
+		machine.NINA_GPIO0,
+		machine.NINA_RESETN)
+	adaptor.Configure()
+
+	// Connect to access point
+	time.Sleep(2 * time.Second)
+	println("Connecting to " + ssid)
+	err := adaptor.ConnectToAccessPoint(ssid, pass, 10*time.Second)
+	if err != nil { // error connecting to AP
+		for {
+			println(err)
+			time.Sleep(1 * time.Second)
+		}
+	}
+
+	println("Connected.")
+
+	time.Sleep(2 * time.Second)
+	ip, _, _, err := adaptor.GetIP()
+	for ; err != nil; ip, _, _, err = adaptor.GetIP() {
+		println(err.Error())
+		time.Sleep(1 * time.Second)
+	}
+	println(ip.String())
 }

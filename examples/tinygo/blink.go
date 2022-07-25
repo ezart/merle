@@ -8,12 +8,22 @@
 package main
 
 import (
-	"github.com/merliot/merle"
 	"machine"
 	"time"
+
+	"github.com/merliot/merle"
+//	"tinygo.org/x/drivers/net"
 )
 
+// Access point info
+const ssid = ""
+const pass = ""
+
 type blinky struct {
+}
+
+func (b *blinky) init(p *merle.Packet) {
+	merle.Nano33ConnectAP(ssid, pass)
 }
 
 func (b *blinky) run(p *merle.Packet) {
@@ -30,7 +40,7 @@ func (b *blinky) run(p *merle.Packet) {
 
 func (b *blinky) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdInit: nil,
+		merle.CmdInit: b.init,
 		merle.CmdRun:  b.run,
 	}
 }

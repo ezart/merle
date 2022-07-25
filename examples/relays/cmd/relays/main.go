@@ -2,9 +2,10 @@ package main
 
 import (
 	"flag"
+	"log"
+
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/relays"
-	"log"
 )
 
 func main() {

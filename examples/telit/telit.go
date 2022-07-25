@@ -6,11 +6,12 @@ package telit
 
 import (
 	"fmt"
-	"github.com/tarm/serial"
 	"log"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/tarm/serial"
 )
 
 type Telit struct {

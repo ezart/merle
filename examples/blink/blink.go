@@ -1,10 +1,11 @@
 package blink
 
 import (
+	"time"
+
 	"github.com/merliot/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
-	"time"
 )
 
 type blink struct {

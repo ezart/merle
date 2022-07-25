@@ -1,11 +1,12 @@
 package hub
 
 import (
+	"sync"
+
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/bmp180"
 	"github.com/merliot/merle/examples/gps"
 	"github.com/merliot/merle/examples/relays"
-	"sync"
 )
 
 type child struct {

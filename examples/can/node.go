@@ -3,9 +3,10 @@
 package can
 
 import (
+	"log"
+
 	"github.com/go-daq/canbus"
 	"github.com/merliot/merle"
-	"log"
 )
 
 type node struct {

@@ -5,10 +5,11 @@
 package hub
 
 import (
+	"testing"
+
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/gps"
 	"github.com/merliot/merle/examples/relays"
-	"testing"
 )
 
 func testHub(t *testing.T, hub *merle.Thing) {

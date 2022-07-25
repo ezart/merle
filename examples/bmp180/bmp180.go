@@ -3,12 +3,13 @@
 package bmp180
 
 import (
-	"github.com/merliot/merle"
-	"gobot.io/x/gobot/drivers/i2c"
-	"gobot.io/x/gobot/platforms/raspi"
 	"math"
 	"sync"
 	"time"
+
+	"github.com/merliot/merle"
+	"gobot.io/x/gobot/drivers/i2c"
+	"gobot.io/x/gobot/platforms/raspi"
 )
 
 type Bmp180 struct {

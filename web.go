@@ -14,15 +14,16 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
-	"github.com/msteinert/pam"
-	"golang.org/x/crypto/acme/autocert"
 	"html/template"
 	"net/http"
 	"path"
 	"strconv"
 	"sync"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
+	"github.com/msteinert/pam"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 type web struct {

@@ -9,14 +9,15 @@ package merle
 
 import (
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
 	"net/url"
 	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 )
 
 type portAttachCb func(*port, *MsgIdentity) error

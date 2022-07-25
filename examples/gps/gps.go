@@ -3,11 +3,12 @@
 package gps
 
 import (
-	"github.com/merliot/merle"
-	"github.com/merliot/merle/examples/telit"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/merliot/merle"
+	"github.com/merliot/merle/examples/telit"
 )
 
 type gps struct {

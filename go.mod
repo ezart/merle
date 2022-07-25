@@ -11,4 +11,5 @@ require (
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	gobot.io/x/gobot v1.16.0
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
+	tinygo.org/x/drivers v0.21.0
 )

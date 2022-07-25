@@ -1,9 +1,10 @@
 package main
 
 import (
+	"log"
+
 	"github.com/merliot/merle"
 	"github.com/merliot/merle/examples/hub"
-	"log"
 )
 
 func main() {

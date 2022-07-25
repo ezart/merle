@@ -3,10 +3,11 @@
 package relays
 
 import (
+	"sync"
+
 	"github.com/merliot/merle"
 	"gobot.io/x/gobot/drivers/gpio"
 	"gobot.io/x/gobot/platforms/raspi"
-	"sync"
 )
 
 type Relays struct {
