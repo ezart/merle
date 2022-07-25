@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/merliot/merle"
-//	"tinygo.org/x/drivers/net"
 )
 
 // Access point info

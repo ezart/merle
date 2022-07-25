@@ -10,6 +10,8 @@ package merle
 import (
 	"machine"
 	"time"
+	"fmt"
+	"unicode"
 
 	"tinygo.org/x/drivers/wifinina"
 )
@@ -144,10 +146,29 @@ func (l *logger) fatalln(v ...interface{}) {
 // TODO might run into on a  tinygo deployment.
 
 func jsonMarshal(v interface{}) ([]byte, error) {
-	return []byte{}, nil
+	msg := v.(*Msg)
+	return []byte(fmt.Sprintf("{\"Msg\":\"%s\"}", msg.Msg)), nil
 }
 
 func jsonUnmarshal(data []byte, v interface{}) error {
+	msg := v.(*Msg)
+	msg.Msg = ""
+	s := 0
+	for _, ch := range string(data) {
+		switch {
+		case ch == ':':
+			s = 1
+		case ch == '"':
+			switch s {
+			case 1:
+				s = 2
+			}
+		case unicode.IsLetter(ch), ch == '_':
+			if s == 2 {
+				msg.Msg += string(ch)
+			}
+		}
+	}
 	return nil
 }
 
