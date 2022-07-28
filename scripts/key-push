@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+    echo "missing user@host"
+    exit
+fi
+
+FILE=~/.ssh/id_rsa
+if [ ! -f "$FILE" ]; then
+	ssh-keygen -t rsa -N "" -f $FILE
+fi
+
+ssh-copy-id -i $FILE $1
