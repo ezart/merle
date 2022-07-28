@@ -12,24 +12,27 @@ import (
 )
 
 type blink struct {
+	adaptor *raspi.Adaptor
+	led     *gpio.LedDriver
+}
+
+func (b *blink) init(p *merle.Packet) {
+	b.adaptor = raspi.NewAdaptor()
+	b.adaptor.Connect()
+	b.led = gpio.NewLedDriver(b.adaptor, "11")
+	b.led.Start()
 }
 
 func (b *blink) run(p *merle.Packet) {
-	adaptor := raspi.NewAdaptor()
-	adaptor.Connect()
-
-	led := gpio.NewLedDriver(adaptor, "11")
-	led.Start()
-
 	for {
-		led.Toggle()
+		b.led.Toggle()
 		time.Sleep(time.Second)
 	}
 }
 
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdInit: nil,
+		merle.CmdInit: b.init,
 		merle.CmdRun:  b.run,
 	}
 }
