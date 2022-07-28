@@ -171,7 +171,7 @@ func (t *Thing) build(full bool) error {
 	}
 
 	prefix := "[" + id + "] "
-	t.log = NewLogger(prefix)
+	t.log = NewLogger(prefix, t.Cfg.LoggingEnabled)
 
 	t.id = id
 	t.model = t.Cfg.Model

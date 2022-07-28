@@ -13,21 +13,28 @@ import (
 )
 
 type logger struct {
-	log *log.Logger
+	log     *log.Logger
+	enabled bool
 }
 
-func NewLogger(prefix string) *logger {
-	return &logger{log: log.New(os.Stderr, prefix, 0)}
+func NewLogger(prefix string, enabled bool) *logger {
+	return &logger{log: log.New(os.Stderr, prefix, 0), enabled: enabled}
 }
 
 func (l *logger) printf(format string, v ...interface{}) {
-	l.log.Printf(format, v...)
+	if l.enabled {
+		l.log.Printf(format, v...)
+	}
 }
 
 func (l *logger) println(v ...interface{}) {
-	l.log.Println(v...)
+	if l.enabled {
+		l.log.Println(v...)
+	}
 }
 
 func (l *logger) fatalln(v ...interface{}) {
-	l.log.Fatalln(v...)
+	if l.enabled {
+		l.log.Fatalln(v...)
+	}
 }

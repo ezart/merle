@@ -98,7 +98,7 @@ func (t *Thing) primeAttach(p *port, msg *MsgIdentity) error {
 	t.primeId = t.id
 
 	prefix := "[" + t.id + "] "
-	t.log = NewLogger(prefix)
+	t.log = NewLogger(prefix, t.Cfg.LoggingEnabled)
 
 	t.setAssetsDir(t)
 

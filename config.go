@@ -95,7 +95,7 @@ type ThingConfig struct {
 	// A Thing implementing the Bridger interface will use this config for
 	// bridge-specific configuration.
 	//
-	// Beginning port number.  The bridge will listen for Thing
+	// Beginning bridge port number.  The bridge will listen for Thing
 	// (child) connections on the port range [BeginPort-EndPort].
 	//
 	// The bridge port range must be within the system's
@@ -113,8 +113,11 @@ type ThingConfig struct {
 	//
 	BridgePortBegin uint
 
-	// Ending port number.
+	// Ending bridge port number
 	BridgePortEnd uint
+
+	// Logging enable
+	LoggingEnabled bool
 }
 
 var defaultCfg = ThingConfig{
@@ -133,4 +136,5 @@ var defaultCfg = ThingConfig{
 	MotherPortPrivate: 8080,
 	BridgePortBegin:   8000,
 	BridgePortEnd:     8040,
+	LoggingEnabled:    true,
 }
