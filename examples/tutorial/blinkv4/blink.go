@@ -1,8 +1,9 @@
-// file: examples/tutorial/blinkv3/blink.go
+// file: examples/tutorial/blinkv1/blink.go
 
 package main
 
 import (
+	"flag"
 	"log"
 	"sync"
 	"time"
@@ -13,46 +14,60 @@ import (
 )
 
 type blink struct {
-	sync.RWMutex
-	Msg   string
-	State bool
+	sync.Mutex
+	adaptor *raspi.Adaptor
+	led     *gpio.LedDriver
+	Msg     string
+	State   bool
+}
+
+func (b *blink) init(p *merle.Packet) {
+	b.adaptor = raspi.NewAdaptor()
+	b.adaptor.Connect()
+	b.led = gpio.NewLedDriver(b.adaptor, "11")
+	b.led.Start()
+	b.State = b.led.State()
 }
 
 func (b *blink) run(p *merle.Packet) {
-	adaptor := raspi.NewAdaptor()
-	adaptor.Connect()
-
-	led := gpio.NewLedDriver(adaptor, "11")
-	led.Start()
-
 	for {
-		led.Toggle()
-
+		b.led.Toggle()
 		b.Lock()
+		b.State = b.led.State()
 		b.Msg = "Update"
-		b.State = led.State()
 		p.Marshal(b)
 		b.Unlock()
-
 		p.Broadcast()
-
 		time.Sleep(time.Second)
 	}
 }
 
 func (b *blink) getState(p *merle.Packet) {
-	b.RLock()
+	b.Lock()
 	b.Msg = merle.ReplyState
 	p.Marshal(b)
-	b.RUnlock()
+	b.Unlock()
 	p.Reply()
+}
+
+func (b *blink) saveState(p *merle.Packet) {
+	b.Lock()
+	p.Unmarshal(b)
+	b.Unlock()
+}
+
+func (b *blink) update(p *merle.Packet) {
+	b.saveState(p)
+	p.Broadcast()
 }
 
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdInit:  nil,
-		merle.CmdRun:   b.run,
-		merle.GetState: b.getState,
+		merle.CmdInit:    b.init,
+		merle.CmdRun:     b.run,
+		merle.GetState:   b.getState,
+		merle.ReplyState: b.saveState,
+		"Update":         b.update,
 	}
 }
 
@@ -89,13 +104,24 @@ const html = `
 
 func (b *blink) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
-		AssetsDir:        "examples/tutorial/blinkv4/assets",
+		AssetsDir:        "examples/tutorial/assets",
 		HtmlTemplateText: html,
 	}
 }
 
 func main() {
 	thing := merle.NewThing(&blink{})
+
+	thing.Cfg.Model = "blink"
+	thing.Cfg.Name = "blinky"
 	thing.Cfg.PortPublic = 80
+	thing.Cfg.PortPrivate = 8080
+
+	flag.StringVar(&thing.Cfg.MotherHost, "rhost", "", "Remote host")
+	flag.StringVar(&thing.Cfg.MotherUser, "ruser", "merle", "Remote user")
+	flag.BoolVar(&thing.Cfg.IsPrime, "prime", false, "Run as Thing Prime")
+	flag.UintVar(&thing.Cfg.PortPublicTLS, "TLS", 0, "TLS port")
+	flag.Parse()
+
 	log.Fatalln(thing.Run())
 }

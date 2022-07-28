@@ -123,14 +123,13 @@ func (b *bus) receive(p *Packet) {
 
 	if msg.Msg == ReplyState {
 		p.src.SetFlags(p.src.Flags() | sock_flag_bcast)
-		b.thing.log.println("GOT REPLY STATE bcast set", p.src.Name())
 	}
 }
 
 // Reply sends the packet back to the source socket
 func (b *bus) reply(p *Packet) {
 	if p.src == nil {
-		b.thing.log.println("REPLY ABORTED; source is missing")
+		b.thing.log.println("Reply aborted; source is missing")
 		return
 	}
 
@@ -146,7 +145,6 @@ func (b *bus) reply(p *Packet) {
 
 	if msg.Msg == ReplyState {
 		p.src.SetFlags(p.src.Flags() | sock_flag_bcast)
-		b.thing.log.println("SENDING REPLY STATE bcast set", p.src.Name())
 	}
 }
 
@@ -165,14 +163,14 @@ func (b *bus) broadcast(p *Packet) {
 	for sock := range b.sockets {
 		if sock == src {
 			// don't send back to src
-			b.thing.log.println("SKIPPING broadcast to SELF:", sock.Name())
+			b.thing.log.println("Skipping broadcast to self:", sock.Name())
 			continue
 		}
 		if sock.Flags()&sock_flag_bcast == 0 {
 			// Socket not ready for broadcasts.  Once a ReplyState
 			// message has been processed, the socket will be
 			// enabled for broadcasts.
-			b.thing.log.println("SKIPPING BCAST NOT SET:", sock.Name())
+			b.thing.log.println("Skipping broadcast; not ready:", sock.Name())
 			continue
 		}
 		if sent == 0 {
@@ -208,7 +206,6 @@ func (b *bus) send(p *Packet, dst string) {
 }
 
 func (b *bus) close() {
-	b.thing.log.println("CLOSING BUS")
 	b.sockLock.Lock()
 	defer b.sockLock.Unlock()
 

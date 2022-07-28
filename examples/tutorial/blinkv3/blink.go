@@ -1,9 +1,10 @@
-// file: examples/tutorial/blinkv3/blink.go
+// file: examples/tutorial/blinkv1/blink.go
 
 package main
 
 import (
 	"log"
+	"sync"
 	"time"
 
 	"github.com/merliot/merle"
@@ -12,37 +13,45 @@ import (
 )
 
 type blink struct {
-	Msg   string
-	State bool
+	sync.Mutex
+	adaptor *raspi.Adaptor
+	led     *gpio.LedDriver
+	Msg     string
+	State   bool
+}
+
+func (b *blink) init(p *merle.Packet) {
+	b.adaptor = raspi.NewAdaptor()
+	b.adaptor.Connect()
+	b.led = gpio.NewLedDriver(b.adaptor, "11")
+	b.led.Start()
+	b.State = b.led.State()
 }
 
 func (b *blink) run(p *merle.Packet) {
-	adaptor := raspi.NewAdaptor()
-	adaptor.Connect()
-
-	led := gpio.NewLedDriver(adaptor, "11")
-	led.Start()
-
 	for {
-		led.Toggle()
-
+		b.led.Toggle()
+		b.Lock()
+		b.State = b.led.State()
 		b.Msg = "Update"
-		b.State = led.State()
-
-		p.Marshal(b).Broadcast()
-
+		p.Marshal(b)
+		b.Unlock()
+		p.Broadcast()
 		time.Sleep(time.Second)
 	}
 }
 
 func (b *blink) getState(p *merle.Packet) {
+	b.Lock()
 	b.Msg = merle.ReplyState
-	p.Marshal(b).Reply()
+	p.Marshal(b)
+	b.Unlock()
+	p.Reply()
 }
 
 func (b *blink) Subscribers() merle.Subscribers {
 	return merle.Subscribers{
-		merle.CmdInit:  nil,
+		merle.CmdInit:  b.init,
 		merle.CmdRun:   b.run,
 		merle.GetState: b.getState,
 	}
@@ -81,13 +90,17 @@ const html = `
 
 func (b *blink) Assets() *merle.ThingAssets {
 	return &merle.ThingAssets{
-		AssetsDir:        "examples/tutorial/blinkv3/assets",
+		AssetsDir:        "examples/tutorial/assets",
 		HtmlTemplateText: html,
 	}
 }
 
 func main() {
 	thing := merle.NewThing(&blink{})
+
+	thing.Cfg.Model = "blink"
+	thing.Cfg.Name = "blinky"
 	thing.Cfg.PortPublic = 80
+
 	log.Fatalln(thing.Run())
 }

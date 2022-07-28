@@ -37,7 +37,6 @@ func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) err
 	t.bus.plugin(sock)
 
 	// Send GetState msg to Thing
-	t.log.println("PRIME SENDING:", msg)
 	sock.Send(pkt.Marshal(&msg))
 
 	for {
@@ -55,14 +54,12 @@ func (t *Thing) runOnPort(p *port, ready func(*Thing), cleanup func(*Thing)) err
 		t.bus.receive(pkt)
 
 		if msg.Msg == ReplyState {
-			t.log.println("PRIME READY")
 			ready(t)
 		}
 	}
 
 	t.bus.unplug(sock)
 
-	t.log.println("PRIME CLEANUP")
 	cleanup(t)
 
 	return nil
