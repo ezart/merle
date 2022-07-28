@@ -21,13 +21,13 @@ func NewLogger(prefix string) *logger {
 }
 
 func (l *logger) printf(format string, v ...interface{}) {
-	l.log.Printf(format, v)
+	l.log.Printf(format, v...)
 }
 
 func (l *logger) println(v ...interface{}) {
-	l.log.Println(v)
+	l.log.Println(v...)
 }
 
 func (l *logger) fatalln(v ...interface{}) {
-	l.log.Fatalln(v)
+	l.log.Fatalln(v...)
 }

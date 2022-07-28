@@ -342,12 +342,9 @@ func (w *webPublic) httpShutdown() {
 	// Close all WebSocket connections on bus
 	w.thing.bus.close()
 	w.Done()
-	w.thing.log.println("HTTP SHUTDOWN done")
 }
 
 func (w *webPublic) start() {
-	w.thing.log.println("STARTING public web")
-
 	if w.running {
 		return
 	}
@@ -373,7 +370,6 @@ func (w *webPublic) start() {
 			w.thing.log.fatalln("Public HTTP server failed:", err)
 		}
 		w.Done()
-		w.thing.log.println("WAITGROUP HTTP done")
 	}()
 
 	if w.portTLS == 0 {
@@ -397,7 +393,6 @@ func (w *webPublic) start() {
 			w.thing.log.fatalln("Public HTTPS server failed:", err)
 		}
 		w.Done()
-		w.thing.log.println("WAITGROUP HTTPS done")
 	}()
 }
 
@@ -408,9 +403,7 @@ func (w *webPublic) stop() {
 	if w.port != 0 {
 		w.server.Shutdown(context.Background())
 	}
-	w.thing.log.println("STOPPING web public...waiting for waitgroup")
 	w.Wait()
-	w.thing.log.println("STOPPING web public...waitgroup done")
 
 	// We have to create a new server each time we shut one down.
 	// (You can't restart a server once it's shutdown).

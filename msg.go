@@ -38,7 +38,7 @@ const (
 	ReplyIdentity = "_ReplyIdentity"
 
 	// GetState requests Thing's state.  Thing should respond with a
-	// ReplyState message containg Thing's state.
+	// ReplyState message containing Thing's state.
 	GetState = "_GetState"
 
 	// Response to GetState.  ReplyState message coding is Thing-specific.
@@ -47,7 +47,7 @@ const (
 	// container for Thing's state.  Just include a Msg member and export
 	// any other state members (with an uppercase leading letter).  Then
 	// the whole type struct can be passed in p.Marshal() to form the
-	// resonse.
+	// response.
 	//
 	//	type thing struct {
 	//		Msg       string
