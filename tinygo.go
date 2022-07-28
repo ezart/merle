@@ -126,7 +126,7 @@ type wireSocket struct {
 type logger struct {
 }
 
-func NewLogger(prefix string) *logger {
+func NewLogger(prefix string, enabled bool) *logger {
 	return &logger{}
 }
 
