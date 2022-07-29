@@ -8,9 +8,9 @@
 package merle
 
 import (
+	"fmt"
 	"machine"
 	"time"
-	"fmt"
 	"unicode"
 
 	"tinygo.org/x/drivers/wifinina"

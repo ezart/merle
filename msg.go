@@ -43,7 +43,7 @@ const (
 
 	// Response to GetState.  ReplyState message coding is Thing-specific.
 	//
-	// It is convienent to use Thing's type struct (the Thinger) as the
+	// It is convenient to use Thing's type struct (the Thinger) as the
 	// container for Thing's state.  Just include a Msg member and export
 	// any other state members (with an uppercase leading letter).  Then
 	// the whole type struct can be passed in p.Marshal() to form the

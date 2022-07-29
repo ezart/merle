@@ -17,7 +17,7 @@ type logger struct {
 	enabled bool
 }
 
-func NewLogger(prefix string, enabled bool) *logger {
+func newLogger(prefix string, enabled bool) *logger {
 	return &logger{log: log.New(os.Stderr, prefix, 0), enabled: enabled}
 }
 
