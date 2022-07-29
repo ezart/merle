@@ -163,7 +163,7 @@ func (b *bus) broadcast(p *Packet) {
 	for sock := range b.sockets {
 		if sock == src {
 			// don't send back to src
-			b.thing.log.println("Skipping broadcast to self:", sock.Name())
+			//b.thing.log.println("Skipping broadcast to self:", sock.Name())
 			continue
 		}
 		if sock.Flags()&sock_flag_bcast == 0 {
