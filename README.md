@@ -29,7 +29,7 @@ Copyright (c) 2021-2022 Scott Feldman (sfeldma@gmail.com).
 
 ## TODO
 
-My TODO list, not in any particular order.
+My TODO list, not in any particular order.  (Help would be much appreciated).
 
  - Thing-wide setting for a websocket ping/pong messages to close half-open sockets
  	(send ping from Thing side of websocket)
