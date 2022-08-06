@@ -183,15 +183,15 @@ func (t *Thing) build(full bool) error {
 
 	t.bus.subscribe(GetIdentity, t.getIdentity)
 
+	t.web = newWeb(t, t.Cfg.PortPublic, t.Cfg.PortPublicTLS,
+		t.Cfg.PortPrivate, t.Cfg.User)
+	t.setAssetsDir(t)
+	t.setHtmlTemplate()
+
 	if full {
 		t.tunnel = newTunnel(t, t.Cfg.MotherHost,
 			t.Cfg.MotherUser, t.Cfg.PortPrivate,
 			t.Cfg.MotherPortPrivate)
-
-		t.web = newWeb(t, t.Cfg.PortPublic, t.Cfg.PortPublicTLS,
-			t.Cfg.PortPrivate, t.Cfg.User)
-		t.setAssetsDir(t)
-		t.setHtmlTemplate()
 
 		_, t.isBridge = t.thinger.(Bridger)
 		if t.isBridge {
