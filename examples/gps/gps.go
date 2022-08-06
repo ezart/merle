@@ -12,7 +12,7 @@ import (
 )
 
 type gps struct {
-	sync.RWMutex
+	sync.Mutex
 	lastLat  float64
 	lastLong float64
 	Demo     bool
@@ -42,12 +42,18 @@ func (g *gps) run(p *merle.Packet) {
 		msg.Lat, msg.Long = telit.Location()
 
 		g.Lock()
+		changed := false
 		if msg.Lat != g.lastLat || msg.Long != g.lastLong {
 			g.lastLat = msg.Lat
 			g.lastLong = msg.Long
-			p.Marshal(&msg).Broadcast()
+			p.Marshal(&msg)
+			changed = true
 		}
 		g.Unlock()
+
+		if changed {
+			p.Broadcast()
+		}
 
 		time.Sleep(time.Minute)
 	}
@@ -179,19 +185,21 @@ func (g *gps) runDemo(p *merle.Packet) {
 		g.Lock()
 		g.lastLat = places[i].lat
 		g.lastLong = places[i].long
+		p.Marshal(&msg)
 		g.Unlock()
 
-		p.Marshal(&msg).Broadcast()
+		p.Broadcast()
 		time.Sleep(time.Minute)
 		i = (i + 1) % len(places)
 	}
 }
 
 func (g *gps) getState(p *merle.Packet) {
-	g.RLock()
-	defer g.RUnlock()
+	g.Lock()
 	msg := &msg{Msg: merle.ReplyState, Lat: g.lastLat, Long: g.lastLong}
-	p.Marshal(&msg).Reply()
+	p.Marshal(&msg)
+	g.Unlock()
+	p.Reply()
 }
 
 func (g *gps) saveState(p *merle.Packet) {
