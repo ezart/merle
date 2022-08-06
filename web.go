@@ -73,7 +73,7 @@ func (t *Thing) ws(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if id != "" && id != t.id {
-		t.log.println("Mismatch on Ids")
+		t.log.println("Mismatch on Ids: client browser needs refreshed")
 		return
 	}
 
@@ -169,7 +169,7 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if id != "" && id != t.id {
-		http.Error(w, "Mismatch on Ids", http.StatusNotFound)
+		http.Error(w, "Mismatch on Ids: client browser needs refreshed", http.StatusNotFound)
 		return
 	}
 
@@ -199,7 +199,7 @@ func (t *Thing) state(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if id != "" && id != t.id {
-		http.Error(w, "Mismatch on Ids", http.StatusNotFound)
+		http.Error(w, "Mismatch on Ids: client browser needs refreshed", http.StatusNotFound)
 		return
 	}
 
