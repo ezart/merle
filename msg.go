@@ -97,6 +97,7 @@ type Msg struct {
 // this notification is sent to:
 //
 // 1. If Thing Prime, send to all listeners (browsers) on Thing Prime.
+//
 // 2. If Bridge, send to mother bus and to bridge bus.
 type MsgEventStatus struct {
 	Msg    string

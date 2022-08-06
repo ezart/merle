@@ -77,8 +77,7 @@ func (p *Packet) IsThing() bool {
 	return !p.bus.thing.isPrime
 }
 
-// Subscriber helper function to broadcast Packet.  Do not call with locks
-// held.
+// Subscriber helper function to broadcast Packet.
 //
 // In this example, any Packets received with message Alert are broadcast to
 // all other listeners:
@@ -137,8 +136,8 @@ func ReplyGetState(p *Packet) {
 	p.Marshal(&msg).Reply()
 }
 
-// Subscriber helper function to GetIdentity.  Example of chaining the event
-// status change notification to send a GetIdentity request:
+// Subscriber helper function to GetIdentity.  Example of chaining the
+// EventStatus change notification to send a GetIdentity request:
 //
 //	return merle.Subscribers{
 //		...

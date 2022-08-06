@@ -33,14 +33,14 @@ type ThingConfig struct {
 	// [Optional] system User.  If a User is given, any browser views of
 	// the Thing's UI will prompt for user/passwd.  HTTP Basic
 	// Authentication is used and the user/passwd given must match the
-	// system creditials for the User.  If no User is given, HTTP Basic
+	// system creditials for the user.  If no user is given, HTTP Basic
 	// Authentication is skipped; anyone can view the UI.  The default is
-	// "".
+	// "" (skipped).
 	User string
 
 	// [Optional] If PortPublic is non-zero, an HTTP web server is started
 	// on port PortPublic.  PortPublic is typically set to 80.  The HTTP
-	// web server runs Thing's UI.  The default is 0.
+	// web server runs Thing's UI.  The default is 0 (no web server).
 	PortPublic uint
 
 	// [Optional] If PortPublicTLS is non-zero, an HTTPS web server is
@@ -48,13 +48,13 @@ type ThingConfig struct {
 	// 443.  The HTTPS web server will self-certify using a certificate
 	// from Let's Encrypt.  The public HTTPS server will securely run the
 	// Thing's UI.  If PortPublicTLS is given, PortPublic must be given.
-	// The default is 0.
+	// The default is 0 (no web server).
 	PortPublicTLS uint
 
 	// [Optional] If PortPrivate is non-zero, a private HTTP server is
 	// started on port PortPrivate.  This HTTP server does not server up
 	// the Thing's UI but rather connects to Thing's Mother using a
-	// websocket over HTTP.  The default is 0.
+	// websocket over HTTP.  The default is 0 (no web server).
 	PortPrivate uint
 
 	// [Optional] Run as Thing-prime.  The default is false.
@@ -71,6 +71,9 @@ type ThingConfig struct {
 	// (and higher) concurrent WebSocket connection attempt will block,
 	// waiting for one of the first 30 WebSocket sessions to terminate.
 	MaxConnections uint
+
+	// Logging enable
+	LoggingEnabled bool
 
 	// ########## Mother configuration.
 	//
@@ -115,9 +118,6 @@ type ThingConfig struct {
 
 	// Ending bridge port number
 	BridgePortEnd uint
-
-	// Logging enable
-	LoggingEnabled bool
 }
 
 var defaultCfg = ThingConfig{
@@ -130,11 +130,11 @@ var defaultCfg = ThingConfig{
 	PortPrivate:       0,
 	IsPrime:           false,
 	PortPrime:         8000,
+	LoggingEnabled:    true,
 	MaxConnections:    30,
 	MotherHost:        "",
 	MotherUser:        "",
 	MotherPortPrivate: 8080,
 	BridgePortBegin:   8000,
 	BridgePortEnd:     8040,
-	LoggingEnabled:    true,
 }

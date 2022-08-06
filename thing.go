@@ -27,7 +27,8 @@ type ThingAssets struct {
 
 // All Things implement the Thinger interface.
 //
-// To be a Thinger, the Thing must implement the two methods Subscribers() and Assets():
+// To be a Thinger, the Thing must implement the two methods, Subscribers() and
+// Assets():
 //
 //	type thing struct {}
 //	func (t *thing) Subscribers() merle.Subscribers { ... }

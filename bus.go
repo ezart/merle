@@ -6,11 +6,11 @@ package merle
 
 import "sync"
 
-// Subscribers is a map of message subscribers, keyed by Msg.  On Packet
-// receipt, the Packet Msg is used to lookup a subscriber.  If a match,
-// the subscriber handler is called to process the Packet.
+// Subscribers is a map of message subscribers, keyed by Msg type.  On Packet
+// receipt, the Packet Msg is used to lookup a subscriber.  If a match, the
+// subscriber handler is called to process the Packet.
 //
-// Here's an example Subscribers() list:
+// Here's an example Subscribers() map:
 //
 // func (t *thing) Subscribers() merle.Subscribers {
 //	return merle.Subscribers{
