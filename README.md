@@ -3,17 +3,21 @@
 [![Go Reference](https://pkg.go.dev/badge/pkg.dev.go/github.com/merliot/merle.svg)](https://pkg.go.dev/github.com/merliot/merle)
 [![Go Report Card](https://goreportcard.com/badge/github.com/merliot/merle)](https://goreportcard.com/report/github.com/merliot/merle)
 
+![Gopher Thing](gopher_cloud.png)
+
 [Merle](https://merliot.org) is a framework for building secure web-apps for your IoT project.
 
 Put your **Thing** on the **Internet** with Merle.
 
 Merle uses the Go programming language.
 
-![](gopher_cloud.png)
-
 ## Documentation
 
-Find documentation [here](https://pkg.go.dev/github.com/scottfeldman/merle)
+[Project Web Page](https://merliot.org)
+
+- Find Getting Started, Tutorial, and Examples.
+
+[Code Reference](https://pkg.go.dev/github.com/scottfeldman/merle)
 
 ## Need help?
 * Issues: [https://github.com/scottfeldman/merle/issues](https://github.com/scottfeldman/merle/issues)
