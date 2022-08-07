@@ -47,3 +47,5 @@ My TODO list, not in any particular order.  (Help would be much appreciated).
  - [tunnel.go] Need to use golang.org/x/crypto/ssh instead of os/exec'ing ssh calls.  Also, look
    into using golang.org/x/crypto/ssh on hub-side of merle for bespoke ssh server.
  - More tests!
+ - I'm not a Security expert.  Need review of Merle by some who are.
+ - I'm not a JavaScript/HTML expert.  Need review of Merle by experts.
