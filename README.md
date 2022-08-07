@@ -24,6 +24,7 @@ Merle uses the Go programming language.
 ## Need help?
 * Issues: [https://github.com/scottfeldman/merle/issues](https://github.com/scottfeldman/merle/issues)
 * Mailing list: [https://groups.google.com/g/merle-io](https://groups.google.com/g/merle-io)
+* Gophers Slack channel: [https://gophers.slack.com/messages/merliot/](https://gophers.slack.com/messages/merliot/)
 
 ## Contributing
 For contribution guidelines, please go to [here](https://github.com/scottfeldman/merle/blob/main/CONTRIBUTING.md).
