@@ -9,6 +9,8 @@ Put your **Thing** on the **Internet** with Merle.
 
 Merle uses the Go programming language.
 
+***Warning: Alpha-level software - use at your own risk***
+
 ![Gopher Thing](gopher_cloud.png)
 
 ## Documentation
