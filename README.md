@@ -77,8 +77,6 @@ My TODO list, not in any particular order.  (Help would be much appreciated).
  - Investigate if Merle framework could be written in other languages (Rust?).
    Assests (js/html/etc) wouldn't need to change.  Thing code would be rewritten in new language.
    A Thing written in one language should interoperate with another Thing written in another language?
- - [tunnel.go] Need to use golang.org/x/crypto/ssh instead of os/exec'ing ssh calls.  Also, look
-   into using golang.org/x/crypto/ssh on hub-side of merle for bespoke ssh server.
  - More tests!
  - I'm not a Security expert.  Need review of Merle by some who are.
  - I'm not a JavaScript/HTML expert.  Need review of Merle by experts.
