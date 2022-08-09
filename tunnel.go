@@ -9,14 +9,18 @@ package merle
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
 	"math/rand"
-	"os/exec"
+	"net"
 	"strconv"
-	"syscall"
 	"time"
+
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/knownhosts"
 )
 
-// Tunnel (remote SSH port forwarding) to connect a child thing to it's mother thing
+// Tunnel (remote SSH port forwarding) to connect a child Thing to it's mother Thing
 type tunnel struct {
 	thing       *Thing
 	host        string
@@ -36,85 +40,139 @@ func newTunnel(t *Thing, host, user string,
 	}
 }
 
-// TODO Need to use golang.org/x/crypto/ssh instead of
-// TODO os/exec'ing these ssh calls.  Also, look into
-// TODO using golang.org/x/crypto/ssh on hub-side of
-// TODO merle for bespoke ssh server.
+func getRemote(user, server string) (*ssh.Client, error) {
+	hostKeyCallback, err := knownhosts.New("/home/" + user + "/.ssh/known_hosts")
+	if err != nil {
+	    return nil, err
+	}
 
-func (t *tunnel) getPort() string {
+	// TODO: Allow different key name to be passed in thing.Cfg?
+	// TODO: Currently hardcoded to id_ras
+
+	key, err := ioutil.ReadFile("/home/" + user + "/.ssh/id_rsa")
+	if err != nil {
+		return nil, fmt.Errorf("Unable to read private key: %v", err)
+	}
+
+	signer, err := ssh.ParsePrivateKey(key)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to parse private key: %v", err)
+	}
+
+	config := &ssh.ClientConfig{
+		User: user,
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(signer),
+		},
+		HostKeyCallback: hostKeyCallback,
+	}
+
+	client, err := ssh.Dial("tcp", server + ":22", config)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to connect: %v", err)
+	}
+
+	return client, nil
+}
+
+func (t *tunnel) getPort() (string, error) {
 
 	// ssh <user>@<host> curl -s localhost:<privatePort>/port/<id>
 
 	privatePort := strconv.FormatUint(uint64(t.portRemote), 10)
+	cmd := "curl -s localhost:" + privatePort + "/port/" + t.thing.id
 
-	args := []string{
-		t.user + "@" + t.host,
-		"curl", "-s",
-		"localhost:" + privatePort + "/port/" + t.thing.id,
-	}
+	t.thing.log.printf("Tunnel getting port [ssh %s@%s %s]",
+		t.user, t.host, cmd)
 
-	t.thing.log.printf("Tunnel getting port [ssh %s]", args)
-
-	cmd := exec.Command("ssh", args...)
-
-	// If the parent process (this app) dies, kill the ssh cmd also
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: syscall.SIGTERM,
-	}
-
-	stdoutStderr, err := cmd.CombinedOutput()
+	remote, err := getRemote(t.user, t.host)
 	if err != nil {
-		t.thing.log.printf("Tunnel get port failed: %s, err %v", stdoutStderr, err)
-		return ""
+		return "", fmt.Errorf("Tunnel get remote client failed: %v", err)
+	}
+	defer remote.Close()
+
+	session, err := remote.NewSession()
+	if err != nil {
+		return "", fmt.Errorf("Tunnel get remote session failed: %v", err)
+	}
+	defer session.Close()
+
+	out, err := session.CombinedOutput(cmd)
+	if err != nil {
+		return "", fmt.Errorf("Tunnel get port failed: %s, err %v", out, err)
 	}
 
-	port := string(stdoutStderr)
+	port := string(out)
 
 	switch port {
 	case "404 page not found\n":
-		t.thing.log.println("Tunnel weirdness; Thing trying to be its own Mother?; trying again")
-		return ""
+		return "", fmt.Errorf("Tunnel weirdness; Thing trying to be its own Mother?; trying again")
 	case "no ports available":
-		t.thing.log.println("Tunnel no ports available; trying again")
-		return ""
+		return "", fmt.Errorf("Tunnel no ports available; trying again")
 	case "port busy":
-		t.thing.log.println("Tunnel port is busy; trying again")
-		return ""
+		return "", fmt.Errorf("Tunnel port is busy; trying again")
 	}
 
-	return port
+	return port, nil
 }
 
-func (t *tunnel) tunnel(port string) error {
+func reverseForward(client net.Conn, remote net.Conn) {
+	done := make(chan bool)
 
-	// ssh -o ExitOnForwardFailure=yes -CNT -R 8081:localhost:8080 <hub>
+	// Start remote -> local data transfer
+	go func() {
+		io.Copy(client, remote)
+		done <- true
+	}()
+
+	// Start local -> remote data transfer
+	go func() {
+		io.Copy(remote, client)
+		done <- true
+	}()
+
+	<-done
+}
+
+func (t *tunnel) tunnel(remotePort string) error {
+
+	// Create an SSH reverse port forwarding tunnel.  Equivalent to:
 	//
-	//  (The ExitOnForwardFailure=yes is to exit ssh if the remote port forwarding fails,
-	//   most likely from port already being in-use on the server side).
+	//    ssh -NT -R <remotePort>:localhost:<localPort> <user>@<host>
+	//
 
-	remote := fmt.Sprintf("%s:localhost:%d", port, t.portPrivate)
+	t.thing.log.printf("Tunnel creating tunnel [ssh -NT -R %s:localhost:%d %s@%s]",
+		remotePort, t.portPrivate, t.user, t.host)
 
-	args := []string{
-		"-CNT",
-		"-o", "ExitOnForwardFailure=yes",
-		"-R", remote, t.user + "@" + t.host,
-	}
-
-	t.thing.log.printf("Creating tunnel [ssh %s]", args)
-
-	cmd := exec.Command("ssh", args...)
-
-	// If the parent process (this app) dies, kill the ssh cmd also
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: syscall.SIGTERM,
-	}
-
-	stdoutStderr, err := cmd.CombinedOutput()
+	remote, err := getRemote(t.user, t.host)
 	if err != nil {
-		t.thing.log.printf("Create tunnel failed: %s, err %v", stdoutStderr, err)
+		return fmt.Errorf("Tunnel get remote client failed: %v", err)
+	}
+	defer remote.Close()
+
+	// Listen on remote server port
+	listener, err := remote.Listen("tcp", "localhost:" + remotePort)
+	if err != nil {
+		return fmt.Errorf("Unable to listen on remote server: %v", err)
 	}
 
-	return err
+	// Handle incoming connections on reverse forwarded tunnel
+	address := fmt.Sprintf("localhost:%d", t.portPrivate)
+	local, err := net.Dial("tcp", address)
+	if err != nil {
+		return fmt.Errorf("Dial into local service error: %v", err)
+	}
+	defer local.Close()
+
+	client, err := listener.Accept()
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	reverseForward(client, local)
+
+	return nil
 }
 
 func (t *tunnel) create() {
@@ -125,8 +183,9 @@ func (t *tunnel) create() {
 
 	for {
 
-		port = t.getPort()
-		if port == "" {
+		port, err = t.getPort()
+		if err != nil {
+			t.thing.log.println(err)
 			goto again
 		}
 
@@ -134,6 +193,7 @@ func (t *tunnel) create() {
 
 		err = t.tunnel(port)
 		if err != nil {
+			t.thing.log.println(err)
 			goto again
 		}
 
