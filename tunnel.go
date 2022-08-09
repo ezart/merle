@@ -43,7 +43,7 @@ func newTunnel(t *Thing, host, user string,
 func getRemote(user, server string) (*ssh.Client, error) {
 	hostKeyCallback, err := knownhosts.New("/home/" + user + "/.ssh/known_hosts")
 	if err != nil {
-	    return nil, err
+		return nil, err
 	}
 
 	// TODO: Allow different key name to be passed in thing.Cfg?
@@ -67,7 +67,7 @@ func getRemote(user, server string) (*ssh.Client, error) {
 		HostKeyCallback: hostKeyCallback,
 	}
 
-	client, err := ssh.Dial("tcp", server + ":22", config)
+	client, err := ssh.Dial("tcp", server+":22", config)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to connect: %v", err)
 	}
@@ -151,7 +151,7 @@ func (t *tunnel) tunnel(remotePort string) error {
 	defer remote.Close()
 
 	// Listen on remote server port
-	listener, err := remote.Listen("tcp", "localhost:" + remotePort)
+	listener, err := remote.Listen("tcp", "localhost:"+remotePort)
 	if err != nil {
 		return fmt.Errorf("Unable to listen on remote server: %v", err)
 	}
