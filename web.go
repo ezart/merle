@@ -205,6 +205,9 @@ func (t *Thing) state(w http.ResponseWriter, r *http.Request) {
 
 	msg := Msg{Msg: GetState}
 	p := newPacket(t.bus, nil, &msg)
+	// TODO: this will cause a "Reply aborted; source is missing" message
+	// TODO: because we set src=nil above for the new packet.
+	// TODO: Maybe make a dummy src that will sink the Reply() silently.
 	t.bus.receive(p)
 	fmt.Fprintf(w, jsonPrettyPrint(p.msg))
 }

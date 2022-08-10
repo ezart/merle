@@ -25,5 +25,5 @@ func jsonPrettyPrint(msg []byte) string {
 	if err := json.Indent(&prettyJSON, msg, "", "    "); err != nil {
 		return ""
 	}
-	return prettyJSON.String()
+	return prettyJSON.String() + "\n"
 }
