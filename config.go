@@ -106,11 +106,11 @@ type ThingConfig struct {
 	//
 	// Set a range using:
 	//
-	//   sudo sysctl -w net.ipv4.ip_local_reserved_ports="8000-8040"
+	//   sudo sysctl -w net.ipv4.ip_local_reserved_ports="6000-6100"
 	//
 	// Or, to persist setting on next boot, add to /etc/sysctl.conf:
 	//
-	//   net.ipv4.ip_local_reserved_ports = 8000-8040
+	//   net.ipv4.ip_local_reserved_ports = 6000-6100
 	//
 	// And then run sudo sysctl -p
 	//
@@ -129,12 +129,12 @@ var defaultCfg = ThingConfig{
 	PortPublicTLS:     0,
 	PortPrivate:       0,
 	IsPrime:           false,
-	PortPrime:         8000,
+	PortPrime:         7000,
 	LoggingEnabled:    true,
 	MaxConnections:    30,
 	MotherHost:        "",
 	MotherUser:        "",
-	MotherPortPrivate: 8080,
-	BridgePortBegin:   8000,
-	BridgePortEnd:     8040,
+	MotherPortPrivate: 8000,
+	BridgePortBegin:   6000,
+	BridgePortEnd:     6100,
 }
