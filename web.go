@@ -297,7 +297,7 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 
 	certManager := autocert.Manager{
 		Prompt: autocert.AcceptTOS,
-		Cache:  autocert.DirCache("/tmp/merle-" +
+		Cache: autocert.DirCache("/tmp/merle-" +
 			currentUser.Username + "/" + t.id),
 	}
 
