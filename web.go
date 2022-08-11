@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	osuser "os/user"
 	"path"
 	"strconv"
 	"sync"
@@ -292,9 +293,12 @@ func newWebPublic(t *Thing, port, portTLS uint, user string) *webPublic {
 	addr := ":" + strconv.FormatUint(uint64(port), 10)
 	addrTLS := ":" + strconv.FormatUint(uint64(portTLS), 10)
 
+	currentUser, _ := osuser.Current()
+
 	certManager := autocert.Manager{
 		Prompt: autocert.AcceptTOS,
-		Cache:  autocert.DirCache("./certs"),
+		Cache:  autocert.DirCache("/tmp/merle-" +
+			currentUser.Username + "/" + t.id),
 	}
 
 	w := &webPublic{
