@@ -115,7 +115,7 @@ func main() {
 	thing.Cfg.Model = "blink"
 	thing.Cfg.Name = "blinky"
 	thing.Cfg.PortPublic = 80
-	thing.Cfg.PortPrivate = 8080
+	thing.Cfg.PortPrivate = 6000
 
 	flag.StringVar(&thing.Cfg.MotherHost, "rhost", "", "Remote host")
 	flag.StringVar(&thing.Cfg.MotherUser, "ruser", "merle", "Remote user")
