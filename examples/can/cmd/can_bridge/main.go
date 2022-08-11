@@ -16,7 +16,7 @@ func main() {
 	thing.Cfg.User = "merle"
 
 	thing.Cfg.PortPublic = 80
-	thing.Cfg.PortPrivate = 8080
+	thing.Cfg.PortPrivate = 6000
 
 	log.Fatalln(thing.Run())
 }
