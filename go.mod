@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/go-daq/canbus v0.0.0-20161123191156-079be98fdbd7
+	github.com/goccy/go-json v0.9.10
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/msteinert/pam v1.0.0

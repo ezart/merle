@@ -9,7 +9,7 @@ package merle
 
 import (
 	"bytes"
-	"encoding/json"
+	json "github.com/goccy/go-json"
 )
 
 func jsonMarshal(v interface{}) ([]byte, error) {
