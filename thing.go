@@ -194,7 +194,10 @@ func (t *Thing) build(full bool) error {
 			t.Cfg.MotherUser, t.Cfg.PortPrivate,
 			t.Cfg.MotherPortPrivate)
 
+		// A bridge implements the Bridger interface.
 		_, t.isBridge = t.thinger.(Bridger)
+		// If bridge, but running as Prime, don't enable bridge.
+		t.isBridge = (t.isBridge && !t.isPrime)
 		if t.isBridge {
 			t.bridge = newBridge(t, t.Cfg.BridgePortBegin,
 				t.Cfg.BridgePortEnd)

@@ -9,7 +9,7 @@ import (
 )
 
 type thermo struct {
-	sync.RWMutex
+	sync.Mutex
 	recalc  chan bool
 	refresh chan bool
 	Msg     string
@@ -192,9 +192,9 @@ func (t *thermo) init(p *merle.Packet) {
 }
 
 func (t *thermo) marshal(p *merle.Packet) {
-	t.RLock()
+	t.Lock()
 	p.Marshal(t)
-	t.RUnlock()
+	t.Unlock()
 }
 
 func (t *thermo) run(p *merle.Packet) {
@@ -212,6 +212,13 @@ func (t *thermo) getState(p *merle.Packet) {
 	p.Reply()
 }
 
+func (t *thermo) saveState(p *merle.Packet) {
+	t.Lock()
+	p.Unmarshal(t)
+	t.Unlock()
+	p.Broadcast()
+}
+
 type MsgSetPoint struct {
 	Msg string
 	Val int
@@ -223,7 +230,11 @@ func (t *thermo) setPoint(p *merle.Packet) {
 	t.Lock()
 	t.SetPoint = msg.Val
 	t.Unlock()
-	t.recalc <- true
+	if p.IsThing() {
+		t.recalc <- true
+	} else {
+		p.Broadcast()
+	}
 }
 
 func (t *thermo) Subscribers() merle.Subscribers {
@@ -231,6 +242,7 @@ func (t *thermo) Subscribers() merle.Subscribers {
 		merle.CmdInit:     t.init,
 		merle.CmdRun:      t.run,
 		merle.GetState:    t.getState,
+		merle.ReplyState:  t.saveState,
 		merle.EventStatus: nil,
 		"SetPoint":        t.setPoint,
 	}

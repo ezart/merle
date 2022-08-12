@@ -11,7 +11,7 @@ import (
 )
 
 type Relays struct {
-	sync.RWMutex
+	sync.Mutex
 	drivers [4]*gpio.RelayDriver
 	Msg     string
 	States  [4]bool
@@ -39,10 +39,10 @@ func (r *Relays) run(p *merle.Packet) {
 }
 
 func (r *Relays) getState(p *merle.Packet) {
-	r.RLock()
+	r.Lock()
 	r.Msg = merle.ReplyState
 	p.Marshal(r)
-	r.RUnlock()
+	r.Unlock()
 	p.Reply()
 }
 

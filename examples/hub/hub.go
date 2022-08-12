@@ -15,7 +15,7 @@ type child struct {
 }
 
 type hub struct {
-	sync.RWMutex
+	sync.Mutex
 	Msg      string
 	Children map[string]child
 }
@@ -55,9 +55,9 @@ func (h *hub) update(p *merle.Packet) {
 }
 
 func (h *hub) getState(p *merle.Packet) {
-	h.RLock()
+	h.Lock()
 	p.Marshal(h)
-	h.RUnlock()
+	h.Unlock()
 	p.Reply()
 }
 

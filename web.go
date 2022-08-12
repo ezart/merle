@@ -170,7 +170,7 @@ func (t *Thing) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if id != "" && id != t.id {
-		http.Error(w, "Mismatch on Ids: client browser needs refreshed", http.StatusNotFound)
+		http.Error(w, "View not available", http.StatusNotFound)
 		return
 	}
 
@@ -208,7 +208,7 @@ func (t *Thing) state(w http.ResponseWriter, r *http.Request) {
 	p := newPacket(t.bus, nil, &msg)
 	// TODO: this will cause a "Reply aborted; source is missing" message
 	// TODO: because we set src=nil above for the new packet.
-	// TODO: Maybe make a dummy src that will sink the Reply() silently.
+	// TODO: Maybe make a dummy src that will sink the Reply() silently?
 	t.bus.receive(p)
 	fmt.Fprintf(w, jsonPrettyPrint(p.msg))
 }

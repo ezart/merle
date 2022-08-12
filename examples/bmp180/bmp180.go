@@ -13,7 +13,7 @@ import (
 )
 
 type Bmp180 struct {
-	sync.RWMutex
+	sync.Mutex
 	driver      *i2c.BMP180Driver
 	Msg         string
 	Temperature int
@@ -63,10 +63,10 @@ func (b *Bmp180) run(p *merle.Packet) {
 }
 
 func (b *Bmp180) getState(p *merle.Packet) {
-	b.RLock()
+	b.Lock()
 	b.Msg = merle.ReplyState
 	p.Marshal(b)
-	b.RUnlock()
+	b.Unlock()
 	p.Reply()
 }
 
